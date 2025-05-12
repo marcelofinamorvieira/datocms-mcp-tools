@@ -66,6 +66,18 @@ export const createRecordHandler = async (args: z.infer<typeof recordsSchemas.cr
 
       // Check for common validation errors
       if (detailedErrorMessage.includes("Validation failed") || detailedErrorMessage.includes("422")) {
+        // Check for localization-specific errors
+        if (detailedErrorMessage.includes("locales")) {
+          return createErrorResponse(`Localization error creating DatoCMS record: ${detailedErrorMessage}
+
+Please check that:
+1. For localized fields, you've provided values for all required locales (if 'All locales required' is enabled for the model)
+2. The locales are consistent across all localized fields (if a field has values for locales 'en' and 'it', all other localized fields must have the same locales)
+3. You're using the correct locale codes as defined in your DatoCMS project settings
+
+Use the Schema tools to check which fields are localized. Localized fields require an object with locale codes as keys, e.g., { title: { en: 'English Title', it: 'Italian Title' } }`);
+        }
+
         return createErrorResponse(`Validation error creating DatoCMS record: ${detailedErrorMessage}
 
 Please check that your field values match the required format for each field type. Refer to the DatoCMS API documentation for field type requirements: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values`);

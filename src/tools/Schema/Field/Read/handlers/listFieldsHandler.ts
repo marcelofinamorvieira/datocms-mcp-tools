@@ -40,6 +40,15 @@ export const listFieldsHandler = async (args: ListFieldsParams) => {
       paginatedFields = fields.slice(start, end);
     }
 
+    // Add information about localized fields if any exist
+    const localizedFields = paginatedFields.filter(field => field.localized);
+    let message = `Retrieved ${paginatedFields.length} field(s) for item type ID: ${itemTypeId}`;
+
+    if (localizedFields.length > 0) {
+      const localizedFieldKeys = localizedFields.map(f => f.api_key).join(', ');
+      message += `. Localized fields found: ${localizedFieldKeys}. When creating or updating records, localized fields require values as objects with locale keys (e.g., { "en": "English value", "it": "Italian value" }).`;
+    }
+
     return createResponse({
       success: true,
       data: paginatedFields,
@@ -48,7 +57,10 @@ export const listFieldsHandler = async (args: ListFieldsParams) => {
         limit: page.limit || 10,
         total: fields.length
       } : undefined,
-      message: `Retrieved ${paginatedFields.length} field(s) for item type ID: ${itemTypeId}`
+      localizedFields: localizedFields.length > 0 ?
+        localizedFields.map(f => ({ id: f.id, api_key: f.api_key })) :
+        undefined,
+      message
     });
   } catch (error: unknown) {
     if (isAuthorizationError(error)) {

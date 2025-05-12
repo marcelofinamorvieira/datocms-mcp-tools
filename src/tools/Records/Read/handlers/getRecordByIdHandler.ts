@@ -40,8 +40,26 @@ export const getRecordByIdHandler = async (args: z.infer<typeof recordsSchemas.g
       // Process the item to filter locales (saves on tokens) unless returnAllLocales is true
       const processedItem = returnMostPopulatedLocale(item, returnAllLocales);
 
+      // Return data in all locales if requested, which helps understand
+      // the structure of localized fields for later updates
+      const serializedRecord = JSON.stringify(processedItem, null, 2);
+
+      if (returnAllLocales) {
+        // Add a note about localized fields if they exist in the record
+        const hasLocalizedFields = serializedRecord.includes('{"en":') ||
+                                  serializedRecord.includes('{"it":') ||
+                                  serializedRecord.includes('"localized":true');
+
+        if (hasLocalizedFields) {
+          return createResponse(`${serializedRecord}
+
+NOTE: This record contains localized fields (shown as objects with locale keys like { "en": "value", "it": "value" }).
+When updating these fields, you MUST include values for ALL locales that should be preserved, not just the ones you're updating.`);
+        }
+      }
+
       // Convert to JSON and create response (will be chunked only if necessary)
-      return createResponse(JSON.stringify(processedItem, null, 2));
+      return createResponse(serializedRecord);
       
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {

@@ -69,8 +69,24 @@ export const updateRecordHandler = async (args: z.infer<typeof recordsSchemas.up
       
       // Format API errors for better understanding
       if (errorMessage.includes("Validation failed")) {
-        return createErrorResponse(`Validation error updating DatoCMS record: ${errorMessage}. 
-        
+        // Check for localization-specific errors
+        if (errorMessage.includes("locales")) {
+          return createErrorResponse(`Localization error updating DatoCMS record: ${errorMessage}
+
+Please check that:
+1. For localized fields, you've included values for ALL locales that should be preserved, not just the ones you're updating
+2. Example: if 'title' already has values for 'en' and 'es' locales, and you want to update only 'es',
+   you must provide { title: { en: 'existing English title', es: 'new Spanish title' } },
+   otherwise the 'en' value will be deleted
+3. The locales are consistent across all localized fields (they must share the same locale keys)
+4. You're using the correct locale codes as defined in your DatoCMS project settings
+
+Use the Schema tools to check which fields are localized. For each localized field you're updating,
+include ALL locale values that should exist after the update.`);
+        }
+
+        return createErrorResponse(`Validation error updating DatoCMS record: ${errorMessage}.
+
 Please check that your field values match the required format for each field type. Refer to the DatoCMS API documentation for field type requirements: https://www.datocms.com/docs/content-management-api/resources/item/update#updating-fields`);
       }
       

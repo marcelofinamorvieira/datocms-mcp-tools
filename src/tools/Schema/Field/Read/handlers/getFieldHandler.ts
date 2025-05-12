@@ -22,6 +22,15 @@ export const getFieldHandler = async (args: GetFieldParams) => {
     // Get the field by ID
     const field = await client.fields.find(fieldId);
 
+    // Add special note if the field is localized to help guide users
+    if (field.localized) {
+      return createResponse({
+        success: true,
+        data: field,
+        message: `Field retrieved successfully. NOTE: This field is localized, meaning its values must be provided as an object with locale keys when creating or updating records. Example: { "${field.api_key}": { "en": "English value", "it": "Italian value" } }`
+      });
+    }
+
     return createResponse({
       success: true,
       data: field,

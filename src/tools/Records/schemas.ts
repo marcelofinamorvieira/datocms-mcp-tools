@@ -57,7 +57,7 @@ export const recordsSchemas = {
   create: z.object({
     apiToken: z.string().describe("DatoCMS API token for authentication."),
     itemType: z.string().describe("The ID of the DatoCMS item type (model) for which to create a record."),
-    data: z.record(z.any()).describe("The field values for the new record. The structure depends on the field types in your model. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values."),
+    data: z.record(z.any()).describe("The field values for the new record. For localized fields, provide an object with locale codes as keys (e.g., { title: { en: 'English Title', es: 'Spanish Title' } }). For non-localized fields, provide values directly (e.g., { count: 5 }). The structure depends on the field types in your model. You can use the Schema tools to check which fields are localized. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values."),
     returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
     environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
   }),
@@ -65,7 +65,7 @@ export const recordsSchemas = {
   update: z.object({
     apiToken: z.string().describe("DatoCMS API token for authentication."),
     itemId: z.string().describe("The ID of the DatoCMS record to update."),
-    data: z.record(z.any()).describe("The field values to update. Only include fields you want to modify. The structure depends on the field types in your model. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/update#updating-fields."),
+    data: z.record(z.any()).describe("The field values to update. Only include fields you want to modify. For localized fields, you MUST include values for ALL locales that should be preserved, not just the ones you're updating. Example: if a field 'title' already has values for 'en' and 'es' locales, and you want to update only the 'es' value, you must provide { title: { en: 'existing English title', es: 'new Spanish title' } }, otherwise the 'en' value will be deleted. The structure depends on the field types in your model. Use the Schema tools to check which fields are localized. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/update#updating-fields."),
     version: z.string().optional().describe("Optional version for optimistic locking. If provided, the update will fail if the record has been modified since this version."),
     returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
     environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")

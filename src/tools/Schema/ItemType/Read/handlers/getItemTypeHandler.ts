@@ -24,8 +24,16 @@ export const getItemTypeHandler = async (args: z.infer<typeof schemaSchemas.get_
       // Retrieve the item type
       const itemType = await client.itemTypes.find(itemTypeId);
       
+      // Add special note if the model has all_locales_required flag
+      const serializedItemType = JSON.stringify(itemType, null, 2);
+      if (itemType.all_locales_required) {
+        return createResponse(`${serializedItemType}
+
+NOTE: This model requires all locales to be present for localized fields. When creating or updating records, you must provide values for all configured locales in every localized field. Check the model's fields to see which ones are localized.`);
+      }
+
       // Return the item type data
-      return createResponse(JSON.stringify(itemType, null, 2));
+      return createResponse(serializedItemType);
       
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {
