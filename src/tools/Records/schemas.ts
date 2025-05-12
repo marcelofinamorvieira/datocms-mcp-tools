@@ -54,7 +54,24 @@ export const recordsSchemas = {
   }),
 
   // Create operations
-  duplicate: z.object({ 
+  create: z.object({
+    apiToken: z.string().describe("DatoCMS API token for authentication."),
+    itemType: z.string().describe("The ID of the DatoCMS item type (model) for which to create a record."),
+    data: z.record(z.any()).describe("The field values for the new record. The structure depends on the field types in your model. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values."),
+    returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
+    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  }),
+
+  update: z.object({
+    apiToken: z.string().describe("DatoCMS API token for authentication."),
+    itemId: z.string().describe("The ID of the DatoCMS record to update."),
+    data: z.record(z.any()).describe("The field values to update. Only include fields you want to modify. The structure depends on the field types in your model. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/update#updating-fields."),
+    version: z.string().optional().describe("Optional version for optimistic locking. If provided, the update will fail if the record has been modified since this version."),
+    returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
+    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  }),
+
+  duplicate: z.object({
     apiToken: z.string().describe("DatoCMS API token for authentication."),
     itemId: z.string().describe("The ID of the DatoCMS record to duplicate."),
     returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),

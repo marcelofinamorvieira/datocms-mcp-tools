@@ -13,7 +13,8 @@ import { getRecordByIdHandler } from "./Read/handlers/getRecordByIdHandler.js";
 import { getRecordReferencesHandler } from "./Read/handlers/getRecordReferencesHandler.js";
 import { queryRecordsHandler } from "./Read/handlers/queryRecordsHandler.js";
 import { buildRecordEditorUrlFromTypeHandler } from "./Read/handlers/buildRecordEditorUrlFromTypeHandler.js";
-import { duplicateRecordHandler } from "./Create/handlers/duplicateRecordHandler.js";
+import { duplicateRecordHandler, createRecordHandler } from "./Create/handlers/index.js";
+import { updateRecordHandler } from "./Update/handlers/index.js";
 import { 
   publishRecordHandler,
   unpublishRecordHandler,
@@ -42,6 +43,7 @@ type ActionArgsMap = {
   get: z.infer<typeof recordsSchemas.get>;
   references: z.infer<typeof recordsSchemas.references>;
   editor_url_from_type: z.infer<typeof recordsSchemas.editor_url_from_type>;
+  create: z.infer<typeof recordsSchemas.create>;
   duplicate: z.infer<typeof recordsSchemas.duplicate>;
   destroy: z.infer<typeof recordsSchemas.destroy>;
   bulk_destroy: z.infer<typeof recordsSchemas.bulk_destroy>;
@@ -125,6 +127,10 @@ This will show you all the required parameters and their types.`);
               return getRecordReferencesHandler(validatedArgs as ActionArgsMap['references']);
             case "editor_url_from_type":
               return buildRecordEditorUrlFromTypeHandler(validatedArgs as ActionArgsMap['editor_url_from_type']);
+            case "create":
+              return createRecordHandler(validatedArgs as ActionArgsMap['create']);
+            case "update":
+              return updateRecordHandler(validatedArgs as ActionArgsMap['update']);
             case "duplicate":
               return duplicateRecordHandler(validatedArgs as ActionArgsMap['duplicate']);
             case "destroy":

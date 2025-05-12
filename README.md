@@ -39,7 +39,7 @@ All operations are coordinated through these main router tools:
 
 | Router Tool | Description | Examples |
 |-------------|-------------|----------|
-| `RecordsRouterTool` | Manages record CRUD, publication, and versioning | Query records, publish/unpublish, manage versions |
+| `RecordsRouterTool` | Manages record CRUD, publication, and versioning | Query records, create/update records, publish/unpublish, manage versions |
 | `ProjectRouterTool` | Handles project-level operations | Get project info, update site settings |
 | `EnvironmentRouterTool` | Manages DatoCMS environments | List environments, retrieve environment details |
 | `CollaboratorsRolesAndAPITokensRouterTool` | Manages users, roles, invitations, and API tokens | Create/delete users, manage invitations, create/update/delete roles, create/rotate API tokens |
@@ -67,6 +67,44 @@ The architecture includes a sophisticated parameter description system:
 3. **Schema Validation**:
    - All router tools validate parameters against Zod schemas
    - Detailed error messages direct users back to the parameters tool
+
+## Records Router Actions
+
+The `RecordsRouterTool` provides comprehensive management for DatoCMS records:
+
+### Read Actions
+- **query**: Query multiple records with filtering, pagination, and locale options
+- **get**: Retrieve a specific record by ID
+- **references**: Get records that reference a specific record
+- **editor_url_from_type**: Build a URL to view/edit a specific record in the DatoCMS UI
+
+### Create Actions
+- **create**: Create a new record with support for all field types (Text, Rich Text, Media, Links, SEO, etc.)
+- **duplicate**: Duplicate an existing record
+
+### Update Actions
+- **update**: Update an existing record with partial updates and optimistic locking
+
+### Delete Actions
+- **destroy**: Delete a specific record
+- **bulk_destroy**: Delete multiple records in a single operation
+
+### Publication Actions
+- **publish**: Publish a record
+- **bulk_publish**: Publish multiple records in a single operation
+- **unpublish**: Unpublish a record
+- **bulk_unpublish**: Unpublish multiple records in a single operation
+
+### Publication Scheduling Actions
+- **schedule_publication**: Schedule a record to be published at a specific time
+- **cancel_scheduled_publication**: Cancel a scheduled publication
+- **schedule_unpublication**: Schedule a record to be unpublished at a specific time
+- **cancel_scheduled_unpublication**: Cancel a scheduled unpublication
+
+### Version Actions
+- **versions_list**: List all versions of a record
+- **version_get**: Get a specific version of a record
+- **version_restore**: Restore a record to a previous version
 
 ## WebhookAndBuildTriggerCallsAndDeploys Router Actions
 
@@ -137,6 +175,66 @@ The `WebhookAndBuildTriggerCallsAndDeploysRouterTool` provides comprehensive man
      "args": {
        "apiToken": "your-api-token",
        "textSearch": "content management"
+     }
+   }
+   ```
+
+### Example: Creating a Record
+
+1. **Get Parameters for Record Creation**:
+   ```json
+   {
+     "resource": "records",
+     "action": "create"
+   }
+   ```
+
+2. **Create a New Record**:
+   ```json
+   {
+     "action": "create",
+     "args": {
+       "apiToken": "your-api-token",
+       "itemType": "12345",
+       "data": {
+         "title": "My New Article",
+         "content": "This is the article content",
+         "category": {
+           "type": "item",
+           "id": "category-id"
+         },
+         "image": {
+           "upload_id": "upload-id",
+           "alt": "Featured image",
+           "title": "Featured image title"
+         }
+       }
+     }
+   }
+   ```
+
+### Example: Updating a Record
+
+1. **Get Parameters for Record Update**:
+   ```json
+   {
+     "resource": "records",
+     "action": "update"
+   }
+   ```
+
+2. **Update an Existing Record**:
+   ```json
+   {
+     "action": "update",
+     "args": {
+       "apiToken": "your-api-token",
+       "itemId": "record-id",
+       "data": {
+         "title": "Updated Article Title",
+         "is_featured": true
+       },
+       "version": "current-version-id"
      }
    }
    ```
