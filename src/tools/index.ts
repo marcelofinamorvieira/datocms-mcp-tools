@@ -10,3 +10,10 @@ export { registerPermissionsRouter } from "./CollaboratorsRolesAndAPITokens/inde
 export { registerCollaboratorRouter, registerRolesRouter } from "./CollaboratorsRolesAndAPITokens/index.js";
 export { registerSchemaRouter } from "./Schema/index.js";
 export { registerDeliveryManagementRouter } from "./WebhookAndBuildTriggerCallsAndDeploys/index.js";
+export { 
+  registerMenuItemRouter, 
+  registerSchemaMenuItemRouter, 
+  registerUploadsFilterRouter, 
+  registerModelFilterRouter,
+  registerPluginsRouter 
+} from "./UI/index.js";

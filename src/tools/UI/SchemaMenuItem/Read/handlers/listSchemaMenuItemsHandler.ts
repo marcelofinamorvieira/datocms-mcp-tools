@@ -1,0 +1,46 @@
+/**
+ * @file listSchemaMenuItemsHandler.ts
+ * @description Handler for listing DatoCMS schema menu items
+ */
+
+import type { z } from "zod";
+import { buildClient } from "@datocms/cma-client-node";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import type { schemaMenuItemSchemas } from "../../schemas.js";
+
+/**
+ * Handler function for listing DatoCMS schema menu items
+ */
+export const listSchemaMenuItemsHandler = async (args: z.infer<typeof schemaMenuItemSchemas.list>) => {
+  const { apiToken, page = { limit: 100, offset: 0 }, environment } = args;
+  
+  try {
+    // Initialize DatoCMS client
+    const clientParameters = environment ? { apiToken, environment } : { apiToken };
+    const client = buildClient(clientParameters);
+    
+    try {
+      // Get the list of schema menu items
+      const schemaMenuItems = await client.schemaMenuItems.list({
+        page: {
+          limit: page?.limit ?? 100,
+          offset: page?.offset ?? 0
+        }
+      });
+      
+      // Return the list of schema menu items
+      return createResponse(JSON.stringify(schemaMenuItems, null, 2));
+      
+    } catch (apiError: unknown) {
+      if (isAuthorizationError(apiError)) {
+        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      }
+      
+      // Re-throw other API errors to be caught by the outer catch
+      throw apiError;
+    }
+  } catch (error: unknown) {
+    return createErrorResponse(`Error listing DatoCMS schema menu items: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};

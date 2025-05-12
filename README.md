@@ -12,6 +12,7 @@ This project provides a Model Context Protocol (MCP) server that enables Claude 
 - **Schema Management**: Manage item types (models), fieldsets, and related schema components
 - **Upload Management**: Manage media assets, collections, and tags
 - **Project Configuration**: Retrieve and update project settings
+- **UI Customization**: Manage menu items, schema menu items, model filters, uploads filters, and plugins
 
 ## Architecture
 
@@ -45,6 +46,11 @@ All operations are coordinated through these main router tools:
 | `UploadsRouterTool` | Manages media assets | Query uploads, manage upload collections |
 | `SchemaRouterTool` | Manages schema components | Create/read/update/delete item types and fieldsets |
 | `WebhookAndBuildTriggerCallsAndDeploysRouterTool` | Manages webhooks, build triggers, deploy events, and webhook calls | Create/update/delete webhooks, list webhook calls, manage build triggers, view deploy events |
+| `MenuItemRouterTool` | Manages menu items in the UI | Create/read/update/delete menu items |
+| `SchemaMenuItemRouterTool` | Manages schema menu items | Create/read/update/delete schema menu items |
+| `ModelFilterRouterTool` | Manages model filters | Create/read/update/delete model filters |
+| `UploadsFilterRouterTool` | Manages upload filters | Create/read/update/delete upload filters | 
+| `PluginsRouterTool` | Manages plugins | Create/read/update/delete plugins, retrieve plugin fields |
 
 ### Parameter Description System
 
@@ -89,6 +95,30 @@ The `WebhookAndBuildTriggerCallsAndDeploysRouterTool` provides comprehensive man
 ### Deploy Event Actions
 - **list**: List deploy events for a specific build trigger
 - **retrieve**: Get detailed information about a deploy event
+
+## UI Tools Actions
+
+### Plugins Router Actions
+- **list**: List all plugins
+- **retrieve**: Get a specific plugin
+- **create**: Create a new plugin
+- **update**: Update an existing plugin
+- **delete**: Delete a plugin
+- **fields**: Retrieve fields using the plugin
+
+### Model Filter Router Actions
+- **list**: List all model filters
+- **retrieve**: Get a specific model filter
+- **create**: Create a new model filter
+- **update**: Update an existing model filter
+- **delete**: Delete a model filter
+
+### Menu Item Router Actions
+- **list**: List all menu items
+- **retrieve**: Get a specific menu item
+- **create**: Create a new menu item
+- **update**: Update an existing menu item
+- **delete**: Delete a menu item
 
 ## Usage Flow
 

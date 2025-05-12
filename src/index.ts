@@ -20,7 +20,12 @@ import {
   registerEnvironmentRouter,
   registerPermissionsRouter,
   registerSchemaRouter,
-  registerDeliveryManagementRouter
+  registerDeliveryManagementRouter,
+  registerMenuItemRouter,
+  registerSchemaMenuItemRouter,
+  registerUploadsFilterRouter,
+  registerModelFilterRouter,
+  registerPluginsRouter
 } from "./tools/index.js";
 
 // Import Upload Collection tools directly from their location
@@ -51,6 +56,11 @@ const createServer = (): McpServer => {
   registerPermissionsRouter(server);      // Permissions: Collaborators and Roles
   registerSchemaRouter(server);           // Schema operations (item types, fieldsets, etc.)
   registerDeliveryManagementRouter(server); // Webhooks and delivery management
+  registerMenuItemRouter(server);         // UI Menu Item operations
+  registerSchemaMenuItemRouter(server);   // UI Schema Menu Item operations
+  registerUploadsFilterRouter(server);    // UI Uploads Filter operations
+  registerModelFilterRouter(server);      // UI Model Filter operations
+  registerPluginsRouter(server);          // UI Plugins operations
 
   return server;
 };
