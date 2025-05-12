@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This project is a Model Context Protocol (MCP) server that enables Claude AI models to interact with DatoCMS. It provides tools for querying DatoCMS records, managing content publication, generating editor URLs, and other content management operations through a standardized interface.
+This project is a Model Context Protocol (MCP) server that enables Claude AI models to interact with DatoCMS. It provides tools for querying and managing DatoCMS content, collaborators, environments, projects, records, roles, API tokens, schema (item types, fieldsets, etc.), and uploads through a standardized interface.
 
 ## Commands
 
@@ -21,11 +21,13 @@ The codebase follows a modular architecture organized by domain:
 
 - `src/index.ts` - Entry point that initializes the MCP server
 - `src/tools/` - Contains all MCP tools organized by domain
-  - `Records/` - Tools for record CRUD operations
-  - `Model/` - Tools for model operations
+  - `Records/` - Tools for record CRUD operations, publication, and versioning
+  - `Schema/` - Tools for schema operations (item types, fieldsets, fields)
   - `Project/` - Project configuration tools
   - `Uploads/` - Media asset management tools
   - `Environments/` - Environment management tools
+  - `CollaboratorsRolesAndAPITokens/` - Collaborator, role, and API token management
+  - `WebhookAndBuildTriggerCallsAndDeploys/` - Webhook and delivery management
 
 ## Architecture
 
@@ -36,6 +38,10 @@ The codebase follows a modular architecture organized by domain:
    - `RecordsRouterTool` - Handles record operations
    - `ProjectRouterTool` - Manages project settings
    - `UploadsRouterTool` - Controls media assets
+   - `EnvironmentRouterTool` - Manages environments
+   - `SchemaRouterTool` - Handles schema operations
+   - `CollaboratorsRolesAndAPITokensRouterTool` - Manages users, roles, and API tokens
+   - `WebhookAndBuildTriggerCallsAndDeploysRouterTool` - Manages webhooks and build triggers
 
 ### Key Design Patterns
 
@@ -47,6 +53,10 @@ The codebase follows a modular architecture organized by domain:
 
 3. **Schema Validation** - Uses Zod for input validation
    - Schemas defined in domain-specific schema files (e.g., `schemas.ts`)
+
+4. **Two-Step Execution Flow**:
+   - First call the `datocms_parameters` tool to get information about required parameters
+   - Then use the `datocms_execute` tool with the proper parameters
 
 ### Communication Flow
 
