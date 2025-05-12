@@ -305,16 +305,187 @@ npm run start
 yarn start
 ```
 
-## Connecting to Claude
+## Detailed Guide: Using with Claude Desktop
 
-To connect this MCP server to Claude:
+### Setting Up the DatoCMS MCP Server Locally
 
-1. Open your Anthropic Claude client
-2. Navigate to Settings > Model Context Protocol
-3. Add a new connection with the following details:
-   - **Connection Name**: DatoCMS Tools (or any name you prefer)
-   - **Connection Type**: Local Process
-   - **Command**: Path to the start-server.sh script or `npm run start`
+1. **Clone and Install Dependencies**
+
+   ```bash
+   git clone https://github.com/marcelofinamorvieira/datocms-mcp-tools.git
+   cd datocms-mcp-tools
+   npm install
+   ```
+
+2. **Build the TypeScript Project**
+
+   ```bash
+   npm run build
+   ```
+
+3. **Obtain a DatoCMS API Token**
+
+   - Log in to your DatoCMS account
+   - Go to Settings > API tokens
+   - Create a new full-access API token or use an existing one
+   - Copy the token for later use
+
+4. **Start the MCP Server**
+
+   You can start the server using one of these methods:
+
+   ```bash
+   # Using the shell script
+   ./start-server.sh
+
+   # Using npm
+   npm run start
+
+   # For development with auto-restart on code changes
+   npm run dev
+   ```
+
+   The server will start and listen for connections from Claude. By default, it uses a Unix socket for communication, but you can also use HTTP transport with `npm run start:http`.
+
+### Configuring Claude Desktop
+
+1. **Install Claude Desktop**
+
+   - Download Claude Desktop from the [Anthropic website](https://www.anthropic.com/claude)
+   - Install and launch the application
+
+2. **Add the DatoCMS MCP Connection**
+
+   - Open Claude Desktop
+   - Click on the settings icon (⚙️) in the bottom left corner
+   - Select "Claude Tools" from the menu
+   - Click "Add Tool"
+   - Fill in the following details:
+     - **Name**: DatoCMS Tools (or any descriptive name)
+     - **Command**: Provide the full path to your start-server.sh script or use npm:
+       ```
+       /path/to/your/datocms-mcp-server/start-server.sh
+       ```
+       OR
+       ```
+       cd /path/to/your/datocms-mcp-server && npm run start
+       ```
+   - Click "Save"
+
+3. **Verify the Connection**
+
+   - Start a new conversation in Claude Desktop
+   - Type a message like: "Can you help me manage my DatoCMS content?"
+   - Claude should respond that it has access to DatoCMS tools
+   - If Claude doesn't recognize the tools, check the console output from your MCP server for any errors
+
+### Using the DatoCMS MCP Tools
+
+1. **Two-Step Execution Flow**
+
+   Always use the two-step pattern with DatoCMS tools:
+
+   - First, ask Claude to get information about the required parameters
+   - Then, provide those parameters to execute the action
+
+2. **Example: Querying Records**
+
+   ```
+   User: I want to query records in my DatoCMS project. What parameters do I need?
+
+   Claude: Let me check what parameters are needed for querying records.
+   [Claude uses datocms_parameters tool]
+
+   To query records, you'll need these parameters:
+   - apiToken (required): Your DatoCMS API token
+   - skip (optional): Number of records to skip
+   - first (optional): Maximum number of records to return
+   - ...other parameters
+
+   User: Great, please query my blog posts using this API token: [your-api-token]
+
+   Claude: [Claude executes the query and returns the results]
+   ```
+
+3. **Common Operations**
+
+   - **List Item Types**: Ask Claude to list all available item types in your project
+   - **Query Records**: Request records with filtering and sorting options
+   - **Create/Update Records**: Create or modify content with Claude's assistance
+   - **Manage Collaborators**: Add, remove, or update user permissions
+   - **Work with Environments**: Fork, promote, or manage environments
+
+4. **Troubleshooting**
+
+   If you encounter issues:
+
+   - Check the MCP server console output for error messages
+   - Verify your API token has the necessary permissions
+   - Ensure the MCP server is running when you start a Claude conversation
+   - Try restarting both the MCP server and Claude Desktop
+
+### Advanced Configuration
+
+1. **Using Environment Variables**
+
+   You can configure the server using environment variables:
+
+   ```bash
+   # Set the transport type (unix or http)
+   export MCP_TRANSPORT=http
+
+   # Set the HTTP port (if using HTTP transport)
+   export MCP_HTTP_PORT=3000
+
+   # Start the server
+   npm run start
+   ```
+
+2. **Setting Up as a Background Service**
+
+   For convenience, you can set up the MCP server as a background service:
+
+   **macOS (using launchd):**
+
+   Create a file named `com.datocms.mcp-server.plist` in `~/Library/LaunchAgents/`:
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+       <key>Label</key>
+       <string>com.datocms.mcp-server</string>
+       <key>ProgramArguments</key>
+       <array>
+           <string>/bin/bash</string>
+           <string>/path/to/your/datocms-mcp-server/start-server.sh</string>
+       </array>
+       <key>RunAtLoad</key>
+       <true/>
+       <key>KeepAlive</key>
+       <true/>
+       <key>StandardOutPath</key>
+       <string>/tmp/datocms-mcp-server.log</string>
+       <key>StandardErrorPath</key>
+       <string>/tmp/datocms-mcp-server.error.log</string>
+   </dict>
+   </plist>
+   ```
+
+   Load the service:
+
+   ```bash
+   launchctl load ~/Library/LaunchAgents/com.datocms.mcp-server.plist
+   ```
+
+3. **Using with Claude Web**
+
+   While primarily designed for Claude Desktop, you can also use this server with Claude web by:
+
+   - Running the server with HTTP transport: `npm run start:http`
+   - Using a tunneling service like ngrok to expose your local server to the internet
+   - Configuring the Claude web MCP settings to connect to your tunneled URL
 
 ## License
 
