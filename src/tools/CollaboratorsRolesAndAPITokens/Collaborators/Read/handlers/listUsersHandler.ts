@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { collaboratorSchemas } from "../../../schemas.js";
 
 type Params = z.infer<typeof collaboratorSchemas.user_list>;
@@ -42,6 +42,6 @@ export const listUsersHandler = async (params: Params) => {
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error listing DatoCMS site users: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error listing DatoCMS site users: ${extractDetailedErrorInfo(error)}`);
   }
 };

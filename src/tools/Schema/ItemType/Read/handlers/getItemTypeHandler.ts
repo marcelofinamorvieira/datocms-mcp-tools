@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { schemaSchemas } from "../../../schemas.js";
 
 /**
@@ -41,6 +41,6 @@ export const getItemTypeHandler = async (args: z.infer<typeof schemaSchemas.get_
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error retrieving DatoCMS Item Type: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error retrieving DatoCMS Item Type: ${extractDetailedErrorInfo(error)}`);
   }
 };

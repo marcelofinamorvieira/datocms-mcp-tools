@@ -11,7 +11,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import fetch from "node-fetch";
 
 // Import all tool registration functions
-// Records tools are now consolidated into a router tool
+// Several tools are consolidated into router tools
 import { registerRecordsRouter } from "./tools/Records/RecordsRouterTool.js";
 import { registerGetParametersTool } from "./tools/DocumentationTool.js";
 import {
@@ -21,11 +21,7 @@ import {
   registerPermissionsRouter,
   registerSchemaRouter,
   registerDeliveryManagementRouter,
-  registerMenuItemRouter,
-  registerSchemaMenuItemRouter,
-  registerUploadsFilterRouter,
-  registerModelFilterRouter,
-  registerPluginsRouter
+  registerUIRouter
 } from "./tools/index.js";
 
 // Import Upload Collection tools directly from their location
@@ -56,11 +52,7 @@ const createServer = (): McpServer => {
   registerPermissionsRouter(server);      // Permissions: Collaborators and Roles
   registerSchemaRouter(server);           // Schema operations (item types, fieldsets, etc.)
   registerDeliveryManagementRouter(server); // Webhooks and delivery management
-  registerMenuItemRouter(server);         // UI Menu Item operations
-  registerSchemaMenuItemRouter(server);   // UI Schema Menu Item operations
-  registerUploadsFilterRouter(server);    // UI Uploads Filter operations
-  registerModelFilterRouter(server);      // UI Model Filter operations
-  registerPluginsRouter(server);          // UI Plugins operations
+  registerUIRouter(server);               // Unified UI tools (menu items, schema menu items, etc.)
 
   return server;
 };

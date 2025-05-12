@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { pluginSchemas } from "../../schemas.js";
 
 /**
@@ -56,6 +56,6 @@ export const retrievePluginHandler = async (args: z.infer<typeof pluginSchemas.r
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error retrieving DatoCMS plugin: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error retrieving DatoCMS plugin: ${extractDetailedErrorInfo(error)}`);
   }
 };

@@ -7,7 +7,7 @@ import mime from "mime-types";
 import {
   isAuthorizationError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 

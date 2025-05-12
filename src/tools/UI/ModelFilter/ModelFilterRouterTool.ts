@@ -6,7 +6,7 @@ import { listModelFiltersHandler } from "./Read/handlers/index.js";
 import { retrieveModelFilterHandler } from "./Read/handlers/index.js";
 import { updateModelFilterHandler } from "./Update/handlers/index.js";
 import { deleteModelFilterHandler } from "./Delete/handlers/index.js";
-import { createErrorResponse } from "../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import { ZodError } from "zod";
 
@@ -61,7 +61,7 @@ export const registerModelFilterRouter = (server: McpServer) => {
             );
         }
       } catch (error) {
-        return createErrorResponse(`Error in ModelFilter Router: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error in ModelFilter Router: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );

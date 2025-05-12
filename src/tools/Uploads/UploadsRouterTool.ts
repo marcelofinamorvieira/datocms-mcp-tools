@@ -4,7 +4,7 @@ import {
   uploadsSchemas,
   uploadsActionsList
 } from "./schemas.js";
-import { createErrorResponse } from "../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 import { createResponse } from "../../utils/responseHandlers.js";
 
 // Handler imports

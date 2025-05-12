@@ -6,7 +6,7 @@
 
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -50,7 +50,7 @@ export const schedulePublicationHandler = async (args: z.infer<typeof recordsSch
     return {
       content: [{
         type: "text" as const,
-        text: `Error creating scheduled publication: ${error instanceof Error ? error.message : String(error)}`
+        text: `Error creating scheduled publication: ${extractDetailedErrorInfo(error)}`
       }]
     };
   }

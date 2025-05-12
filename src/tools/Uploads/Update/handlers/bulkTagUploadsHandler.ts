@@ -4,7 +4,7 @@ import {
   isAuthorizationError,
   isNotFoundError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 
@@ -33,7 +33,7 @@ export const bulkTagUploadsHandler = async (
     }
     return createErrorResponse(
       `Bulk tag error: ${
-        apiError instanceof Error ? apiError.message : String(apiError)
+        extractDetailedErrorInfo(apiError)
       }`
     );
   }

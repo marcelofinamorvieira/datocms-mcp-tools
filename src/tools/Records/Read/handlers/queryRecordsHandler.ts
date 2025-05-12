@@ -7,7 +7,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import type { recordsSchemas } from "../../schemas.js";
 
@@ -155,9 +155,9 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
       }
       
       // Generic API error handling
-      return createErrorResponse(`Error querying DatoCMS records: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+      return createErrorResponse(`Error querying DatoCMS records: ${extractDetailedErrorInfo(apiError)}`);
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error querying DatoCMS records: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error querying DatoCMS records: ${extractDetailedErrorInfo(error)}`);
   }
 };

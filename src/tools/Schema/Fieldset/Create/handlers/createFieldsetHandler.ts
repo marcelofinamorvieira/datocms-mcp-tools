@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { schemaSchemas } from "../../../schemas.js";
 
 /**
@@ -54,6 +54,6 @@ export const createFieldsetHandler = async (args: z.infer<typeof schemaSchemas.c
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error creating DatoCMS fieldset: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error creating DatoCMS fieldset: ${extractDetailedErrorInfo(error)}`);
   }
 };

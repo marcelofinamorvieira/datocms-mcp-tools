@@ -6,7 +6,7 @@
 
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
@@ -40,12 +40,12 @@ export const getRecordVersionHandler = async (args: z.infer<typeof recordsSchema
       }
       
       return createErrorResponse(
-        `Error retrieving record version: ${error instanceof Error ? error.message : String(error)}`
+        `Error retrieving record version: ${extractDetailedErrorInfo(error)}`
       );
     }
   } catch (error: unknown) {
     return createErrorResponse(
-      `Error initializing DatoCMS client: ${error instanceof Error ? error.message : String(error)}`
+      `Error initializing DatoCMS client: ${extractDetailedErrorInfo(error)}`
     );
   }
 };

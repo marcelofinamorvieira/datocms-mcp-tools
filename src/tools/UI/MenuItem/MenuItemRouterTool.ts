@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -58,7 +58,7 @@ export const registerMenuItemRouter = (server: McpServer) => {
         );
         
         if (shouldSuggestParams) {
-          return createErrorResponse(`  PARAMETERS REQUIRED: You need to specify the parameters for the '${action}' action.  
+          return createErrorResponse(`ï¿½ PARAMETERS REQUIRED: You need to specify the parameters for the '${action}' action. ï¿½
 
 To get the required parameters, use the datocms_parameters tool first with:
 {
@@ -106,7 +106,7 @@ This will show you all the required parameters and their types.`);
             // Format the validation error in a helpful way
             const errorFormatted = formatZodError(error);
             
-            return createErrorResponse(`  VALIDATION ERROR: Your parameters for '${action}' are incorrect or incomplete!  
+            return createErrorResponse(`ï¿½ VALIDATION ERROR: Your parameters for '${action}' are incorrect or incomplete! ï¿½
 
 ${errorFormatted}
 
@@ -115,10 +115,10 @@ ${JSON.stringify(schemaInfo, null, 2)}
 
 To see proper documentation, use the 'datocms_parameters' tool first with:\n\n  action: "datocms_parameters",\n  args: {\n    resource: "ui_menu_item",\n    action: "${action}"\n  }`);
           }
-          return createErrorResponse(`Error validating arguments: ${error instanceof Error ? error.message : String(error)}`);
+          return createErrorResponse(`Error validating arguments: ${extractDetailedErrorInfo(error)}`);
         }
       } catch (error: unknown) {
-        return createErrorResponse(`Error in Menu Item Router: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error in Menu Item Router: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );

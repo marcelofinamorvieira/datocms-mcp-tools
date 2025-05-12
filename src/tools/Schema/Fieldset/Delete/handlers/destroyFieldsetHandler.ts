@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { schemaSchemas } from "../../../schemas.js";
 
 /**
@@ -49,6 +49,6 @@ export const destroyFieldsetHandler = async (args: z.infer<typeof schemaSchemas.
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error deleting DatoCMS fieldset: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error deleting DatoCMS fieldset: ${extractDetailedErrorInfo(error)}`);
   }
 };

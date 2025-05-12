@@ -2,7 +2,7 @@ import { buildClient } from "@datocms/cma-client-node";
 import { z } from "zod";
 import { roleSchemas } from "../../../schemas.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 
 type Params = z.infer<typeof roleSchemas.create_role>;
 
@@ -59,6 +59,6 @@ export const createRoleHandler = async (params: Params) => {
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error creating DatoCMS role: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error creating DatoCMS role: ${extractDetailedErrorInfo(error)}`);
   }
 };

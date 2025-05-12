@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { deployEventSchemas } from "../../../schemas.js";
 import { z } from "zod";
@@ -63,7 +63,7 @@ export async function retrieveDeployEventHandler(
 
     // Handle other errors
     return createErrorResponse(
-      `Failed to retrieve deploy event: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to retrieve deploy event: ${extractDetailedErrorInfo(error)}`
     );
   }
 }

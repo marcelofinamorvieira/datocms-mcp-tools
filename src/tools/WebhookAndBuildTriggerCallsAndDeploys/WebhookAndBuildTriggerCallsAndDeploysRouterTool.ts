@@ -35,7 +35,7 @@ import { triggerBuildHandler } from "./BuildTriggers/Trigger/handlers/index.js";
 import { listDeployEventsHandler } from "./DeployEvents/List/handlers/index.js";
 import { retrieveDeployEventHandler } from "./DeployEvents/Retrieve/handlers/index.js";
 
-import { createErrorResponse } from "../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Types for the action parameters
 type WebhookAction = keyof typeof webhookSchemas;
@@ -224,7 +224,7 @@ export const registerDeliveryManagementRouter = (server: McpServer) => {
       } catch (error) {
         // Handle other errors
         return createErrorResponse(
-          `Error in Delivery Management Router: ${error instanceof Error ? error.message : String(error)}`
+          `Error in Delivery Management Router: ${extractDetailedErrorInfo(error)}`
         );
       }
     }

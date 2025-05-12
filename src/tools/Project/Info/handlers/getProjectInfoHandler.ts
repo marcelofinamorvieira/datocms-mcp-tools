@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { projectSchemas } from "../../schemas.js";
 
 /**
@@ -41,6 +41,6 @@ export const getProjectInfoHandler = async (args: z.infer<typeof projectSchemas.
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error retrieving DatoCMS site information: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error retrieving DatoCMS site information: ${extractDetailedErrorInfo(error)}`);
   }
 };

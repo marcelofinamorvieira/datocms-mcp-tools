@@ -5,7 +5,7 @@
 
 import type { z } from "zod";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -49,7 +49,7 @@ export const buildRecordEditorUrlFromTypeHandler = async (args: z.infer<typeof r
     return {
       content: [{
         type: "text" as const,
-        text: `Error building DatoCMS URL: ${error instanceof Error ? error.message : String(error)}`
+        text: `Error building DatoCMS URL: ${extractDetailedErrorInfo(error)}`
       }]
     };
   }

@@ -3,7 +3,7 @@ import { buildClient } from "@datocms/cma-client-node";
 import {
   isAuthorizationError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 

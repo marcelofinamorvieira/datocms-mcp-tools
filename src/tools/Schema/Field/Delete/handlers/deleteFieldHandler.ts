@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
 import { schemaSchemas } from "../../../schemas.js";
@@ -47,6 +47,6 @@ export const deleteFieldHandler = async (args: DeleteFieldParams) => {
       return createErrorResponse(`Field with ID '${args.fieldId}' not found.`);
     }
 
-    return createErrorResponse(`Error deleting field: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error deleting field: ${extractDetailedErrorInfo(error)}`);
   }
 };

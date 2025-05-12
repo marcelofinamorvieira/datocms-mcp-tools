@@ -6,7 +6,7 @@
 
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
@@ -45,7 +45,7 @@ export const cancelScheduledUnpublicationHandler = async (args: z.infer<typeof r
     return {
       content: [{
         type: "text" as const,
-        text: `Error cancelling scheduled unpublication: ${error instanceof Error ? error.message : String(error)}`
+        text: `Error cancelling scheduled unpublication: ${extractDetailedErrorInfo(error)}`
       }]
     };
   }

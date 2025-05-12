@@ -7,7 +7,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import type { recordsSchemas } from "../../schemas.js";
 
@@ -57,6 +57,6 @@ export const getRecordByIdHandler = async (args: z.infer<typeof recordsSchemas.g
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error retrieving DatoCMS record: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error retrieving DatoCMS record: ${extractDetailedErrorInfo(error)}`);
   }
 };

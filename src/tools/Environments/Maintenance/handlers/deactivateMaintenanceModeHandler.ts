@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
 
 /**
@@ -38,6 +38,6 @@ export const deactivateMaintenanceModeHandler = async (args: z.infer<typeof envi
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error deactivating maintenance mode: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error deactivating maintenance mode: ${extractDetailedErrorInfo(error)}`);
   }
 };

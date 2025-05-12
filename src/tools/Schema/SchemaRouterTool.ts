@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -197,10 +197,10 @@ ${JSON.stringify(schemaInfo, null, 2)}
 
 To see proper documentation, use the 'datocms_parameters' tool first with:\n\n  action: "datocms_parameters",\n  args: {\n    resource: "schema",\n    action: "${action}"\n  }`);
           }
-          return createErrorResponse(`Error validating arguments: ${error instanceof Error ? error.message : String(error)}`);
+          return createErrorResponse(`Error validating arguments: ${extractDetailedErrorInfo(error)}`);
         }
       } catch (error: unknown) {
-        return createErrorResponse(`Error in Schema Router: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error in Schema Router: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );

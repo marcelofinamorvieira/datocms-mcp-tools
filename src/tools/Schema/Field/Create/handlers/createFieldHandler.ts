@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
 import { schemaSchemas } from "../../../schemas.js";
@@ -44,6 +44,6 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       return createErrorResponse(`Item type with ID '${args.itemTypeId}' not found.`);
     }
 
-    return createErrorResponse(`Error creating field: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error creating field: ${extractDetailedErrorInfo(error)}`);
   }
 };

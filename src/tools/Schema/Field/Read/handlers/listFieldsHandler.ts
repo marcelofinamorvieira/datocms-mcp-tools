@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
 import { schemaSchemas } from "../../../schemas.js";
@@ -55,6 +55,6 @@ export const listFieldsHandler = async (args: ListFieldsParams) => {
       return createErrorResponse("Authorization failed. Please check your API token.");
     }
 
-    return createErrorResponse(`Error listing fields: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error listing fields: ${extractDetailedErrorInfo(error)}`);
   }
 };

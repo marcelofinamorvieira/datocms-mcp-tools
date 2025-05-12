@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { menuItemSchemas } from "../../schemas.js";
 
 /**
@@ -45,6 +45,6 @@ export const retrieveMenuItemHandler = async (args: z.infer<typeof menuItemSchem
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error retrieving DatoCMS menu item: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error retrieving DatoCMS menu item: ${extractDetailedErrorInfo(error)}`);
   }
 };

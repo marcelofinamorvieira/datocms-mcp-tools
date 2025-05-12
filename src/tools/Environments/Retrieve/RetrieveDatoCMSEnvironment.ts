@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -54,7 +54,7 @@ export const registerRetrieveDatoCMSEnvironment = (server: McpServer) => {
         return {
           content: [{
             type: "text" as const,
-            text: `Error retrieving environment: ${error instanceof Error ? error.message : String(error)}`
+            text: `Error retrieving environment: ${extractDetailedErrorInfo(error)}`
           }]
         };
       }

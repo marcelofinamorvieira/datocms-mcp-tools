@@ -6,7 +6,7 @@
 
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
@@ -56,6 +56,6 @@ export const bulkUnpublishRecordsHandler = async (args: z.infer<typeof recordsSc
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error bulk unpublishing DatoCMS records: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error bulk unpublishing DatoCMS records: ${extractDetailedErrorInfo(error)}`);
   }
 };

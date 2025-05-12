@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -62,7 +62,7 @@ export const updateRecordHandler = async (args: z.infer<typeof recordsSchemas.up
       }
       
       // Check for version conflict errors
-      const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+      const errorMessage = extractDetailedErrorInfo(apiError);
       if (errorMessage.includes("version") && errorMessage.includes("conflict")) {
         return createErrorResponse(`Error: Version conflict detected. The record has been modified since you retrieved it. Please fetch the latest version and try again.`);
       }
@@ -78,6 +78,6 @@ Please check that your field values match the required format for each field typ
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error updating DatoCMS record: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error updating DatoCMS record: ${extractDetailedErrorInfo(error)}`);
   }
 };

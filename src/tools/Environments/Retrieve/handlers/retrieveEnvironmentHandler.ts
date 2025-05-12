@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
 
 /**
@@ -42,6 +42,6 @@ export const retrieveEnvironmentHandler = async (args: z.infer<typeof environmen
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error retrieving environment: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error retrieving environment: ${extractDetailedErrorInfo(error)}`);
   }
 };

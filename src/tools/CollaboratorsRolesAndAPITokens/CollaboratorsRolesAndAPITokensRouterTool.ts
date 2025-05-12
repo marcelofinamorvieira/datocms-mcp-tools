@@ -9,7 +9,7 @@ import {
   apiTokenSchemas
 } from "./schemas.js";
 import { createResponse } from "../../utils/responseHandlers.js";
-import { createErrorResponse } from "../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Import handlers from subdirectories for collaborators
 import {
@@ -188,10 +188,10 @@ ${JSON.stringify(schemaInfo, null, 2)}
 
 To see proper documentation, use the 'datocms_parameters' tool first with:\n\n  action: "datocms_parameters",\n  args: {\n    resource: "collaborator",\n    action: "${action}"\n  }`);
           }
-          return createErrorResponse(`Error validating arguments: ${error instanceof Error ? error.message : String(error)}`);
+          return createErrorResponse(`Error validating arguments: ${extractDetailedErrorInfo(error)}`);
         }
       } catch (error: unknown) {
-        return createErrorResponse(`Error in Collaborator Router: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error in Collaborator Router: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );
@@ -235,7 +235,7 @@ export const registerRolesRouter = (server: McpServer) => {
             throw new Error(`Unsupported action: ${action}`);
         }
       } catch (error) {
-        return createErrorResponse(`Error performing role operation: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error performing role operation: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );
@@ -279,7 +279,7 @@ export const registerAPITokensRouter = (server: McpServer) => {
             throw new Error(`Unsupported action: ${action}`);
         }
       } catch (error) {
-        return createErrorResponse(`Error performing API token operation: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error performing API token operation: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );

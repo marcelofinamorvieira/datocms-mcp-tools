@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { uploadsFilterSchemas } from "../../schemas.js";
 
 /**
@@ -53,6 +53,6 @@ export const createUploadsFilterHandler = async (args: z.infer<typeof uploadsFil
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error creating DatoCMS uploads filter: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error creating DatoCMS uploads filter: ${extractDetailedErrorInfo(error)}`);
   }
 };

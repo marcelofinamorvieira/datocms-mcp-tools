@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
-import { isAuthorizationError, createErrorResponse } from "../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -49,7 +49,7 @@ export const registerListDatoCMSEnvironments = (server: McpServer) => {
         return {
           content: [{
             type: "text" as const,
-            text: `Error listing environments: ${error instanceof Error ? error.message : String(error)}`
+            text: `Error listing environments: ${extractDetailedErrorInfo(error)}`
           }]
         };
       }

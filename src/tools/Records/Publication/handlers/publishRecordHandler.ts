@@ -7,7 +7,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -64,7 +64,7 @@ export const publishRecordHandler = async (args: z.infer<typeof recordsSchemas.p
     return {
       content: [{
         type: "text" as const,
-        text: `Error publishing DatoCMS record: ${error instanceof Error ? error.message : String(error)}`
+        text: `Error publishing DatoCMS record: ${extractDetailedErrorInfo(error)}`
       }]
     };
   }

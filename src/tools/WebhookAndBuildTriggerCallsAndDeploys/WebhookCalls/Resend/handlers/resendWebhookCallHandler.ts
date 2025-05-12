@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookCallSchemas } from "../../../schemas.js";
 import { z } from "zod";
@@ -67,7 +67,7 @@ export async function resendWebhookCallHandler(
 
     // Handle other errors
     return createErrorResponse(
-      `Failed to resend webhook call: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to resend webhook call: ${extractDetailedErrorInfo(error)}`
     );
   }
 }

@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -61,17 +61,20 @@ export const createRecordHandler = async (args: z.infer<typeof recordsSchemas.cr
       // Format API errors for better understanding
       const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
       
+      // Extract detailed error information and return it
+      const detailedErrorMessage = extractDetailedErrorInfo(apiError);
+
       // Check for common validation errors
-      if (errorMessage.includes("Validation failed")) {
-        return createErrorResponse(`Validation error creating DatoCMS record: ${errorMessage}. 
-        
+      if (detailedErrorMessage.includes("Validation failed") || detailedErrorMessage.includes("422")) {
+        return createErrorResponse(`Validation error creating DatoCMS record: ${detailedErrorMessage}
+
 Please check that your field values match the required format for each field type. Refer to the DatoCMS API documentation for field type requirements: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values`);
       }
-      
+
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error creating DatoCMS record: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error creating DatoCMS record: ${extractDetailedErrorInfo(error)}`);
   }
 };

@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { createErrorResponse, isAuthorizationError, isNotFoundError } from "../../../../utils/errorHandlers.js";
+import { createErrorResponse, isAuthorizationError, isNotFoundError , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -81,6 +81,6 @@ export const listRecordVersionsHandler = async (args: z.infer<typeof recordsSche
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error listing versions: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error listing versions: ${extractDetailedErrorInfo(error)}`);
   }
 };

@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { environmentSchemas, environmentActionsList } from "./schemas.js";
 import { createResponse } from "../../utils/responseHandlers.js";
-import { createErrorResponse } from "../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Import handlers from subdirectories
 import { retrieveEnvironmentHandler } from "./Retrieve/handlers/index.js";
@@ -137,10 +137,10 @@ ${JSON.stringify(schemaInfo, null, 2)}
 
 To see proper documentation, use the 'datocms_parameters' tool first with:\n\n  action: "datocms_parameters",\n  args: {\n    resource: "environment",\n    action: "${action}"\n  }`);
           }
-          return createErrorResponse(`Error validating arguments: ${error instanceof Error ? error.message : String(error)}`);
+          return createErrorResponse(`Error validating arguments: ${extractDetailedErrorInfo(error)}`);
         }
       } catch (error: unknown) {
-        return createErrorResponse(`Error in Environment Router: ${error instanceof Error ? error.message : String(error)}`);
+        return createErrorResponse(`Error in Environment Router: ${extractDetailedErrorInfo(error)}`);
       }
     }
   );

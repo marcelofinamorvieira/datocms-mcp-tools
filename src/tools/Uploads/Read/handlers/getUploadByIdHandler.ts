@@ -5,7 +5,7 @@ import {
   isAuthorizationError,
   isNotFoundError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { uploadsSchemas } from "../../schemas.js";
 
 export const getUploadByIdHandler = async (

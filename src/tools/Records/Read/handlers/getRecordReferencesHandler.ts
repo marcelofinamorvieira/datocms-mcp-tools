@@ -7,7 +7,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import type { recordsSchemas } from "../../schemas.js";
 
@@ -73,7 +73,7 @@ export const getRecordReferencesHandler = async (args: z.infer<typeof recordsSch
     return {
       content: [{
         type: "text" as const,
-        text: `Error retrieving DatoCMS record references: ${error instanceof Error ? error.message : String(error)}`
+        text: `Error retrieving DatoCMS record references: ${extractDetailedErrorInfo(error)}`
       }]
     };
   }

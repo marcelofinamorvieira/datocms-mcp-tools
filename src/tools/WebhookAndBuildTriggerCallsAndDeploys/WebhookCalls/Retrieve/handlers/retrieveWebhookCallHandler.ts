@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookCallSchemas } from "../../../schemas.js";
 import { z } from "zod";
@@ -68,7 +68,7 @@ export async function retrieveWebhookCallHandler(
 
     // Handle other errors
     return createErrorResponse(
-      `Failed to retrieve webhook call log: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to retrieve webhook call log: ${extractDetailedErrorInfo(error)}`
     );
   }
 }

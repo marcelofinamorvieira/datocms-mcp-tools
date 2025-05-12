@@ -4,7 +4,7 @@ import { createResponse } from "../../../../utils/responseHandlers.js";
 import {
   isAuthorizationError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 
 export const queryUploadsHandler = async (
@@ -57,7 +57,7 @@ export const queryUploadsHandler = async (
       );
     }
     return createErrorResponse(
-      `Error querying uploads: ${apiError instanceof Error ? apiError.message : String(apiError)}`
+      `Error querying uploads: ${extractDetailedErrorInfo(apiError)}`
     );
   }
 };

@@ -4,7 +4,7 @@ import {
   isAuthorizationError,
   isNotFoundError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 
@@ -39,7 +39,7 @@ export const bulkSetUploadCollectionHandler = async (
     }
     return createErrorResponse(
       `Bulk set collection error: ${
-        apiError instanceof Error ? apiError.message : String(apiError)
+        extractDetailedErrorInfo(apiError)
       }`
     );
   }

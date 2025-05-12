@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
 import { z } from "zod";
@@ -78,7 +78,7 @@ export async function updateWebhookHandler(
 
     // Handle other errors
     return createErrorResponse(
-      `Failed to update webhook: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to update webhook: ${extractDetailedErrorInfo(error)}`
     );
   }
 }

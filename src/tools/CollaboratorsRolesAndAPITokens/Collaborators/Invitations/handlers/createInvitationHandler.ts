@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { collaboratorSchemas } from "../../../schemas.js";
 
 /**
@@ -45,6 +45,6 @@ export const createInvitationHandler = async (args: z.infer<typeof collaboratorS
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error creating DatoCMS site invitation: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error creating DatoCMS site invitation: ${extractDetailedErrorInfo(error)}`);
   }
 };

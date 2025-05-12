@@ -4,7 +4,7 @@ import {
   isAuthorizationError,
   isNotFoundError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 
@@ -43,7 +43,7 @@ export const destroyUploadHandler = async (
     }
     return createErrorResponse(
       `Error deleting upload: ${
-        apiError instanceof Error ? apiError.message : String(apiError)
+        extractDetailedErrorInfo(apiError)
       }`
     );
   }

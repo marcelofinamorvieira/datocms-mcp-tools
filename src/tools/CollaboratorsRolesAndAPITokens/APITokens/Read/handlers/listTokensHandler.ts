@@ -2,7 +2,7 @@ import { buildClient } from "@datocms/cma-client-node";
 import { z } from "zod";
 import { apiTokenSchemas } from "../../../schemas.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 
 type Params = z.infer<typeof apiTokenSchemas.list_tokens>;
 
@@ -36,6 +36,6 @@ export const listTokensHandler = async (params: Params) => {
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error listing DatoCMS API tokens: ${error instanceof Error ? error.message : String(error)}`);
+    return createErrorResponse(`Error listing DatoCMS API tokens: ${extractDetailedErrorInfo(error)}`);
   }
 };

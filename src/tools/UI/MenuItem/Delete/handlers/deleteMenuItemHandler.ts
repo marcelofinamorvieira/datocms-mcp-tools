@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { menuItemSchemas } from "../../schemas.js";
 
 /**
@@ -44,12 +44,12 @@ export const deleteMenuItemHandler = async (args: z.infer<typeof menuItemSchemas
     }
   } catch (error: unknown) {
     // Check if the error is related to having child menu items
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = extractDetailedErrorInfo(error);
     
     if (errorMessage.includes("has children")) {
       return createErrorResponse(`Error: Cannot delete menu item with ID '${menuItemId}' because it has children. Set 'force' to true to delete it along with all its children.`);
     }
     
-    return createErrorResponse(`Error deleting DatoCMS menu item: ${errorMessage}`);
+    return createErrorResponse(`${extractDetailedErrorInfo(errorMessage)}`);
   }
 };

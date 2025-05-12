@@ -5,7 +5,7 @@ import {
   isAuthorizationError,
   isNotFoundError,
   createErrorResponse
-} from "../../../../utils/errorHandlers.js";
+, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
 
 export const getUploadReferencesHandler = async (
@@ -45,7 +45,7 @@ export const getUploadReferencesHandler = async (
     }
     return createErrorResponse(
       `Error fetching references: ${
-        apiError instanceof Error ? apiError.message : String(apiError)
+        extractDetailedErrorInfo(apiError)
       }`
     );
   }

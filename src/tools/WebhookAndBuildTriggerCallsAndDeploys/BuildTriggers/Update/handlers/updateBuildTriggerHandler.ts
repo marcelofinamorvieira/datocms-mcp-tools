@@ -1,5 +1,5 @@
 import { buildClient } from "@datocms/cma-client-node";
-import { createErrorResponse } from "../../../../../utils/errorHandlers.js";
+import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
 import { z } from "zod";
@@ -83,13 +83,13 @@ export async function updateBuildTriggerHandler(
        (error.message.includes('422') || error.message.toLowerCase().includes('validation')))
     ) {
       return createErrorResponse(
-        `Invalid build trigger data: ${error instanceof Error ? error.message : String(error)}`
+        `Invalid build trigger data: ${extractDetailedErrorInfo(error)}`
       );
     }
 
     // Handle other errors
     return createErrorResponse(
-      `Failed to update build trigger: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to update build trigger: ${extractDetailedErrorInfo(error)}`
     );
   }
 }
