@@ -22,7 +22,7 @@ export const deleteMenuItemHandler = async (args: z.infer<typeof menuItemSchemas
     
     try {
       // Delete the menu item
-      await client.menuItems.destroy(menuItemId, { force });
+      await client.menuItems.destroy(menuItemId);
       
       // Return success message
       return createResponse(JSON.stringify({ 

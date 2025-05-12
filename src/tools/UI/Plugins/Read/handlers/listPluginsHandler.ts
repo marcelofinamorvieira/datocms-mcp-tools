@@ -33,7 +33,7 @@ export const listPluginsHandler = async (args: z.infer<typeof pluginSchemas.list
           };
       
       // Get plugins with pagination
-      const plugins = await client.plugins.list(paginationParams);
+      const plugins = await client.plugins.list();
       
       // Format the response
       return createResponse(JSON.stringify({

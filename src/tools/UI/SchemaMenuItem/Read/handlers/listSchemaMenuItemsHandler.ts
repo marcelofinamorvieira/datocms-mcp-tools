@@ -22,12 +22,7 @@ export const listSchemaMenuItemsHandler = async (args: z.infer<typeof schemaMenu
     
     try {
       // Get the list of schema menu items
-      const schemaMenuItems = await client.schemaMenuItems.list({
-        page: {
-          limit: page?.limit ?? 100,
-          offset: page?.offset ?? 0
-        }
-      });
+      const schemaMenuItems = await client.schemaMenuItems.list();
       
       // Return the list of schema menu items
       return createResponse(JSON.stringify(schemaMenuItems, null, 2));

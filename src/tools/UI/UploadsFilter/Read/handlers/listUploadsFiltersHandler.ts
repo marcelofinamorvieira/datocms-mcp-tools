@@ -22,12 +22,7 @@ export const listUploadsFiltersHandler = async (args: z.infer<typeof uploadsFilt
     
     try {
       // Get the list of uploads filters
-      const uploadsFilters = await client.uploadFilters.list({
-        page: {
-          limit: page?.limit ?? 100,
-          offset: page?.offset ?? 0
-        }
-      });
+      const uploadsFilters = await client.uploadFilters.list();
       
       // Return the list of uploads filters
       return createResponse(JSON.stringify(uploadsFilters, null, 2));

@@ -1,5 +1,6 @@
-import { buildClient } from "../../../../../utils/clientManager.js";
-import { createResponse, createAuthorizationErrorResponse } from "../../../../../utils/responseHandlers.js";
+import { getClient } from "../../../../../utils/clientManager.js";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
 import { modelFilterSchemas } from "../../schemas.js";
 import { z } from "zod";
 
@@ -13,8 +14,8 @@ export const createModelFilterHandler = async (args: CreateModelFilterArgs) => {
   
   try {
     // Initialize the DatoCMS client with auth token and environment
-    const client = buildClient({ apiToken, environment });
-    
+    const client = getClient(apiToken, environment);
+
     // Prepare the payload for creating a model filter
     const payload: Record<string, any> = {
       name,
@@ -29,22 +30,18 @@ export const createModelFilterHandler = async (args: CreateModelFilterArgs) => {
     if (columns) payload.columns = columns;
     if (order_by) payload.order_by = order_by;
     if (shared !== undefined) payload.shared = shared;
-    
+
     // Create the model filter using the DatoCMS client
-    const createdModelFilter = await client.itemTypeFilters.create(payload);
-    
+    const createdModelFilter = await client.itemTypeFilters.create(payload as any);
+
     // Return successful response with the created model filter data
-    return createResponse(
-      "success",
-      `Model filter "${name}" created successfully.`,
-      JSON.stringify(createdModelFilter, null, 2)
-    );
-  } catch (error: any) {
+    return createResponse(createdModelFilter);
+  } catch (error) {
     // Check for authorization errors
-    if (error?.response?.status === 401) {
-      return createAuthorizationErrorResponse("create model filter");
+    if (isAuthorizationError(error)) {
+      return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
     }
-    
+
     // Pass other errors to the router for handling
     throw error;
   }

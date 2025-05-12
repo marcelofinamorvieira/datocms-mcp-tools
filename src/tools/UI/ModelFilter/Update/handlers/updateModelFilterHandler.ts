@@ -1,5 +1,6 @@
-import { buildClient } from "../../../../../utils/clientManager.js";
-import { createResponse, createAuthorizationErrorResponse, createNotFoundErrorResponse } from "../../../../../utils/responseHandlers.js";
+import { getClient } from "../../../../../utils/clientManager.js";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
 import { modelFilterSchemas } from "../../schemas.js";
 import { z } from "zod";
 
@@ -22,38 +23,34 @@ export const updateModelFilterHandler = async (args: UpdateModelFilterArgs) => {
   
   try {
     // Initialize the DatoCMS client with auth token and environment
-    const client = buildClient({ apiToken, environment });
-    
+    const client = getClient(apiToken, environment);
+
     // Prepare the payload for updating the model filter
     const payload: Record<string, any> = {};
-    
+
     // Add optional fields if provided
     if (name !== undefined) payload.name = name;
     if (filter !== undefined) payload.filter = filter;
     if (columns !== undefined) payload.columns = columns;
     if (order_by !== undefined) payload.order_by = order_by;
     if (shared !== undefined) payload.shared = shared;
-    
+
     // Update the model filter using the DatoCMS client
     const updatedModelFilter = await client.itemTypeFilters.update(modelFilterId, payload);
-    
+
     // Return successful response with the updated model filter data
-    return createResponse(
-      "success",
-      `Model filter "${updatedModelFilter.name}" updated successfully.`,
-      JSON.stringify(updatedModelFilter, null, 2)
-    );
-  } catch (error: any) {
+    return createResponse(updatedModelFilter);
+  } catch (error) {
     // Check for authorization errors
-    if (error?.response?.status === 401) {
-      return createAuthorizationErrorResponse("update model filter");
+    if (isAuthorizationError(error)) {
+      return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
     }
-    
+
     // Check for not found errors
-    if (error?.response?.status === 404) {
-      return createNotFoundErrorResponse("Model filter", modelFilterId);
+    if (isNotFoundError(error)) {
+      return createErrorResponse(`Error: Model filter with ID '${modelFilterId}' was not found.`);
     }
-    
+
     // Pass other errors to the router for handling
     throw error;
   }

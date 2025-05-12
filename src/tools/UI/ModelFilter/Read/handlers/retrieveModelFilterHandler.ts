@@ -1,5 +1,6 @@
-import { buildClient } from "../../../../../utils/clientManager.js";
-import { createResponse, createAuthorizationErrorResponse, createNotFoundErrorResponse } from "../../../../../utils/responseHandlers.js";
+import { getClient } from "../../../../../utils/clientManager.js";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
 import { modelFilterSchemas } from "../../schemas.js";
 import { z } from "zod";
 
@@ -13,28 +14,24 @@ export const retrieveModelFilterHandler = async (args: RetrieveModelFilterArgs) 
   
   try {
     // Initialize the DatoCMS client with auth token and environment
-    const client = buildClient({ apiToken, environment });
-    
+    const client = getClient(apiToken, environment);
+
     // Fetch the model filter by ID
     const modelFilter = await client.itemTypeFilters.find(modelFilterId);
-    
+
     // Return successful response with the model filter data
-    return createResponse(
-      "success",
-      `Retrieved model filter "${modelFilter.name}".`,
-      JSON.stringify(modelFilter, null, 2)
-    );
-  } catch (error: any) {
+    return createResponse(modelFilter);
+  } catch (error) {
     // Check for authorization errors
-    if (error?.response?.status === 401) {
-      return createAuthorizationErrorResponse("retrieve model filter");
+    if (isAuthorizationError(error)) {
+      return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
     }
-    
+
     // Check for not found errors
-    if (error?.response?.status === 404) {
-      return createNotFoundErrorResponse("Model filter", modelFilterId);
+    if (isNotFoundError(error)) {
+      return createErrorResponse(`Error: Model filter with ID '${modelFilterId}' was not found.`);
     }
-    
+
     // Pass other errors to the router for handling
     throw error;
   }

@@ -32,10 +32,10 @@ export const updateUploadsFilterHandler = async (args: z.infer<typeof uploadsFil
 
       // Add fields only if they are defined
       if (name !== undefined) filterPayload.name = name;
-      if (payload !== undefined) filterPayload.payload = payload;
-      
+      if (payload !== undefined) filterPayload.filter = payload;
+
       // Update the uploads filter
-      const updatedUploadsFilter = await client.uploadFilters.update(uploadsFilterId, filterPayload);
+      const updatedUploadsFilter = await client.uploadFilters.update(uploadsFilterId, filterPayload as any);
       
       // If no filter returned, return error
       if (!updatedUploadsFilter) {

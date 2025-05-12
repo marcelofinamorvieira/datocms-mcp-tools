@@ -29,11 +29,12 @@ export const createUploadsFilterHandler = async (args: z.infer<typeof uploadsFil
       // Create uploads filter payload
       const filterPayload = {
         name,
-        payload
+        filter: payload,
+        shared: true
       };
-      
+
       // Create the uploads filter
-      const createdUploadsFilter = await client.uploadFilters.create(filterPayload);
+      const createdUploadsFilter = await client.uploadFilters.create(filterPayload as any);
       
       // If no filter returned, return error
       if (!createdUploadsFilter) {

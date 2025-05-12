@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/sdk";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { modelFilterSchemas, modelFilterSchemaKeys } from "./schemas.js";
 import { createModelFilterHandler } from "./Create/handlers/index.js";
@@ -6,12 +6,12 @@ import { listModelFiltersHandler } from "./Read/handlers/index.js";
 import { retrieveModelFilterHandler } from "./Read/handlers/index.js";
 import { updateModelFilterHandler } from "./Update/handlers/index.js";
 import { deleteModelFilterHandler } from "./Delete/handlers/index.js";
-import { formatErrorResponse, formatZodError } from "../../../utils/errorHandlers.js";
+import { createErrorResponse } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import { ZodError } from "zod";
 
 // Create action enum from model filter schema keys
-const actionEnum = z.enum(modelFilterSchemaKeys);
+const actionEnum = z.enum(modelFilterSchemaKeys as [string, ...string[]]);
 type Action = z.infer<typeof actionEnum>;
 
 /**
@@ -25,10 +25,10 @@ export const registerModelFilterRouter = (server: McpServer) => {
       args: z.record(z.any()).optional()
     },
     { title: "DatoCMS Model Filter", description: "Interact with DatoCMS model filters" },
-    async ({ action, args = {} }) => {
+    async ({ action, args = {} }: { action: Action, args?: Record<string, any> }) => {
       try {
         // Get schema for the requested action
-        const schema = modelFilterSchemas[action];
+        const schema = modelFilterSchemas[action as keyof typeof modelFilterSchemas];
 
         // Validate the arguments against the schema
         try {
@@ -36,14 +36,8 @@ export const registerModelFilterRouter = (server: McpServer) => {
         } catch (e) {
           if (e instanceof ZodError) {
             // Handle validation errors with helpful messages
-            return formatZodError(
-              action,
-              schema,
-              e,
-              { 
-                title: `Model Filter ${action}`, 
-                description: `Interact with model filters - ${action} operation`
-              }
+            return createErrorResponse(
+              `Validation error for model filter ${action}: ${e.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ')}`
             );
           }
           throw e;
@@ -52,23 +46,22 @@ export const registerModelFilterRouter = (server: McpServer) => {
         // Route to the appropriate handler based on the action
         switch (action) {
           case "list":
-            return await listModelFiltersHandler(args);
+            return await listModelFiltersHandler(args as z.infer<typeof modelFilterSchemas.list>);
           case "retrieve":
-            return await retrieveModelFilterHandler(args);
+            return await retrieveModelFilterHandler(args as z.infer<typeof modelFilterSchemas.retrieve>);
           case "create":
-            return await createModelFilterHandler(args);
+            return await createModelFilterHandler(args as z.infer<typeof modelFilterSchemas.create>);
           case "update":
-            return await updateModelFilterHandler(args);
+            return await updateModelFilterHandler(args as z.infer<typeof modelFilterSchemas.update>);
           case "delete":
-            return await deleteModelFilterHandler(args);
+            return await deleteModelFilterHandler(args as z.infer<typeof modelFilterSchemas.delete>);
           default:
-            return createResponse(
-              "error",
+            return createErrorResponse(
               `Invalid action: ${action}. Valid actions are: ${modelFilterSchemaKeys.join(", ")}`
             );
         }
       } catch (error) {
-        return formatErrorResponse(error);
+        return createErrorResponse(`Error in ModelFilter Router: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   );
@@ -77,6 +70,6 @@ export const registerModelFilterRouter = (server: McpServer) => {
 /**
  * Destroy the ModelFilter router (remove it from the server)
  */
-export const destroyModelFilterRouter = (server: McpServer) => {
-  server.removeTool("datocms_ui_model_filter");
+export const destroyModelFilterRouter = (_server: McpServer) => {
+  // Cleanup functionality if needed
 };

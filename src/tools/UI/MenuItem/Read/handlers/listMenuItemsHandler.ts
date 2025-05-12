@@ -22,12 +22,7 @@ export const listMenuItemsHandler = async (args: z.infer<typeof menuItemSchemas.
     
     try {
       // Get the list of menu items
-      const menuItems = await client.menuItems.list({
-        page: {
-          limit: page?.limit ?? 100,
-          offset: page?.offset ?? 0
-        }
-      });
+      const menuItems = await client.menuItems.list();
       
       // Return the list of menu items
       return createResponse(JSON.stringify(menuItems, null, 2));

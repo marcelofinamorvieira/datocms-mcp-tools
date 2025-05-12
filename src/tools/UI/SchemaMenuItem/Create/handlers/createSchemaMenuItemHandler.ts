@@ -82,7 +82,7 @@ export const createSchemaMenuItemHandler = async (args: z.infer<typeof schemaMen
       }
       
       // Create the schema menu item
-      const createdSchemaMenuItem = await client.schemaMenuItems.create(payload);
+      const createdSchemaMenuItem = await client.schemaMenuItems.create(payload as any);
       
       // If no item returned, return error
       if (!createdSchemaMenuItem) {

@@ -1,5 +1,6 @@
-import { buildClient } from "../../../../../utils/clientManager.js";
-import { createResponse, createAuthorizationErrorResponse } from "../../../../../utils/responseHandlers.js";
+import { getClient } from "../../../../../utils/clientManager.js";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { isAuthorizationError, createErrorResponse } from "../../../../../utils/errorHandlers.js";
 import { modelFilterSchemas } from "../../schemas.js";
 import { z } from "zod";
 
@@ -13,23 +14,19 @@ export const listModelFiltersHandler = async (args: ListModelFiltersArgs) => {
   
   try {
     // Initialize the DatoCMS client with auth token and environment
-    const client = buildClient({ apiToken, environment });
-    
+    const client = getClient(apiToken, environment);
+
     // Fetch all model filters
     const modelFilters = await client.itemTypeFilters.list();
-    
+
     // Return successful response with the model filters data
-    return createResponse(
-      "success",
-      `Retrieved ${modelFilters.length} model filters.`,
-      JSON.stringify(modelFilters, null, 2)
-    );
-  } catch (error: any) {
+    return createResponse(modelFilters);
+  } catch (error) {
     // Check for authorization errors
-    if (error?.response?.status === 401) {
-      return createAuthorizationErrorResponse("list model filters");
+    if (isAuthorizationError(error)) {
+      return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
     }
-    
+
     // Pass other errors to the router for handling
     throw error;
   }

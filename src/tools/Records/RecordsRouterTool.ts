@@ -44,6 +44,7 @@ type ActionArgsMap = {
   references: z.infer<typeof recordsSchemas.references>;
   editor_url_from_type: z.infer<typeof recordsSchemas.editor_url_from_type>;
   create: z.infer<typeof recordsSchemas.create>;
+  update: z.infer<typeof recordsSchemas.update>;
   duplicate: z.infer<typeof recordsSchemas.duplicate>;
   destroy: z.infer<typeof recordsSchemas.destroy>;
   bulk_destroy: z.infer<typeof recordsSchemas.bulk_destroy>;

@@ -45,7 +45,7 @@ export const createMenuItemHandler = async (args: z.infer<typeof menuItemSchemas
       if (item_type_filter_id !== undefined) payload.item_type_filter_id = item_type_filter_id;
       
       // Create the menu item
-      const createdMenuItem = await client.menuItems.create(payload);
+      const createdMenuItem = await client.menuItems.create(payload as any);
       
       // If no item returned, return error
       if (!createdMenuItem) {
