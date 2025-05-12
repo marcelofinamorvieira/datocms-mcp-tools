@@ -349,6 +349,10 @@ yarn start
 
 ### Configuring Claude Desktop
 
+You can configure Claude Desktop to work with the DatoCMS MCP server using either the GUI or by directly editing the configuration file.
+
+#### Method 1: Using the GUI (Recommended for Beginners)
+
 1. **Install Claude Desktop**
 
    - Download Claude Desktop from the [Anthropic website](https://www.anthropic.com/claude)
@@ -372,12 +376,101 @@ yarn start
        ```
    - Click "Save"
 
-3. **Verify the Connection**
+#### Method 2: Direct JSON Configuration (Advanced)
 
-   - Start a new conversation in Claude Desktop
-   - Type a message like: "Can you help me manage my DatoCMS content?"
-   - Claude should respond that it has access to DatoCMS tools
-   - If Claude doesn't recognize the tools, check the console output from your MCP server for any errors
+1. **Locate the Claude Desktop Configuration File**
+
+   The configuration file is typically located at:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   - **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+2. **Edit the Configuration File**
+
+   Open the file in a text editor and add the DatoCMS MCP server to the `mcpServers` section:
+
+   ```json
+   {
+     "globalShortcut": "Ctrl+Space",
+     "mcpServers": {
+       "datocms": {
+         "name": "DatoCMS Tools",
+         "command": "/path/to/your/datocms-mcp-server/start-server.sh",
+         "auto_start": true,
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+   **Configuration Options:**
+   - `name`: Display name for the tool
+   - `command`: Full path to the start script or command
+   - `auto_start`: Set to `true` to automatically start the server when Claude Desktop launches
+   - `enabled`: Set to `true` to enable the tool
+
+3. **Multiple Environment Support**
+
+   You can configure multiple DatoCMS environments by adding multiple entries:
+
+   ```json
+   {
+     "globalShortcut": "Ctrl+Space",
+     "mcpServers": {
+       "datocms_production": {
+         "name": "DatoCMS Production",
+         "command": "/path/to/your/datocms-mcp-server/start-server.sh",
+         "env": {
+           "DATOCMS_ENV": "production"
+         },
+         "auto_start": true,
+         "enabled": true
+       },
+       "datocms_staging": {
+         "name": "DatoCMS Staging",
+         "command": "/path/to/your/datocms-mcp-server/start-server.sh",
+         "env": {
+           "DATOCMS_ENV": "staging"
+         },
+         "auto_start": true,
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+4. **Using HTTP Transport**
+
+   If you prefer to use HTTP transport instead of Unix sockets:
+
+   ```json
+   {
+     "globalShortcut": "Ctrl+Space",
+     "mcpServers": {
+       "datocms": {
+         "name": "DatoCMS Tools",
+         "command": "/path/to/your/datocms-mcp-server/start-server.sh",
+         "env": {
+           "MCP_TRANSPORT": "http",
+           "MCP_HTTP_PORT": "3000"
+         },
+         "auto_start": true,
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+5. **Save the File and Restart Claude Desktop**
+
+   After making changes to the configuration file, save it and restart Claude Desktop for the changes to take effect.
+
+### Verifying the Connection
+
+- Start a new conversation in Claude Desktop
+- Type a message like: "Can you help me manage my DatoCMS content?"
+- Claude should respond that it has access to DatoCMS tools
+- If Claude doesn't recognize the tools, check the console output from your MCP server for any errors
 
 ### Using the DatoCMS MCP Tools
 
