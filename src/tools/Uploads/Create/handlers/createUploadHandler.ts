@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import fetch, { Response as FetchResponse } from "node-fetch";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -126,8 +126,7 @@ export const createUploadHandler = async (
   }
 
   // 4) Create upload resource
-  const clientParams = environment ? { apiToken, environment } : { apiToken };
-  const client = buildClient(clientParams);
+  const client = getClient(apiToken, environment);
 
   try {
     const payload: any = {

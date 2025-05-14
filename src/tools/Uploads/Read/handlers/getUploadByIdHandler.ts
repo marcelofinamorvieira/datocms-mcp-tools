@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import {
   isAuthorizationError,
@@ -14,8 +14,7 @@ export const getUploadByIdHandler = async (
   const { apiToken, uploadId, environment } = args;
 
   try {
-    const clientParams = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(apiToken, environment);
 
     try {
       const upload = await client.uploads.find(uploadId);

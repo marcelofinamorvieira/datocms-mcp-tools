@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -16,7 +16,7 @@ export const updateUploadCollectionHandler = async (
     return createErrorResponse("At least one field must be provided for update.");
   }
   try {
-    const client = buildClient(environment ? { apiToken, environment } : { apiToken });
+    const client = getClient(apiToken, environment);
     const updated = await client.uploadCollections.update(uploadCollectionId, data);
     return createResponse(JSON.stringify(updated, null, 2));
   } catch (e) {

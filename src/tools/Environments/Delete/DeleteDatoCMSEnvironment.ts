@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../utils/clientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -33,7 +33,7 @@ export const registerDeleteDatoCMSEnvironment = (server: McpServer) => {
       
       try {
         // Initialize DatoCMS client
-        const client = buildClient({ apiToken });
+        const client = getClient(apiToken, environmentId);
         
         try {
           // Delete the environment

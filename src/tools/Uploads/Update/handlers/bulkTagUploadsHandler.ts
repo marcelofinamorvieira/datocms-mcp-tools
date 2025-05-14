@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -14,8 +14,7 @@ export const bulkTagUploadsHandler = async (
   const { apiToken, uploadIds, tags, environment } = args;
 
   try {
-    const clientParams = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(apiToken, environment);
 
     const uploadsParam: { type: "upload"; id: string }[] =
       uploadIds.map(id => ({ type: "upload", id }));

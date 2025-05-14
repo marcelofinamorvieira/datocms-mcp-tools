@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
@@ -17,7 +17,7 @@ export const forkEnvironmentHandler = async (args: z.infer<typeof environmentSch
   
   try {
     // Initialize DatoCMS client
-    const client = buildClient({ apiToken });
+    const client = getClient(apiToken, environmentId);
     
     try {
       // Fork the environment with immediate_return set to false

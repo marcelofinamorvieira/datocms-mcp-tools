@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../utils/clientManager.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -25,7 +25,7 @@ export const registerListDatoCMSEnvironments = (server: McpServer) => {
     async ({ apiToken }) => {
       try {
         // Initialize DatoCMS client
-        const client = buildClient({ apiToken });
+        const client = getClient(apiToken);
         
         try {
           // List all environments

@@ -1,4 +1,4 @@
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
@@ -20,7 +20,7 @@ export async function deleteWebhookHandler(
     const clientParams = params.environment 
       ? { apiToken: params.apiToken, environment: params.environment } 
       : { apiToken: params.apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(apiToken, environment);
 
     // Delete the webhook
     await client.webhooks.destroy(params.webhookId);

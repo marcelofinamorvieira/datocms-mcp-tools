@@ -1,4 +1,4 @@
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
@@ -14,10 +14,7 @@ export const getFieldHandler = async (args: GetFieldParams) => {
     const { apiToken, fieldId, environment } = args;
 
     // Build the DatoCMS client
-    const client = buildClient({
-      apiToken,
-      environment: environment || undefined,
-    });
+    const client = getClient(apiToken, environment);
 
     // Get the field by ID
     const field = await client.fields.find(fieldId);

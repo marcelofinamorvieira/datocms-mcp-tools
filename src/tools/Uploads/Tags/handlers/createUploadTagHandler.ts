@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import {
   isAuthorizationError,
   createErrorResponse
@@ -12,7 +12,7 @@ export const createUploadTagHandler = async (
 ) => {
   const { apiToken, name, environment } = args;
   try {
-    const client = buildClient(environment ? { apiToken, environment } : { apiToken });
+    const client = getClient(apiToken, environment);
     const tag = await client.uploadTags.create({ name });
     return createResponse(JSON.stringify(tag, null, 2));
   } catch (e) {

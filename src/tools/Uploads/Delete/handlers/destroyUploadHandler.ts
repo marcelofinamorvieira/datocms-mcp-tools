@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -26,8 +26,7 @@ export const destroyUploadHandler = async (
   }
 
   try {
-    const clientParams = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(apiToken, environment);
 
     const deleted = await client.uploads.destroy(uploadId);
     if (returnOnlyConfirmation) {

@@ -1,4 +1,4 @@
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
@@ -14,10 +14,7 @@ export const listFieldsHandler = async (args: ListFieldsParams) => {
     const { apiToken, itemTypeId, page, environment } = args;
 
     // Build the DatoCMS client
-    const client = buildClient({
-      apiToken,
-      environment: environment || undefined,
-    });
+    const client = getClient(apiToken, environment);
 
     // First, check if the item type exists
     try {

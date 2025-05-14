@@ -1,4 +1,4 @@
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
@@ -17,10 +17,7 @@ export async function listWebhooksHandler(
 ) {
   try {
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(params.apiToken, params.environment);
 
     // Fetch all webhooks
     const webhooks = await client.webhooks.list();

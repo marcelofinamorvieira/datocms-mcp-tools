@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import { isAuthorizationError, createErrorResponse } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -26,8 +26,7 @@ export const registerFetchMaintenanceMode = (server: McpServer) => {
     async ({ apiToken, environment }) => {
       try {
         // Initialize DatoCMS client
-        const clientParameters = environment ? { apiToken, environment } : { apiToken };
-        const client = buildClient(clientParameters);
+        const client = getClient(apiToken, environment);
         
         try {
           // Fetch maintenance mode status

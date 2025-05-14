@@ -5,7 +5,7 @@
  */
 
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
@@ -18,8 +18,7 @@ export const scheduleUnpublicationHandler = async (args: z.infer<typeof recordsS
   
   try {
     // Initialize DatoCMS client
-    const clientParameters = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParameters);
+    const client = getClient(apiToken, environment);
     
     try {
       // Create the scheduled unpublication

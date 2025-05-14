@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
@@ -17,7 +17,7 @@ export const activateMaintenanceModeHandler = async (args: z.infer<typeof enviro
   
   try {
     // Initialize DatoCMS client
-    const client = buildClient({ apiToken });
+    const client = getClient(apiToken);
     
     try {
       // Activate maintenance mode

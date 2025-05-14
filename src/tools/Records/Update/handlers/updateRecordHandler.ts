@@ -4,9 +4,9 @@
  */
 
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { getClient } from "../../../../utils/clientManager.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -24,8 +24,7 @@ export const updateRecordHandler = async (args: z.infer<typeof recordsSchemas.up
   
   try {
     // Initialize DatoCMS client
-    const clientParameters = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParameters);
+    const client = getClient(apiToken, environment);
     
     try {
       // Prepare update parameters

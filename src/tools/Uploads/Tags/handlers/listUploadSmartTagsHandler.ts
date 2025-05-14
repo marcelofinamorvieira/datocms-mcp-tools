@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import {
   isAuthorizationError,
   createErrorResponse
@@ -12,7 +12,7 @@ export const listUploadSmartTagsHandler = async (
 ) => {
   const { apiToken, filter, page, environment } = args;
   try {
-    const client = buildClient(environment ? { apiToken, environment } : { apiToken });
+    const client = getClient(apiToken, environment);
     const opts: any = {};
     if (filter) opts.filter = filter;
     if (page) opts.page = page;

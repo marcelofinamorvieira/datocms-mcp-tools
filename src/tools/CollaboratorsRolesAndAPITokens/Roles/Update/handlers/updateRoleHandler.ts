@@ -1,4 +1,4 @@
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { z } from "zod";
 import { roleSchemas } from "../../../schemas.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
@@ -26,8 +26,7 @@ export const updateRoleHandler = async (params: Params) => {
 
   try {
     // Initialize DatoCMS client
-    const clientParams = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(apiToken, environment);
 
     try {
       // Prepare role update payload, filtering out undefined values

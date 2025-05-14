@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { pluginSchemas } from "../../schemas.js";
@@ -17,8 +17,7 @@ export const deletePluginHandler = async (args: z.infer<typeof pluginSchemas.del
   
   try {
     // Initialize DatoCMS client
-    const clientParameters = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParameters);
+    const client = getClient(apiToken, environment);
     
     try {
       // Try to get the plugin first to check if it exists and to get its name

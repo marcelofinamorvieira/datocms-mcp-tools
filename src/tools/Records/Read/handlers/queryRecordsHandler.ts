@@ -5,7 +5,7 @@
  */
 
 import type { z } from "zod";
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
@@ -34,8 +34,7 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
 
   try {
     // Initialize DatoCMS client
-    const clientParameters = environment ? { apiToken, environment } : { apiToken };
-    const client = buildClient(clientParameters);
+    const client = getClient(apiToken, environment);
     
     // Prepare query parameters
     const queryParams: Record<string, unknown> = {

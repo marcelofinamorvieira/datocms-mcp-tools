@@ -1,6 +1,6 @@
-import { buildClient } from "@datocms/cma-client-node";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { z } from "zod";
 import { schemaSchemas } from "../../../schemas.js";
 
@@ -14,10 +14,7 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
     const { apiToken, itemTypeId, environment, field_type, ...restFieldData } = args;
 
     // Build the DatoCMS client
-    const client = buildClient({
-      apiToken,
-      environment: environment || undefined,
-    });
+    const client = getClient(apiToken, environment);
 
     // Use type casting to ensure compatibility with the DatoCMS API
     // This is necessary because our schema and the API's expected schema

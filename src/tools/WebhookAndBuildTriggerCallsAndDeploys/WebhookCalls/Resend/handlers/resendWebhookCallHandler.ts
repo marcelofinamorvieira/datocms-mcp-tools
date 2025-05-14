@@ -1,4 +1,4 @@
-import { buildClient } from "@datocms/cma-client-node";
+import { getClient } from "../../../../../utils/clientManager.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookCallSchemas } from "../../../schemas.js";
@@ -20,7 +20,7 @@ export async function resendWebhookCallHandler(
     const clientParams = params.environment 
       ? { apiToken: params.apiToken, environment: params.environment } 
       : { apiToken: params.apiToken };
-    const client = buildClient(clientParams);
+    const client = getClient(apiToken, environment);
 
     // Use the client's baseURL and apiToken to make a direct API call for resending a webhook
     // Since the specific method might not be available in the client SDK
