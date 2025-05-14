@@ -72,7 +72,7 @@ export const registerRecordsRouter = (server: McpServer) => {
   
   server.tool(
     // Tool name
-    "datocms_execute",
+    "datocms_records",
     // Parameter schema with types using discriminated union based on action
     {
       action: actionEnum,
@@ -80,8 +80,8 @@ export const registerRecordsRouter = (server: McpServer) => {
     },
     // Annotations for the tool
     {
-      title: "DatoCMS Execute Action",
-      description: "Executes a DatoCMS action with the specified parameters. YOU MUST use the 'datocms_parameters' tool FIRST to get the required parameters for each action."
+      title: "DatoCMS Records",
+      description: "Manage DatoCMS records - items (records) that are instances of item types (models)."
     },
     // Handler function for the records router
     async ({ action, args = {} }) => {
