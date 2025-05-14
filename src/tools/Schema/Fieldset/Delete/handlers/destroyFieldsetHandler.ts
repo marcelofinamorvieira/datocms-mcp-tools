@@ -16,17 +16,17 @@ export const destroyFieldsetHandler = async (args: z.infer<typeof schemaSchemas.
   const { apiToken, fieldsetId, confirmation, environment } = args;
   
   // Check for explicit confirmation
-  if (!confirmation) {
+  if (confirmation !== true) {
     return createErrorResponse("Error: You must provide explicit confirmation to delete this fieldset. Set 'confirmation: true' to confirm.");
   }
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = getClient(apiToken as string, environment as string);
     
     try {
       // Delete the fieldset
-      await client.fieldsets.destroy(fieldsetId);
+      await client.fieldsets.destroy(fieldsetId as string);
       
       // Return success response
       return createResponse(JSON.stringify({

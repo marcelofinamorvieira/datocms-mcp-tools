@@ -1,4 +1,23 @@
 import { z } from "zod";
+import {
+  apiTokenSchema,
+  environmentSchema,
+  createIdSchema,
+  createBaseSchema,
+  createRetrieveSchema,
+  createListSchema,
+  destructiveConfirmationSchema
+} from "../../utils/sharedSchemas.js";
+
+/**
+ * Environment ID schema with specific validation rules
+ */
+const environmentIdSchema = z.string()
+  .min(1)
+  .regex(/^[a-z0-9-]+$/, {
+    message: "Environment ID can only contain lowercase letters, numbers and dashes"
+  })
+  .describe("The ID of the environment to interact with. Can only contain lowercase letters, numbers and dashes.");
 
 /**
  * Schemas for all environment-related actions.
@@ -7,58 +26,57 @@ import { z } from "zod";
  */
 export const environmentSchemas = {
   // Environment retrieval operations
-  retrieve: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environmentId: z.string().describe("The ID of the environment to retrieve.")
+  retrieve: createRetrieveSchema("environment").extend({
+    environmentId: environmentIdSchema,
   }),
 
   // Environment listing operations
-  list: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate.")
-  }),
+  list: createListSchema(),
 
   // Environment deletion operations
-  delete: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environmentId: z.string().describe("The ID of the environment to delete."),
-    confirmation: z.string().describe("Type 'confirm' to confirm the deletion of the environment. THIS OPERATION CANNOT BE UNDONE.")
+  delete: createBaseSchema().extend({
+    environmentId: environmentIdSchema,
+    // Enhanced validation using consistent pattern instead of string-based confirmation
+    confirmation: z.union([
+      destructiveConfirmationSchema,
+      // For backward compatibility, also accept 'confirm' string
+      z.literal('confirm').describe("Type 'confirm' to confirm the deletion. This is a destructive action that cannot be undone.")
+    ]),
   }),
 
   // Environment renaming operations
-  rename: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environmentId: z.string().describe("The ID of the environment to rename."),
-    newId: z.string().describe("The new ID for the environment.")
+  rename: createBaseSchema().extend({
+    environmentId: environmentIdSchema,
+    newId: environmentIdSchema.describe("The new ID for the environment."),
   }),
 
   // Environment promotion operations
-  promote: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environmentId: z.string().describe("The ID of the environment to promote to primary status.")
+  promote: createBaseSchema().extend({
+    environmentId: environmentIdSchema,
   }),
 
   // Environment forking operations
-  fork: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environmentId: z.string().describe("The ID of the environment to fork."),
-    newId: z.string().describe("The ID for the new environment."),
-    fast: z.boolean().optional().describe("If true, the fork will be created without copying records (faster but incomplete)."),
-    force: z.boolean().optional().describe("If true, the fork operation will proceed even if there are warnings.")
+  fork: createBaseSchema().extend({
+    environmentId: environmentIdSchema,
+    newId: environmentIdSchema.describe("The ID for the new environment."),
+    fast: z.boolean()
+      .optional()
+      .describe("If true, the fork will be created without copying records (faster but incomplete)."),
+    force: z.boolean()
+      .optional()
+      .describe("If true, the fork operation will proceed even if there are warnings.")
   }),
 
   // Maintenance mode operations
-  maintenance_status: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate.")
+  maintenance_status: createBaseSchema(),
+
+  maintenance_activate: createBaseSchema().extend({
+    force: z.boolean()
+      .optional()
+      .describe("If true, maintenance mode will be activated even if there are active jobs.")
   }),
 
-  maintenance_activate: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    force: z.boolean().optional().describe("If true, maintenance mode will be activated even if there are active jobs.")
-  }),
-
-  maintenance_deactivate: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate.")
-  })
+  maintenance_deactivate: createBaseSchema()
 };
 
 // Create an array of all available environment actions for the enum

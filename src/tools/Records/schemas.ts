@@ -1,4 +1,17 @@
 import { z } from "zod";
+import { 
+  apiTokenSchema,
+  environmentSchema,
+  paginationSchema,
+  createBaseSchema,
+  versionSchema as versionEnumSchema,
+  returnOnlyIdsSchema,
+  returnOnlyConfirmationSchema,
+  destructiveConfirmationSchema,
+  orderBySchema
+} from "../../utils/sharedSchemas.js";
+import { filterCondition, filterConditions } from "./filterCondition.js";
+
 import type { 
   RecordStatus,
   RecordQueryParams,
@@ -7,33 +20,11 @@ import type {
 } from "./types.js";
 
 /**
- * Create a more specific filter condition type
+ * Record ID schema with validation
  */
-const filterCondition = z.union([
-  z.object({ eq: z.union([z.string(), z.number(), z.boolean(), z.null()]) }),
-  z.object({ neq: z.union([z.string(), z.number(), z.boolean(), z.null()]) }),
-  z.object({ matches: z.string() }),
-  z.object({ in: z.array(z.union([z.string(), z.number()])) }),
-  z.object({ nin: z.array(z.union([z.string(), z.number()])) }),
-  z.object({ gt: z.union([z.string(), z.number()]) }),
-  z.object({ gte: z.union([z.string(), z.number()]) }),
-  z.object({ lt: z.union([z.string(), z.number()]) }),
-  z.object({ lte: z.union([z.string(), z.number()]) }),
-  z.object({ exists: z.boolean() })
-]);
-
-/**
- * Version type enum
- */
-const versionEnum = z.enum(["published", "current"]);
-
-/**
- * Pagination schema
- */
-const paginationSchema = z.object({
-  offset: z.number().int().optional().default(0).describe("The (zero-based) offset of the first entity returned in the collection (defaults to 0)."),
-  limit: z.number().int().optional().default(5).describe("The maximum number of entities to return (defaults to 5, maximum is 500).")
-});
+const recordIdSchema = z.string()
+  .min(1)
+  .describe("The ID of the specific DatoCMS record.");
 
 /**
  * Schemas for all record-related actions.
@@ -42,179 +33,203 @@ const paginationSchema = z.object({
  */
 export const recordsSchemas = {
   // Read operations
-  query: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not halucinate."),
-    textSearch: z.string().optional().describe("SIMPLE TEXT SEARCH ONLY. Enter ONLY the raw search term (like 'searchTerm') with NO additional syntax. NOT a GraphQL query. NOT a filter. ONLY the exact word or phrase you want to find across all records. Examples: 'potato', 'dog', 'content management'."),
-    ids: z.string().optional().describe("Comma-separated list of DatoCMS record IDs to fetch (with no spaces), e.g.: 'abc123,def456'. Records can be from different models."),
-    modelId: z.string().optional().describe("Model ID to restrict results to"),
-    modelName: z.string().optional().describe("Model name to restrict results to"),
-    fields: z.record(z.record(z.unknown())).optional().describe("Filter records by field values within a model. Only use this when the user specifically asks to filter by a particular field. Requires modelId or modelName. Object where keys are field API names and values are filter conditions. Example: { name: { in: ['Buddy', 'Rex'] }, breed: { eq: 'mixed' } }. See DatoCMS filtering documentation https://www.datocms.com/docs/content-delivery-api/filtering-records for all available operators: eq, neq, matches, in, nin, gt, gte, lt, lte, exists."),
-    locale: z.string().optional().describe("Optional locale to use when filtering by localized fields. If not specified, environment's main locale will be used."),
-    order_by: z.string().optional().describe("Fields used to order results. Format: <field_name>_(ASC|DESC), where <field_name> can be a model's field API key or meta columns like id, _updated_at, _created_at, etc. You can pass multiple comma-separated rules (e.g., 'name_DESC,_created_at_ASC'). Requires modelId or modelName to be specified."),
-    version: versionEnum.optional().default("current").describe("Whether to retrieve the published version ('published') or the latest draft ('current'). Default is 'current'."),
-    returnAllLocales: z.boolean().optional().default(false).describe("If true, returns all locale versions for each field instead of only the most populated locale. Default is false to save on token usage."),
-    returnOnlyIds: z.boolean().optional().default(false).describe("If true, returns only an array of record IDs instead of complete records. Use this to save on tokens and context window space when only IDs are needed. These IDs can then be used with GetDatoCMSRecordById to get detailed information. Default is false."),
-    page: paginationSchema.optional().describe("Parameters to control offset-based pagination."),
-    nested: z.boolean().optional().default(true).describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  query: createBaseSchema().extend({
+    textSearch: z.string().optional()
+      .describe("SIMPLE TEXT SEARCH ONLY. Enter ONLY the raw search term (like 'searchTerm') with NO additional syntax. NOT a GraphQL query. NOT a filter. ONLY the exact word or phrase you want to find across all records. Examples: 'potato', 'dog', 'content management'."),
+    ids: z.string().optional()
+      .describe("Comma-separated list of DatoCMS record IDs to fetch (with no spaces), e.g.: 'abc123,def456'. Records can be from different models."),
+    modelId: z.string().optional()
+      .describe("Model ID to restrict results to"),
+    modelName: z.string().optional()
+      .describe("Model name to restrict results to"),
+    fields: filterConditions.optional(),
+    locale: z.string().optional()
+      .describe("Optional locale to use when filtering by localized fields. If not specified, environment's main locale will be used."),
+    order_by: orderBySchema.optional(),
+    version: versionEnumSchema,
+    returnAllLocales: z.boolean().optional().default(false)
+      .describe("If true, returns all locale versions for each field instead of only the most populated locale. Default is false to save on token usage."),
+    returnOnlyIds: returnOnlyIdsSchema,
+    page: paginationSchema.optional(),
+    nested: z.boolean().optional().default(true)
+      .describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
   }),
 
-  get: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not halucinate."),
-    itemId: z.string().describe("The ID of the specific DatoCMS record to retrieve."),
-    version: versionEnum.optional().describe("Whether to retrieve the published version ('published') or the latest draft ('current'). Default is 'published'."),
-    returnAllLocales: z.boolean().optional().describe("If true, returns all locale versions for each field instead of only the most populated locale. Default is false to save on token usage."),
-    nested: z.boolean().optional().describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  get: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    version: versionEnumSchema.optional().default("published"),
+    returnAllLocales: z.boolean().optional().default(false)
+      .describe("If true, returns all locale versions for each field instead of only the most populated locale. Default is false to save on token usage."),
+    nested: z.boolean().optional().default(true)
+      .describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
   }),
 
-  references: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to get references for."),
-    version: versionEnum.optional().describe("Whether to retrieve the published version ('published') or the latest draft ('current'). Default is 'current'."),
-    returnAllLocales: z.boolean().optional().describe("If true, returns all locale versions for each field instead of only the most populated locale. Default is false to save on token usage."),
-    nested: z.boolean().optional().describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
-    returnOnlyIds: z.boolean().optional().default(true).describe("If true, returns only an array of record IDs instead of complete records. Use this to save on tokens and context window space when only IDs are needed. These IDs can then be used with GetDatoCMSRecordById to get detailed information. Default is false."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  references: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    version: versionEnumSchema.optional().default("current"),
+    returnAllLocales: z.boolean().optional().default(false)
+      .describe("If true, returns all locale versions for each field instead of only the most populated locale. Default is false to save on token usage."),
+    nested: z.boolean().optional().default(true)
+      .describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
+    returnOnlyIds: z.boolean().optional().default(true)
+      .describe("If true, returns only an array of record IDs instead of complete records. Use this to save on tokens and context window space when only IDs are needed. Default is true."),
   }),
 
   editor_url_from_type: z.object({ 
-    projectUrl: z.string().describe("DatoCMS project URL. If the user did not provide one yet, use the datocms_project tool with action 'get_info' to retrieve it. The URL will be under the internal_domain property."),
-    itemTypeId: z.string().describe("The item type ID from DatoCMS, typically available in the item.item_type.id property of a record."),
-    itemId: z.string().describe("The ID of the specific record you want to build a URL for."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    projectUrl: z.string()
+      .describe("DatoCMS project URL. If the user did not provide one yet, use the datocms_project tool with action 'get_info' to retrieve it. The URL will be under the internal_domain property."),
+    itemTypeId: z.string()
+      .describe("The item type ID from DatoCMS, typically available in the item.item_type.id property of a record."),
+    itemId: recordIdSchema,
+    environment: environmentSchema
   }),
 
   // Create operations
-  create: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemType: z.string().describe("The ID of the DatoCMS item type (model) for which to create a record."),
-    data: z.record(z.unknown()).describe("The field values for the new record. For localized fields, provide an object with locale codes as keys (e.g., { title: { en: 'English Title', es: 'Spanish Title' } }). For non-localized fields, provide values directly (e.g., { count: 5 }). The structure depends on the field types in your model. You can use the Schema tools to check which fields are localized. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values."),
+  create: createBaseSchema().extend({
+    itemType: z.string()
+      .describe("The ID of the DatoCMS item type (model) for which to create a record."),
+    data: z.record(z.unknown())
+      .describe("The field values for the new record. For localized fields, provide an object with locale codes as keys (e.g., { title: { en: 'English Title', es: 'Spanish Title' } }). For non-localized fields, provide values directly (e.g., { count: 5 }). The structure depends on the field types in your model. You can use the Schema tools to check which fields are localized. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values."),
     meta: z.object({
       current_version: z.string().optional(),
       status: z.enum(["draft", "updated", "published"] as const).optional()
-    }).optional().describe("Optional metadata for the record"),
-    returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    }).optional()
+      .describe("Optional metadata for the record"),
+    returnOnlyConfirmation: returnOnlyConfirmationSchema,
   }),
 
-  update: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to update."),
-    data: z.record(z.unknown()).describe("The field values to update. Only include fields you want to modify. For localized fields, you MUST include values for ALL locales that should be preserved, not just the ones you're updating. Example: if a field 'title' already has values for 'en' and 'es' locales, and you want to update only the 'es' value, you must provide { title: { en: 'existing English title', es: 'new Spanish title' } }, otherwise the 'en' value will be deleted. The structure depends on the field types in your model. Use the Schema tools to check which fields are localized. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/update#updating-fields."),
-    version: z.string().optional().describe("Optional version for optimistic locking. If provided, the update will fail if the record has been modified since this version."),
+  update: createBaseSchema().extend({
+    itemId: recordIdSchema,
+    data: z.record(z.unknown())
+      .describe("The field values to update. Only include fields you want to modify. For localized fields, you MUST include values for ALL locales that should be preserved, not just the ones you're updating. Example: if a field 'title' already has values for 'en' and 'es' locales, and you want to update only the 'es' value, you must provide { title: { en: 'existing English title', es: 'new Spanish title' } }, otherwise the 'en' value will be deleted. The structure depends on the field types in your model. Use the Schema tools to check which fields are localized. Refer to DatoCMS Content Management API documentation for field type values: https://www.datocms.com/docs/content-management-api/resources/item/update#updating-fields."),
+    version: z.string().optional()
+      .describe("Optional version for optimistic locking. If provided, the update will fail if the record has been modified since this version."),
     meta: z.object({
       current_version: z.string().optional(),
       stage: z.string().optional()
-    }).optional().describe("Optional metadata for the record update, including version and workflow stage information"),
-    returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    }).optional()
+      .describe("Optional metadata for the record update, including version and workflow stage information"),
+    returnOnlyConfirmation: returnOnlyConfirmationSchema,
   }),
 
-  duplicate: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to duplicate."),
-    returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  duplicate: createBaseSchema().extend({
+    itemId: recordIdSchema,
+    returnOnlyConfirmation: returnOnlyConfirmationSchema,
   }),
 
   // Delete operations
-  destroy: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to destroy."),
-    confirmation: z.boolean().describe("Explicit confirmation that you want to delete this record. This is a destructive action that cannot be undone."),
-    returnOnlyConfirmation: z.boolean().optional().describe("If true, returns only a success confirmation message instead of the full record data. Use this to save on token usage. Default is false."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  destroy: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    confirmation: destructiveConfirmationSchema,
+    returnOnlyConfirmation: returnOnlyConfirmationSchema,
   }),
 
-  bulk_destroy: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemIds: z.array(z.string()).describe("Array of record IDs to destroy."),
-    confirmation: z.boolean().describe("Explicit confirmation that you want to delete these records. This is a destructive action that cannot be undone."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  bulk_destroy: createBaseSchema().extend({ 
+    itemIds: z.array(z.string()).min(1)
+      .describe("Array of record IDs to destroy."),
+    confirmation: destructiveConfirmationSchema,
   }),
 
   // Publication operations
-  publish: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to publish."),
-    content_in_locales: z.array(z.string()).optional().describe("Optional array of locale codes to publish. If not provided, all locales will be published. If provided, non_localized_content must be provided as well."),
-    non_localized_content: z.boolean().optional().describe("Whether non-localized content will be published. If not provided and content_in_locales is missing, all content will be published. If provided, content_in_locales must be provided as well."),
-    recursive: z.boolean().optional().default(false).describe("When true, if the record belongs to a tree-like collection and any parent records aren't published, those parent records will be published as well. When false, an UNPUBLISHED_PARENT error will occur in such cases."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  publish: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    content_in_locales: z.array(z.string()).optional()
+      .describe("Optional array of locale codes to publish. If not provided, all locales will be published. If provided, non_localized_content must be provided as well."),
+    non_localized_content: z.boolean().optional()
+      .describe("Whether non-localized content will be published. If not provided and content_in_locales is missing, all content will be published. If provided, content_in_locales must be provided as well."),
+    recursive: z.boolean().optional().default(false)
+      .describe("When true, if the record belongs to a tree-like collection and any parent records aren't published, those parent records will be published as well. When false, an UNPUBLISHED_PARENT error will occur in such cases."),
+  }).refine(
+    data => {
+      // If one of content_in_locales or non_localized_content is provided, both must be provided
+      return (
+        (data.content_in_locales === undefined && data.non_localized_content === undefined) ||
+        (data.content_in_locales !== undefined && data.non_localized_content !== undefined)
+      );
+    },
+    {
+      message: "If content_in_locales is provided, non_localized_content must also be provided, and vice versa."
+    }
+  ),
+
+  bulk_publish: createBaseSchema().extend({ 
+    itemIds: z.array(z.string()).min(1)
+      .describe("Array of record IDs to publish."),
+    content_in_locales: z.array(z.string()).optional()
+      .describe("Optional array of locale codes to publish. If not provided, all locales will be published. If provided, non_localized_content must be provided as well."),
+    non_localized_content: z.boolean().optional()
+      .describe("Whether non-localized content will be published. If not provided and content_in_locales is missing, all content will be published. If provided, content_in_locales must be provided as well."),
+    recursive: z.boolean().optional().default(false)
+      .describe("When true, if the record belongs to a tree-like collection and any parent records aren't published, those parent records will be published as well. When false, an UNPUBLISHED_PARENT error will occur in such cases."),
+  }).refine(
+    data => {
+      // If one of content_in_locales or non_localized_content is provided, both must be provided
+      return (
+        (data.content_in_locales === undefined && data.non_localized_content === undefined) ||
+        (data.content_in_locales !== undefined && data.non_localized_content !== undefined)
+      );
+    },
+    {
+      message: "If content_in_locales is provided, non_localized_content must also be provided, and vice versa."
+    }
+  ),
+
+  unpublish: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    recursive: z.boolean().optional().default(false)
+      .describe("When true, if the record belongs to a tree-like collection and any child records are published, those child records will be unpublished as well. When false, a PUBLISHED_CHILDREN error will occur in such cases."),
   }),
 
-  bulk_publish: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemIds: z.array(z.string()).describe("Array of record IDs to publish."),
-    content_in_locales: z.array(z.string()).optional().describe("Optional array of locale codes to publish. If not provided, all locales will be published. If provided, non_localized_content must be provided as well."),
-    non_localized_content: z.boolean().optional().describe("Whether non-localized content will be published. If not provided and content_in_locales is missing, all content will be published. If provided, content_in_locales must be provided as well."),
-    recursive: z.boolean().optional().default(false).describe("When true, if the record belongs to a tree-like collection and any parent records aren't published, those parent records will be published as well. When false, an UNPUBLISHED_PARENT error will occur in such cases."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-  }),
-
-  unpublish: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to unpublish."),
-    recursive: z.boolean().optional().default(false).describe("When true, if the record belongs to a tree-like collection and any child records are published, those child records will be unpublished as well. When false, a PUBLISHED_CHILDREN error will occur in such cases."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-  }),
-
-  bulk_unpublish: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemIds: z.array(z.string()).describe("Array of record IDs to unpublish."),
-    recursive: z.boolean().optional().default(false).describe("When true, if the record belongs to a tree-like collection and any child records are published, those child records will be unpublished as well. When false, a PUBLISHED_CHILDREN error will occur in such cases."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  bulk_unpublish: createBaseSchema().extend({ 
+    itemIds: z.array(z.string()).min(1)
+      .describe("Array of record IDs to unpublish."),
+    recursive: z.boolean().optional().default(false)
+      .describe("When true, if the record belongs to a tree-like collection and any child records are published, those child records will be unpublished as well. When false, a PUBLISHED_CHILDREN error will occur in such cases."),
   }),
 
   // Publication scheduling operations
-  schedule_publication: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to schedule publication for."),
-    publication_scheduled_at: z.string().describe("The ISO8601 timestamp when the record should be automatically published (e.g., '2023-12-31T23:59:59Z')."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  schedule_publication: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    publication_scheduled_at: z.string()
+      .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/, {
+        message: "Must be a valid ISO8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)"
+      })
+      .describe("The ISO8601 timestamp when the record should be automatically published (e.g., '2023-12-31T23:59:59Z')."),
   }),
 
-  cancel_scheduled_publication: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to cancel scheduled publication for."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  cancel_scheduled_publication: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
   }),
 
-  schedule_unpublication: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to schedule unpublication for."),
-    unpublishing_scheduled_at: z.string().describe("The ISO8601 timestamp when the record should be automatically unpublished (e.g., '2023-12-31T23:59:59Z')."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  schedule_unpublication: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    unpublishing_scheduled_at: z.string()
+      .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/, {
+        message: "Must be a valid ISO8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)"
+      })
+      .describe("The ISO8601 timestamp when the record should be automatically unpublished (e.g., '2023-12-31T23:59:59Z')."),
   }),
 
-  cancel_scheduled_unpublication: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to cancel scheduled unpublication for."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  cancel_scheduled_unpublication: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
   }),
 
   // Version operations
-  versions_list: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record to retrieve versions for."),
-    returnOnlyIds: z.boolean().optional().default(true).describe("If true, returns only an array of version IDs and their timestamps instead of complete version records. This saves on token usage and response size. Default is true."),
-    page: paginationSchema.optional().describe("Parameters to control offset-based pagination."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  versions_list: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
+    returnOnlyIds: z.boolean().optional().default(true)
+      .describe("If true, returns only an array of version IDs and their timestamps instead of complete version records. This saves on token usage and response size. Default is true."),
+    page: paginationSchema.optional(),
   }),
 
-  version_get: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record."),
+  version_get: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
     versionId: z.string().describe("The ID of the version to retrieve."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
   }),
 
-  version_restore: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    itemId: z.string().describe("The ID of the DatoCMS record."),
+  version_restore: createBaseSchema().extend({ 
+    itemId: recordIdSchema,
     versionId: z.string().describe("The ID of the version to restore."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
   })
 };
 

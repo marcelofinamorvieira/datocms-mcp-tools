@@ -21,7 +21,7 @@ export const retrieveEnvironmentHandler = async (args: z.infer<typeof environmen
     
     try {
       // Fetch environment information
-      const environment = await client.environments.find(environmentId);
+      const environment = await client.environments.find(environmentId as string);
       
       if (!environment) {
         return createErrorResponse(`Error: Failed to fetch environment with ID '${environmentId}'.`);

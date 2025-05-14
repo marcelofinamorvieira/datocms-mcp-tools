@@ -1,26 +1,28 @@
 /**
- * @file deleteItemTypeHandler.ts
- * @description Handler for deleting DatoCMS Item Types
+ * @file deleteItemTypeHandlerV2.ts
+ * @description Handler for deleting DatoCMS Item Types, using the handler factory pattern
  */
 
-import type { z } from "zod";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { z } from "zod";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { schemaSchemas } from "../../../schemas.js";
+import { getClient } from "../../../../../utils/clientManager.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+
+import { schemaSchemas } from "../../../schemas.js";
 
 /**
  * Handler to delete an Item Type from DatoCMS
+ * This implementation uses a simplified approach to avoid TypeScript issues
  */
 export const deleteItemTypeHandler = async (args: z.infer<typeof schemaSchemas.delete_item_type>) => {
-  const { apiToken, itemTypeId, confirmation, environment } = args;
-  
-  // Check for explicit confirmation
-  if (confirmation !== true) {
-    return createErrorResponse("Error: You must provide explicit confirmation to delete this item type. Set 'confirmation: true' to confirm.");
-  }
-  
   try {
+    const { apiToken, itemTypeId, confirmation, environment } = args;
+    
+    // Check for explicit confirmation
+    if (confirmation !== true) {
+      return createErrorResponse("Error: You must provide explicit confirmation to delete this item type. Set 'confirmation: true' to confirm.");
+    }
+    
     // Initialize DatoCMS client
     const client = getClient(apiToken as string, environment as string);
     
@@ -39,7 +41,6 @@ export const deleteItemTypeHandler = async (args: z.infer<typeof schemaSchemas.d
         return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
       }
       
-      // Check if it's a not found error
       if (isNotFoundError(apiError)) {
         return createErrorResponse(`Error: Item Type with ID '${itemTypeId}' was not found.`);
       }

@@ -1,26 +1,28 @@
 /**
- * @file deleteItemTypeHandler.ts
- * @description Handler for deleting DatoCMS Item Types
+ * @file deleteItemTypeHandlerV3.ts
+ * @description Handler for deleting DatoCMS Item Types, using the schema registry
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../../utils/clientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { schemaSchemas } from "../../../schemas.js";
+import { getClient } from "../../../../../utils/clientManager.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+
+import { domainSchemas } from "../../../../../utils/schemaRegistry.js";
 
 /**
  * Handler to delete an Item Type from DatoCMS
+ * This implementation uses the schema registry for better schema reuse
  */
-export const deleteItemTypeHandler = async (args: z.infer<typeof schemaSchemas.delete_item_type>) => {
-  const { apiToken, itemTypeId, confirmation, environment } = args;
-  
-  // Check for explicit confirmation
-  if (confirmation !== true) {
-    return createErrorResponse("Error: You must provide explicit confirmation to delete this item type. Set 'confirmation: true' to confirm.");
-  }
-  
+export const deleteItemTypeHandler = async (args: z.infer<typeof domainSchemas.schema.itemType.delete>) => {
   try {
+    const { apiToken, itemTypeId, confirmation, environment } = args;
+    
+    // Check for explicit confirmation
+    if (confirmation !== true) {
+      return createErrorResponse("Error: You must provide explicit confirmation to delete this item type. Set 'confirmation: true' to confirm.");
+    }
+    
     // Initialize DatoCMS client
     const client = getClient(apiToken as string, environment as string);
     
@@ -39,7 +41,6 @@ export const deleteItemTypeHandler = async (args: z.infer<typeof schemaSchemas.d
         return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
       }
       
-      // Check if it's a not found error
       if (isNotFoundError(apiError)) {
         return createErrorResponse(`Error: Item Type with ID '${itemTypeId}' was not found.`);
       }

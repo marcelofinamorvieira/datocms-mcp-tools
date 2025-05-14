@@ -14,7 +14,7 @@ export const deleteFieldHandler = async (args: DeleteFieldParams) => {
     const { apiToken, fieldId, confirmation, environment } = args;
 
     // Safety check for confirmation
-    if (!confirmation) {
+    if (confirmation !== true) {
       return createErrorResponse(
         "Confirmation required. Please set 'confirmation: true' to confirm you want to delete this field. " +
         "This action cannot be undone and may impact existing content."
@@ -22,13 +22,13 @@ export const deleteFieldHandler = async (args: DeleteFieldParams) => {
     }
 
     // Build the DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = getClient(apiToken as string, environment as string);
 
     // First, get the field to return its info later
-    const field = await client.fields.find(fieldId);
+    const field = await client.fields.find(fieldId as string);
 
     // Delete the field
-    await client.fields.destroy(fieldId);
+    await client.fields.destroy(fieldId as string);
 
     return createResponse({
       success: true,
