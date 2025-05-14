@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { apiTokenSchemas } from "../../../schemas.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { CreateAPITokenParams, CreateAPITokenResponse, isCollaboratorsAuthError, Role } from "../../../collaboratorsTypes.js";
+import { createTypedCollaboratorsClientFromToken } from "../../../collaboratorsClientManager.js";
 
 type Params = z.infer<typeof apiTokenSchemas.create_token>;
 
 /**
  * Handler for creating a new API token in DatoCMS
  */
-export const createTokenHandler = async (params: Params) => {
+export const createTokenHandler = async (params: Params): Promise<CreateAPITokenResponse> => {
   const {
     apiToken,
     name,
@@ -21,56 +21,74 @@ export const createTokenHandler = async (params: Params) => {
   } = params;
 
   try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    // Initialize TypedCollaboratorsClient
+    const typedClient = createTypedCollaboratorsClientFromToken(apiToken, environment);
 
     try {
-      // Prepare token payload with required fields
-      const tokenPayload: any = {
-        name,
-        can_access_cda,
-        can_access_cda_preview,
-        can_access_cma,
-      };
+      // Prepare token creation parameters
+      let roleId: string;
 
       // Handle role assignment
       if (typeof role === 'string') {
         // Handle predefined role names or role IDs
         if (['admin', 'editor', 'developer', 'seo', 'contributor'].includes(role)) {
-          const roles = await client.roles.list();
-          const matchingRole = roles.find(r => r.name.toLowerCase() === role.toLowerCase());
+          // We need to get the client directly as our typed client doesn't have this helper function
+          const roles = await typedClient.listRoles();
+          const matchingRole = roles.find((r: Role) => r.attributes.name.toLowerCase() === role.toLowerCase());
           if (matchingRole) {
-            tokenPayload.role = { id: matchingRole.id, type: "role" };
+            roleId = matchingRole.id;
           } else {
-            throw new Error(`Predefined role '${role}' not found in your DatoCMS project.`);
+            return {
+              success: false,
+              error: `Predefined role '${role}' not found in your DatoCMS project.`
+            };
           }
         } else {
           // Assume it's a role ID
-          tokenPayload.role = { id: role, type: "role" };
+          roleId = role;
         }
-      } else if (typeof role === 'object') {
+      } else if (typeof role === 'object' && role !== null && 'id' in role) {
         // Direct role object assignment
-        tokenPayload.role = role;
+        roleId = role.id.toString();
+      } else {
+        return {
+          success: false,
+          error: "Invalid role specification. Please provide a valid role ID or predefined role name."
+        };
       }
 
-      // Create the API token
-      const newToken = await client.accessTokens.create(tokenPayload);
+      // Create the token with our properly typed client
+      const createParams: CreateAPITokenParams = {
+        name,
+        role: { id: roleId, type: 'role' },
+        can_access_cda: can_access_cda === undefined ? true : can_access_cda,
+        can_access_cda_preview: can_access_cda_preview === undefined ? true : can_access_cda_preview,
+        can_access_cma: can_access_cma === undefined ? true : can_access_cma
+      };
 
-      // Convert to JSON and create response
-      return createResponse(JSON.stringify({
+      // Our typed client abstracts away the details and handles the API correctly
+      const newToken = await typedClient.createAPIToken(createParams);
+
+      // Return success response
+      return {
         success: true,
-        data: newToken,
-        message: "API token created successfully"
-      }, null, 2));
+        data: newToken
+      };
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      if (isCollaboratorsAuthError(apiError)) {
+        return {
+          success: false,
+          error: "Error: Invalid or unauthorized DatoCMS API token."
+        };
       }
 
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error creating DatoCMS API token: ${extractDetailedErrorInfo(error)}`);
+    return {
+      success: false,
+      error: `Error creating DatoCMS API token: ${extractDetailedErrorInfo(error)}`
+    };
   }
 };

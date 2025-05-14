@@ -262,22 +262,54 @@ export const registerAPITokensRouter = (server: McpServer) => {
         const params = schema.parse(args);
 
         // Route to the appropriate handler
+        let response;
         switch (action) {
           case "create_token":
-            return await createTokenHandler(params as z.infer<typeof apiTokenSchemas.create_token>);
+            response = await createTokenHandler(params as z.infer<typeof apiTokenSchemas.create_token>);
+            break;
           case "list_tokens":
-            return await listTokensHandler(params as z.infer<typeof apiTokenSchemas.list_tokens>);
+            response = await listTokensHandler(params as z.infer<typeof apiTokenSchemas.list_tokens>);
+            break;
           case "retrieve_token":
-            return await retrieveTokenHandler(params as z.infer<typeof apiTokenSchemas.retrieve_token>);
+            response = await retrieveTokenHandler(params as z.infer<typeof apiTokenSchemas.retrieve_token>);
+            break;
           case "update_token":
-            return await updateTokenHandler(params as z.infer<typeof apiTokenSchemas.update_token>);
+            response = await updateTokenHandler(params as z.infer<typeof apiTokenSchemas.update_token>);
+            break;
           case "destroy_token":
-            return await destroyTokenHandler(params as z.infer<typeof apiTokenSchemas.destroy_token>);
+            response = await destroyTokenHandler(params as z.infer<typeof apiTokenSchemas.destroy_token>);
+            break;
           case "rotate_token":
-            return await rotateTokenHandler(params as z.infer<typeof apiTokenSchemas.rotate_token>);
+            response = await rotateTokenHandler(params as z.infer<typeof apiTokenSchemas.rotate_token>);
+            break;
           default:
             throw new Error(`Unsupported action: ${action}`);
         }
+
+        // Handle typed response
+        if (response) {
+          if ('success' in response) {
+            if (response.success) {
+              return createResponse(JSON.stringify(response.data, null, 2));
+            } else {
+              // Handle error response
+              if (response.validationErrors && response.validationErrors.length > 0) {
+                const validationErrorMessages = response.validationErrors
+                  .map((err) => `  - ${err.field || 'General'}: ${err.message}`)
+                  .join('\n');
+                
+                return createErrorResponse(`${response.error || 'Validation failed'}\n\nValidation errors:\n${validationErrorMessages}`);
+              }
+              
+              return createErrorResponse(response.error || 'Unknown error');
+            }
+          } else {
+            // Handle legacy response (compatibility with non-updated handlers)
+            return response;
+          }
+        }
+
+        return createErrorResponse('No response from handler');
       } catch (error) {
         return createErrorResponse(`Error performing API token operation: ${extractDetailedErrorInfo(error)}`);
       }
