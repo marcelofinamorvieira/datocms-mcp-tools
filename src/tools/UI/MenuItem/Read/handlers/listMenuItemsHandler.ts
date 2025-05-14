@@ -6,35 +6,47 @@
 import type { z } from "zod";
 import { getClient } from "../../../../../utils/clientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { menuItemSchemas } from "../../schemas.js";
+import { createTypedUIClient } from "../../../uiClient.js";
+import { ListMenuItemsResponse, isUIAuthorizationError } from "../../../uiTypes.js";
 
 /**
  * Handler function for listing DatoCMS menu items
  */
-export const listMenuItemsHandler = async (args: z.infer<typeof menuItemSchemas.list>) => {
+export const listMenuItemsHandler = async (args: z.infer<typeof menuItemSchemas.list>): Promise<ListMenuItemsResponse> => {
   const { apiToken, page = { limit: 100, offset: 0 }, environment } = args;
   
   try {
     // Initialize DatoCMS client
     const client = getClient(apiToken, environment);
+    const typedClient = createTypedUIClient(client);
     
     try {
-      // Get the list of menu items
-      const menuItems = await client.menuItems.list();
+      // Get the list of menu items using typed client
+      const menuItems = await typedClient.listMenuItems(page);
       
-      // Return the list of menu items
-      return createResponse(JSON.stringify(menuItems, null, 2));
+      // Return success response
+      return {
+        success: true,
+        data: menuItems
+      };
       
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      if (isUIAuthorizationError(apiError)) {
+        return {
+          success: false,
+          error: "Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API."
+        };
       }
       
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error listing DatoCMS menu items: ${extractDetailedErrorInfo(error)}`);
+    return {
+      success: false,
+      error: `Error listing DatoCMS menu items: ${extractDetailedErrorInfo(error)}`
+    };
   }
 };

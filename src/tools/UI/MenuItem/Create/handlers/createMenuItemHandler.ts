@@ -6,13 +6,15 @@
 import type { z } from "zod";
 import { getClient } from "../../../../../utils/clientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { menuItemSchemas } from "../../schemas.js";
+import { createTypedUIClient } from "../../../uiClient.js";
+import { CreateMenuItemResponse, MenuItemCreateParams, isUIAuthorizationError, isUIValidationError } from "../../../uiTypes.js";
 
 /**
  * Handler function for creating a DatoCMS menu item
  */
-export const createMenuItemHandler = async (args: z.infer<typeof menuItemSchemas.create>) => {
+export const createMenuItemHandler = async (args: z.infer<typeof menuItemSchemas.create>): Promise<CreateMenuItemResponse> => {
   const { 
     apiToken, 
     label, 
@@ -28,10 +30,11 @@ export const createMenuItemHandler = async (args: z.infer<typeof menuItemSchemas
   try {
     // Initialize DatoCMS client
     const client = getClient(apiToken, environment);
+    const typedClient = createTypedUIClient(client);
     
     try {
-      // Create menu item payload
-      const payload: Record<string, any> = {
+      // Create menu item payload with proper typing
+      const payload: MenuItemCreateParams = {
         label
       };
 
@@ -43,26 +46,39 @@ export const createMenuItemHandler = async (args: z.infer<typeof menuItemSchemas
       if (item_type_id !== undefined) payload.item_type_id = item_type_id;
       if (item_type_filter_id !== undefined) payload.item_type_filter_id = item_type_filter_id;
       
-      // Create the menu item
-      const createdMenuItem = await client.menuItems.create(payload as any);
+      // Create the menu item using typed client
+      const createdMenuItem = await typedClient.createMenuItem(payload);
       
-      // If no item returned, return error
-      if (!createdMenuItem) {
-        return createErrorResponse("Error: Failed to create menu item.");
-      }
-
-      // Return the created menu item
-      return createResponse(JSON.stringify(createdMenuItem, null, 2));
+      // Return success response
+      return {
+        success: true,
+        data: createdMenuItem,
+        message: "Menu item created successfully"
+      };
       
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      if (isUIAuthorizationError(apiError)) {
+        return {
+          success: false,
+          error: "Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API."
+        };
+      }
+      
+      if (isUIValidationError(apiError)) {
+        return {
+          success: false,
+          error: "Validation failed",
+          validationErrors: apiError.validationErrors
+        };
       }
       
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error creating DatoCMS menu item: ${extractDetailedErrorInfo(error)}`);
+    return {
+      success: false,
+      error: `Error creating DatoCMS menu item: ${extractDetailedErrorInfo(error)}`
+    };
   }
 };

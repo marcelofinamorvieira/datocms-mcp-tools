@@ -4,46 +4,84 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../../utils/clientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { schemaSchemas } from "../../../schemas.js";
+import { createSchemaClient } from "../../../schemaClient.js";
+import { isDatoCMSAuthorizationError, ItemType } from "../../../schemaTypes.js";
+
+/**
+ * Response type for the listItemTypes handler
+ */
+export interface ListItemTypesResponse {
+  success: boolean;
+  data?: ItemType[];
+  totalCount?: number;
+  pagination?: {
+    offset: number;
+    limit: number;
+    totalPages: number;
+    currentPage: number;
+  };
+  error?: string;
+}
 
 /**
  * Handler to list all Item Types in a DatoCMS project
+ * 
+ * @param args - The arguments containing apiToken, optional environment, and pagination parameters
+ * @returns A response containing the list of item types or an error message
  */
-export const listItemTypesHandler = async (args: z.infer<typeof schemaSchemas.list_item_types>) => {
+export const listItemTypesHandler = async (
+  args: z.infer<typeof schemaSchemas.list_item_types>
+): Promise<ListItemTypesResponse> => {
   const { apiToken, environment, page } = args;
   
   try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    // Initialize DatoCMS typed client
+    const schemaClient = createSchemaClient(apiToken, environment);
     
     try {
-      // The client.itemTypes.list() method doesn't take any parameters in this version of the client
-      // We'll request all item types and then handle pagination in memory if needed
-      const allItemTypes = await client.itemTypes.list();
-
-      // Apply pagination in memory if provided
-      let itemTypes = allItemTypes;
-      if (page) {
-        const start = page.offset || 0;
-        const end = start + (page.limit || 10);
-        itemTypes = allItemTypes.slice(start, end);
-      }
+      // Get pagination parameters with defaults
+      const offset = page?.offset || 0;
+      const limit = page?.limit || 10;
       
-      // Return the item types
-      return createResponse(JSON.stringify(itemTypes, null, 2));
+      // Retrieve all item types using the typed client
+      const allItemTypes = await schemaClient.listItemTypes();
+
+      // Apply pagination in memory
+      const itemTypes = allItemTypes.slice(offset, offset + limit);
+      const totalCount = allItemTypes.length;
+      const totalPages = Math.ceil(totalCount / limit);
+      
+      // Return the item types with pagination information
+      return {
+        success: true,
+        data: itemTypes,
+        totalCount,
+        pagination: {
+          offset,
+          limit,
+          totalPages,
+          currentPage: Math.floor(offset / limit) + 1
+        }
+      };
       
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      if (isDatoCMSAuthorizationError(apiError) || isAuthorizationError(apiError)) {
+        return {
+          success: false,
+          error: "Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API."
+        };
       }
       
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error listing DatoCMS Item Types: ${extractDetailedErrorInfo(error)}`);
+    return {
+      success: false,
+      error: `Error listing DatoCMS Item Types: ${extractDetailedErrorInfo(error)}`
+    };
   }
 };

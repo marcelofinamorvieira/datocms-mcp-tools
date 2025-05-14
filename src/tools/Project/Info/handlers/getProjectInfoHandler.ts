@@ -4,42 +4,61 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { projectSchemas } from "../../schemas.js";
+import { createProjectClient } from "../../projectClient.js";
+import { isDatoCMSAuthorizationError, Site } from "../../projectTypes.js";
+
+/**
+ * Response type for the getProjectInfo handler
+ */
+export interface GetProjectInfoResponse {
+  success: boolean;
+  data?: Site;
+  error?: string;
+}
 
 /**
  * Handler for retrieving DatoCMS project information
+ * 
+ * @param args - The arguments containing apiToken and optionally environment
+ * @returns A response containing the project information or an error message
  */
-export const getProjectInfoHandler = async (args: z.infer<typeof projectSchemas.get_info>) => {
+export const getProjectInfoHandler = async (
+  args: z.infer<typeof projectSchemas.get_info>
+): Promise<GetProjectInfoResponse> => {
   const { apiToken, environment } = args;
   
   try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    // Initialize DatoCMS typed client
+    const projectClient = createProjectClient(apiToken, environment);
     
     try {
-      // Retrieve the project information
-      const project = await client.site.find();
+      // Retrieve the project information using the typed client
+      const site = await projectClient.findSite();
       
-      // If no project found, return error
-      if (!project) {
-        return createErrorResponse("Error: Could not retrieve project information.");
-      }
-
-      // Convert to JSON and create response (will be chunked only if necessary)
-      return createResponse(JSON.stringify(project, null, 2));
+      // Return the project data
+      return {
+        success: true,
+        data: site
+      };
       
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      if (isDatoCMSAuthorizationError(apiError) || isAuthorizationError(apiError)) {
+        return {
+          success: false,
+          error: "Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API."
+        };
       }
       
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error) {
-    return createErrorResponse(`Error retrieving DatoCMS site information: ${extractDetailedErrorInfo(error)}`);
+    return {
+      success: false,
+      error: `Error retrieving DatoCMS site information: ${extractDetailedErrorInfo(error)}`
+    };
   }
 };

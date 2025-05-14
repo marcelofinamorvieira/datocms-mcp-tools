@@ -3,13 +3,16 @@ import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import {
   isAuthorizationError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+  createErrorResponse,
+  extractDetailedErrorInfo 
+} from "../../../../utils/errorHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
+import { createTypedUploadsClient } from "../../uploadsClient.js";
+import { ListUploadsResponse, isUploadsAuthorizationError } from "../../uploadsTypes.js";
 
 export const queryUploadsHandler = async (
   args: z.infer<typeof uploadsSchemas.query>
-) => {
+): Promise<ListUploadsResponse> => {
   const {
     apiToken,
     ids,
@@ -24,39 +27,54 @@ export const queryUploadsHandler = async (
 
   try {
     const client = getClient(apiToken, environment);
+    const typedClient = createTypedUploadsClient(client);
 
-    // Build query
-    const filter: Record<string, unknown> = {};
-    if (ids) filter.ids = ids;
-    if (query) filter.query = query;
-    if (fields && Object.keys(fields).length) filter.fields = fields;
-
-    const queryParams: Record<string, unknown> = {};
-    if (Object.keys(filter).length) queryParams.filter = filter;
+    // Prepare query parameters
+    const queryParams: any = {};
+    if (ids) queryParams.ids = ids;
+    if (query) queryParams.query = query;
+    if (fields) queryParams.fields = fields;
     if (locale) queryParams.locale = locale;
     if (order_by) queryParams.order_by = order_by;
-    queryParams.page = {
-      limit: page?.limit ?? 15,
-      offset: page?.offset ?? 0
-    };
+    if (page) queryParams.page = page;
 
-    const uploads = await client.uploads.list(queryParams);
+    // Use the typed client
+    const uploads = await typedClient.listUploads(queryParams);
 
+    // Handle empty results
     if (!uploads.length) {
-      return createResponse("No uploads matched your query.");
+      return {
+        success: true,
+        data: [],
+        message: "No uploads matched your query."
+      };
     }
+    
+    // Handle IDs-only request
     if (returnOnlyIds) {
-      return createResponse(JSON.stringify(uploads.map(u => u.id), null, 2));
+      return {
+        success: true,
+        data: uploads.map(u => ({ id: u.id, type: u.type })) as any, // Type casting due to partial result
+        message: `Found ${uploads.length} uploads matching your query.`
+      };
     }
-    return createResponse(JSON.stringify(uploads, null, 2));
+    
+    // Return full uploads
+    return {
+      success: true,
+      data: uploads,
+      message: `Found ${uploads.length} uploads matching your query.`
+    };
   } catch (apiError: unknown) {
-    if (isAuthorizationError(apiError)) {
-      return createErrorResponse(
-        "Error: Invalid or unauthorized DatoCMS API token."
-      );
+    if (isUploadsAuthorizationError(apiError)) {
+      return {
+        success: false,
+        error: "Error: Invalid or unauthorized DatoCMS API token."
+      };
     }
-    return createErrorResponse(
-      `Error querying uploads: ${extractDetailedErrorInfo(apiError)}`
-    );
+    return {
+      success: false,
+      error: `Error querying uploads: ${extractDetailedErrorInfo(apiError)}`
+    };
   }
 };

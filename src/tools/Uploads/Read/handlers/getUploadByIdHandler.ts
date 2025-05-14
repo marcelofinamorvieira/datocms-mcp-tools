@@ -4,42 +4,49 @@ import { createResponse } from "../../../../utils/responseHandlers.js";
 import {
   isAuthorizationError,
   isNotFoundError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+  createErrorResponse,
+  extractDetailedErrorInfo 
+} from "../../../../utils/errorHandlers.js";
 import type { uploadsSchemas } from "../../schemas.js";
+import { createTypedUploadsClient } from "../../uploadsClient.js";
+import { GetUploadResponse, isUploadsAuthorizationError, isUploadsNotFoundError } from "../../uploadsTypes.js";
 
 export const getUploadByIdHandler = async (
   args: z.infer<typeof uploadsSchemas.get>
-) => {
+): Promise<GetUploadResponse> => {
   const { apiToken, uploadId, environment } = args;
 
   try {
     const client = getClient(apiToken, environment);
+    const typedClient = createTypedUploadsClient(client);
 
     try {
-      const upload = await client.uploads.find(uploadId);
-      if (!upload) {
-        return createErrorResponse(
-          `Error: Upload with ID '${uploadId}' was not found.`
-        );
-      }
-      return createResponse(JSON.stringify(upload, null, 2));
+      const upload = await typedClient.findUpload(uploadId);
+      
+      // Return success response
+      return {
+        success: true,
+        data: upload
+      };
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse(
-          "Error: Invalid or unauthorized DatoCMS API token."
-        );
+      if (isUploadsAuthorizationError(apiError)) {
+        return {
+          success: false,
+          error: "Error: Invalid or unauthorized DatoCMS API token."
+        };
       }
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(
-          `Error: Upload with ID '${uploadId}' was not found.`
-        );
+      if (isUploadsNotFoundError(apiError)) {
+        return {
+          success: false,
+          error: `Error: Upload with ID '${uploadId}' was not found.`
+        };
       }
       throw apiError;
     }
   } catch (err) {
-    return createErrorResponse(
-      `Error retrieving upload: ${err instanceof Error ? err.message : String(err)}`
-    );
+    return {
+      success: false,
+      error: `Error retrieving upload: ${err instanceof Error ? err.message : String(err)}`
+    };
   }
 };

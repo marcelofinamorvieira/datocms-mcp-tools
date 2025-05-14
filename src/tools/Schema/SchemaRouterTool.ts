@@ -135,44 +135,62 @@ This will show you all the required parameters and their types.`);
           const validatedArgs = actionSchema.parse(args);
 
           // Route to the appropriate handler based on the action
+          let handlerResult: any;
+          
           switch (validAction) {
             // ItemType handlers
             case "create_item_type":
-              return createItemTypeHandler(validatedArgs as ActionArgsMap['create_item_type']);
+              handlerResult = await createItemTypeHandler(validatedArgs as ActionArgsMap['create_item_type']);
+              break;
             case "duplicate_item_type":
-              return duplicateItemTypeHandler(validatedArgs as ActionArgsMap['duplicate_item_type']);
+              handlerResult = await duplicateItemTypeHandler(validatedArgs as ActionArgsMap['duplicate_item_type']);
+              break;
             case "get_item_type":
-              return getItemTypeHandler(validatedArgs as ActionArgsMap['get_item_type']);
+              handlerResult = await getItemTypeHandler(validatedArgs as ActionArgsMap['get_item_type']);
+              break;
             case "list_item_types":
-              return listItemTypesHandler(validatedArgs as ActionArgsMap['list_item_types']);
+              handlerResult = await listItemTypesHandler(validatedArgs as ActionArgsMap['list_item_types']);
+              break;
             case "update_item_type":
-              return updateItemTypeHandler(validatedArgs as ActionArgsMap['update_item_type']);
+              handlerResult = await updateItemTypeHandler(validatedArgs as ActionArgsMap['update_item_type']);
+              break;
             case "delete_item_type":
-              return deleteItemTypeHandler(validatedArgs as ActionArgsMap['delete_item_type']);
+              handlerResult = await deleteItemTypeHandler(validatedArgs as ActionArgsMap['delete_item_type']);
+              break;
 
             // Fieldset handlers
             case "create_fieldset":
-              return createFieldsetHandler(validatedArgs as ActionArgsMap['create_fieldset']);
+              handlerResult = await createFieldsetHandler(validatedArgs as ActionArgsMap['create_fieldset']);
+              break;
             case "get_fieldset":
-              return getFieldsetHandler(validatedArgs as ActionArgsMap['get_fieldset']);
+              handlerResult = await getFieldsetHandler(validatedArgs as ActionArgsMap['get_fieldset']);
+              break;
             case "list_fieldsets":
-              return listFieldsetsHandler(validatedArgs as ActionArgsMap['list_fieldsets']);
+              handlerResult = await listFieldsetsHandler(validatedArgs as ActionArgsMap['list_fieldsets']);
+              break;
             case "update_fieldset":
-              return updateFieldsetHandler(validatedArgs as ActionArgsMap['update_fieldset']);
+              handlerResult = await updateFieldsetHandler(validatedArgs as ActionArgsMap['update_fieldset']);
+              break;
             case "delete_fieldset":
-              return destroyFieldsetHandler(validatedArgs as ActionArgsMap['delete_fieldset']);
+              handlerResult = await destroyFieldsetHandler(validatedArgs as ActionArgsMap['delete_fieldset']);
+              break;
 
             // Field handlers
             case "create_field":
-              return createFieldHandler(validatedArgs as ActionArgsMap['create_field']);
+              handlerResult = await createFieldHandler(validatedArgs as ActionArgsMap['create_field']);
+              break;
             case "get_field":
-              return getFieldHandler(validatedArgs as ActionArgsMap['get_field']);
+              handlerResult = await getFieldHandler(validatedArgs as ActionArgsMap['get_field']);
+              break;
             case "list_fields":
-              return listFieldsHandler(validatedArgs as ActionArgsMap['list_fields']);
+              handlerResult = await listFieldsHandler(validatedArgs as ActionArgsMap['list_fields']);
+              break;
             case "update_field":
-              return updateFieldHandler(validatedArgs as ActionArgsMap['update_field']);
+              handlerResult = await updateFieldHandler(validatedArgs as ActionArgsMap['update_field']);
+              break;
             case "delete_field":
-              return deleteFieldHandler(validatedArgs as ActionArgsMap['delete_field']);
+              handlerResult = await deleteFieldHandler(validatedArgs as ActionArgsMap['delete_field']);
+              break;
 
             default: {
               // This is a type check to ensure we've handled all possible actions
@@ -180,6 +198,42 @@ This will show you all the required parameters and their types.`);
               return createErrorResponse(`Error: Unsupported action '${action}'. This is likely a bug.`);
             }
           }
+          
+          // Handle the new typed responses
+          if (handlerResult && typeof handlerResult === 'object') {
+            // Check if it's already a Response object from createResponse/createErrorResponse
+            if ('content' in handlerResult) {
+              return handlerResult;
+            }
+            
+            // For our new typed responses
+            if ('success' in handlerResult) {
+              if (handlerResult.success) {
+                // Success response
+                const responseContent = JSON.stringify(handlerResult.data || {}, null, 2);
+                let response = responseContent;
+                
+                // Add message if present
+                if (handlerResult.message) {
+                  response = `${responseContent}\n\n${handlerResult.message}`;
+                }
+                
+                // Add pagination info if present
+                if (handlerResult.pagination) {
+                  const paginationInfo = `\n\nPagination: Page ${handlerResult.pagination.currentPage} of ${handlerResult.pagination.totalPages} (Total items: ${handlerResult.totalCount})`;
+                  response = `${response}${paginationInfo}`;
+                }
+                
+                return createResponse(response);
+              } else {
+                // Error response
+                return createErrorResponse(handlerResult.error || 'Unknown error occurred');
+              }
+            }
+          }
+          
+          // Fallback for unhandled response types
+          return createResponse(JSON.stringify(handlerResult, null, 2));
         } catch (error) {
           if (error instanceof z.ZodError) {
             // Get the schema for documentation purposes

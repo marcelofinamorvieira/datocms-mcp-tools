@@ -76,18 +76,60 @@ This will show you all the required parameters and their types.`);
           const validatedArgs = actionSchema.parse(args);
           
           // Route to the appropriate handler based on the action
+          let handlerResult: any;
+            
           switch (validAction) {
             // Project info operations
             case "get_info":
-              return getProjectInfoHandler(validatedArgs as ActionArgsMap['get_info']);
+              handlerResult = await getProjectInfoHandler(validatedArgs as ActionArgsMap['get_info']);
+              break;
             
             // Site settings operations
             case "update_site_settings":
-              return updateSiteSettingsHandler(validatedArgs as ActionArgsMap['update_site_settings']);
+              handlerResult = await updateSiteSettingsHandler(validatedArgs as ActionArgsMap['update_site_settings']);
+              break;
             
             default:
               return createErrorResponse(`Error: No handler implemented for action '${action}'. This is a server configuration error.`);
           }
+          
+          // Handle the new typed responses
+          if (handlerResult && typeof handlerResult === 'object') {
+            // Check if it's already a Response object from createResponse/createErrorResponse
+            if ('content' in handlerResult) {
+              return handlerResult;
+            }
+            
+            // For our new typed responses
+            if ('success' in handlerResult) {
+              if (handlerResult.success) {
+                // Success response
+                const responseContent = JSON.stringify(handlerResult.data || {}, null, 2);
+                let response = responseContent;
+                
+                // Add message if present
+                if (handlerResult.message) {
+                  response = `${responseContent}\n\n${handlerResult.message}`;
+                }
+                
+                return createResponse(response);
+              } else {
+                // Error response with validation errors if present
+                if (handlerResult.validationErrors && handlerResult.validationErrors.length > 0) {
+                  const validationErrorMessages = handlerResult.validationErrors
+                    .map((err: { field?: string; message: string }) => `  - ${err.field || 'General'}: ${err.message}`)
+                    .join('\n');
+                  
+                  return createErrorResponse(`${handlerResult.error || 'Validation failed'}\n\nValidation errors:\n${validationErrorMessages}`);
+                }
+                
+                return createErrorResponse(handlerResult.error || 'Unknown error occurred');
+              }
+            }
+          }
+          
+          // Fallback for unhandled response types
+          return createResponse(JSON.stringify(handlerResult, null, 2));
         } catch (error) {
           if (error instanceof z.ZodError) {
             // Get the schema for documentation purposes

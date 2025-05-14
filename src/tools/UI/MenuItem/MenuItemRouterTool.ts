@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { getClient } from "../../../utils/clientManager.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { UIResponse } from "../uiTypes.js";
 
 // Import the menu item action schemas and handlers
 import { menuItemSchemas, menuItemActionsList } from "./schemas.js";
@@ -38,7 +39,7 @@ export const registerMenuItemRouter = (server: McpServer) => {
     // Parameter schema with types using discriminated union based on action
     {
       action: actionEnum,
-      args: z.record(z.any()).optional().describe("Arguments for the action to perform. You MUST call datocms_parameters first to know what arguments are required for this action."),
+      args: z.record(z.any()).optional().describe("Arguments for the action to perform. You MUST call datocms_parameters first to know what arguments are required for this action.")
     },
     // Annotations for the tool
     {
@@ -83,11 +84,11 @@ This will show you all the required parameters and their types.`);
           // Route to the appropriate handler based on the action
           switch (validAction) {
             case "list":
-              return listMenuItemsHandler(validatedArgs as ActionArgsMap['list']);
+              return handleTypedResponse(await listMenuItemsHandler(validatedArgs as ActionArgsMap['list']));
             case "retrieve":
-              return retrieveMenuItemHandler(validatedArgs as ActionArgsMap['retrieve']);
+              return handleTypedResponse(await retrieveMenuItemHandler(validatedArgs as ActionArgsMap['retrieve']));
             case "create":
-              return createMenuItemHandler(validatedArgs as ActionArgsMap['create']);
+              return handleTypedResponse(await createMenuItemHandler(validatedArgs as ActionArgsMap['create']));
             case "update":
               return updateMenuItemHandler(validatedArgs as ActionArgsMap['update']);
             case "delete":
@@ -159,4 +160,23 @@ function formatSchemaForDisplay(schema: z.ZodSchema) {
 // Helper function to format ZodError for display
 function formatZodError(error: z.ZodError) {
   return error.issues.map(issue => `- ${issue.path.join('.')}: ${issue.message}`).join('\n');
+}
+
+// Helper function to handle typed responses
+function handleTypedResponse<T>(response: UIResponse<T>) {
+  if (response.success) {
+    // Success response
+    return createResponse(JSON.stringify(response.data, null, 2));
+  } else {
+    // Error response
+    if (response.validationErrors && response.validationErrors.length > 0) {
+      const validationErrorMessages = response.validationErrors
+        .map((err) => `  - ${err.field || 'General'}: ${err.message}`)
+        .join('\n');
+      
+      return createErrorResponse(`${response.error || 'Validation failed'}\n\nValidation errors:\n${validationErrorMessages}`);
+    }
+    
+    return createErrorResponse(response.error || 'Unknown error');
+  }
 }
