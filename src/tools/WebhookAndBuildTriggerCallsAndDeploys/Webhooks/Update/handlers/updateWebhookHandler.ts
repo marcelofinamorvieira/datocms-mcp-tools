@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse, UpdateWebhookParams as ClientUpdateParams } from "../../../webhookAndBuildTriggerTypes.js";
 
 type UpdateWebhookParams = z.infer<typeof webhookSchemas.update>;
 
@@ -14,65 +15,51 @@ type UpdateWebhookParams = z.infer<typeof webhookSchemas.update>;
  */
 export async function updateWebhookHandler(
   params: UpdateWebhookParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, webhookId, name, url, headers, events } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
     // Build update payload with only the provided parameters
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: ClientUpdateParams = {};
     
-    if (params.name !== undefined) updatePayload.name = params.name;
-    if (params.url !== undefined) updatePayload.url = params.url;
-    if (params.headers !== undefined) updatePayload.headers = params.headers;
-    if (params.events !== undefined) updatePayload.events = params.events;
-    if (params.payload_format !== undefined) updatePayload.payload_format = params.payload_format;
-    if (params.triggers !== undefined) updatePayload.triggers = params.triggers;
-    if (params.httpsOnly !== undefined) updatePayload.https_only = params.httpsOnly;
+    if (name !== undefined) updatePayload.name = name;
+    if (url !== undefined) updatePayload.url = url;
+    if (headers !== undefined) updatePayload.headers = headers;
+    if (events !== undefined) updatePayload.events = events;
 
-    // Update the webhook
-    const webhook = await client.webhooks.update(params.webhookId, updatePayload as any);
+    // Update the webhook with proper typing
+    const webhook = await client.updateWebhook(webhookId, updatePayload);
 
     // Return the updated webhook details
-    return createResponse({
-      id: webhook.id,
-      name: webhook.name,
-      url: webhook.url,
-      headers: webhook.headers,
-      events: webhook.events,
-      payload_format: (webhook as any).payload_type, 
-      triggers: (webhook as any).triggers,
-      https_only: (webhook as any).https_only,
-      created_at: (webhook as any).created_at,
-      updated_at: (webhook as any).updated_at,
-    });
+    return createResponse(JSON.stringify(webhook, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to update webhooks."
       );
     }
 
     // Handle not found errors
+    if (isNotFoundError(error)) {
+      return createErrorResponse(
+        `No webhook found with ID: ${params.webhookId}`
+      );
+    }
+
+    // Handle validation errors
     if (
       typeof error === 'object' && 
       error !== null && 
-      ('status' in error && error.status === 404 ||
+      ('status' in error && error.status === 422 ||
        'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
+       (error.message.includes('422') || error.message.toLowerCase().includes('validation')))
     ) {
       return createErrorResponse(
-        `No webhook found with ID: ${params.webhookId}`
+        `Invalid webhook data: ${extractDetailedErrorInfo(error)}`
       );
     }
 

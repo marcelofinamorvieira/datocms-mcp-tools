@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse, UpdateBuildTriggerParams as ClientUpdateParams } from "../../../webhookAndBuildTriggerTypes.js";
 
 type UpdateBuildTriggerParams = z.infer<typeof buildTriggerSchemas.update>;
 
@@ -14,61 +15,35 @@ type UpdateBuildTriggerParams = z.infer<typeof buildTriggerSchemas.update>;
  */
 export async function updateBuildTriggerHandler(
   params: UpdateBuildTriggerParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, buildTriggerId, name, adapter_settings, indexing_enabled } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
     // Build update payload with only the provided parameters
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: ClientUpdateParams = {};
     
-    if (params.name !== undefined) updatePayload.name = params.name;
-    if (params.adapter !== undefined) updatePayload.adapter = params.adapter;
-    if (params.adapter_settings !== undefined) updatePayload.adapter_settings = params.adapter_settings;
-    if (params.indexing_enabled !== undefined) updatePayload.indexing_enabled = params.indexing_enabled;
+    if (name !== undefined) updatePayload.name = name;
+    if (adapter_settings !== undefined) updatePayload.adapter_settings = adapter_settings;
+    if (indexing_enabled !== undefined) updatePayload.indexing_enabled = indexing_enabled;
 
-    // Update the build trigger
-    const buildTrigger = await client.buildTriggers.update(params.buildTriggerId, updatePayload);
+    // Update the build trigger with proper typing
+    const buildTrigger = await client.updateBuildTrigger(buildTriggerId, updatePayload);
 
-    // Return the updated build trigger details with type assertion to handle possible type mismatch
-    const triggerData = buildTrigger as any;
-    return createResponse({
-      id: triggerData.id,
-      type: triggerData.type,
-      name: triggerData.name,
-      adapter: triggerData.adapter,
-      adapter_settings: triggerData.adapter_settings,
-      indexing_enabled: triggerData.indexing_enabled,
-      frontend_url: triggerData.frontend_url,
-      webhook_token: triggerData.webhook_token,
-      created_at: triggerData.meta?.created_at || triggerData.created_at,
-      updated_at: triggerData.meta?.updated_at || triggerData.updated_at,
-    });
+    // Return the updated build trigger details
+    return createResponse(JSON.stringify(buildTrigger, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to update build triggers."
       );
     }
 
     // Handle not found errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
         `No build trigger found with ID: ${params.buildTriggerId}`
       );

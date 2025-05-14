@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookCallSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type RetrieveWebhookCallParams = z.infer<typeof webhookCallSchemas.retrieve>;
 
@@ -14,55 +15,30 @@ type RetrieveWebhookCallParams = z.infer<typeof webhookCallSchemas.retrieve>;
  */
 export async function retrieveWebhookCallHandler(
   params: RetrieveWebhookCallParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, callId } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
-    // Fetch the specific webhook call log
-    const call = await client.webhookCalls.find(params.callId);
+    // Fetch the specific webhook call log with proper typing
+    const webhookCall = await client.getWebhookCall(callId);
 
-    // Format the response
-    return createResponse({
-      id: call.id,
-      webhook_id: params.webhookId,
-      status: call.status,
-      entity_type: call.entity_type,
-      request_url: call.request_url,
-      request_headers: call.request_headers,
-      request_payload: call.request_payload,
-      response_status: call.response_status,
-      response_headers: call.response_headers,
-      response_payload: call.response_payload,
-      created_at: call.created_at
-    });
+    // Return the webhook call details
+    return createResponse(JSON.stringify(webhookCall, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to access webhook call logs."
       );
     }
 
     // Handle not found errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
-        `No webhook call log found with ID: ${params.callId} for webhook: ${params.webhookId}`
+        `No webhook call log found with ID: ${params.callId}`
       );
     }
 

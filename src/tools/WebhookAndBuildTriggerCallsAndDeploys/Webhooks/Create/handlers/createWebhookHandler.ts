@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse, CreateWebhookParams as ClientCreateParams } from "../../../webhookAndBuildTriggerTypes.js";
 
 type CreateWebhookParams = z.infer<typeof webhookSchemas.create>;
 
@@ -14,52 +15,44 @@ type CreateWebhookParams = z.infer<typeof webhookSchemas.create>;
  */
 export async function createWebhookHandler(
   params: CreateWebhookParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, name, url, headers, events } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
-    // Create the webhook with the provided parameters
-    const webhook = await client.webhooks.create({
-      name: params.name,
-      url: params.url,
-      headers: params.headers || {},
-      events: params.events,
-      payload_type: params.payload_format,
-      https_only: params.httpsOnly,
-      triggers: params.triggers,
-    } as any);
+    // Create the webhook with the provided parameters using our typed client
+    const createParams: ClientCreateParams = {
+      name,
+      url,
+      headers: headers || {},
+      events
+    };
 
-    // Cast webhook to any to access properties
-    const webhookAny = webhook as any;
+    // Create the webhook with proper typing
+    const webhook = await client.createWebhook(createParams);
 
     // Return the created webhook details
-    return createResponse({
-      id: webhook.id,
-      name: webhook.name,
-      url: webhook.url,
-      headers: webhook.headers,
-      events: webhook.events,
-      payload_format: webhookAny.payload_type,
-      triggers: webhookAny.triggers,
-      https_only: webhookAny.https_only,
-      created_at: webhookAny.created_at,
-      updated_at: webhookAny.updated_at,
-    });
+    return createResponse(JSON.stringify(webhook, null, 2));
   } catch (error) {
     // Handle authorization errors
+    if (isAuthorizationError(error)) {
+      return createErrorResponse(
+        "The provided API token does not have permission to create webhooks."
+      );
+    }
+
+    // Handle validation errors
     if (
       typeof error === 'object' && 
       error !== null && 
-      ('status' in error && error.status === 401 ||
+      ('status' in error && error.status === 422 ||
        'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
+       (error.message.includes('422') || error.message.toLowerCase().includes('validation')))
     ) {
       return createErrorResponse(
-        "The provided API token does not have permission to create webhooks."
+        `Invalid webhook data: ${extractDetailedErrorInfo(error)}`
       );
     }
 

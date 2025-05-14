@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type DeleteWebhookParams = z.infer<typeof webhookSchemas.delete>;
 
@@ -14,44 +15,31 @@ type DeleteWebhookParams = z.infer<typeof webhookSchemas.delete>;
  */
 export async function deleteWebhookHandler(
   params: DeleteWebhookParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, webhookId } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
-    // Delete the webhook
-    await client.webhooks.destroy(params.webhookId);
+    // Delete the webhook with proper typing
+    await client.deleteWebhook(webhookId);
 
     // Return success response
-    return createResponse({
+    return createResponse(JSON.stringify({
       success: true,
-      message: `Webhook with ID ${params.webhookId} has been successfully deleted.`
-    });
+      message: `Webhook with ID ${webhookId} has been successfully deleted.`
+    }, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to delete webhooks."
       );
     }
 
     // Handle not found errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
         `No webhook found with ID: ${params.webhookId}`
       );

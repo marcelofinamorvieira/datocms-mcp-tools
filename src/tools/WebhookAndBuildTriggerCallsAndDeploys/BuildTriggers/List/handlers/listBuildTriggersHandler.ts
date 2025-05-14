@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type ListBuildTriggersParams = z.infer<typeof buildTriggerSchemas.list>;
 
@@ -14,50 +15,24 @@ type ListBuildTriggersParams = z.infer<typeof buildTriggerSchemas.list>;
  */
 export async function listBuildTriggersHandler(
   params: ListBuildTriggersParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
-    // Fetch all build triggers
-    const buildTriggers = await client.buildTriggers.list();
-
-    // Format the response with only the necessary information
-    const formattedBuildTriggers = buildTriggers.map(trigger => {
-      // Cast to any to handle potential type mismatches
-      const triggerData = trigger as any;
-
-      return {
-        id: triggerData.id,
-        type: triggerData.type,
-        name: triggerData.name,
-        adapter: triggerData.adapter,
-        adapter_settings: triggerData.adapter_settings,
-        indexing_enabled: triggerData.indexing_enabled,
-        frontend_url: triggerData.frontend_url,
-        webhook_token: triggerData.webhook_token,
-        created_at: triggerData.meta?.created_at || triggerData.created_at,
-        updated_at: triggerData.meta?.updated_at || triggerData.updated_at,
-      };
-    });
+    // Fetch all build triggers with proper typing
+    const buildTriggers = await client.listBuildTriggers();
 
     // Return the list of build triggers
-    return createResponse({
-      build_triggers: formattedBuildTriggers,
-      total: formattedBuildTriggers.length
-    });
+    return createResponse(JSON.stringify({
+      build_triggers: buildTriggers,
+      total: buildTriggers.length
+    }, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to access build triggers."
       );

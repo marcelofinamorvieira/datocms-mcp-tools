@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { deployEventSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type ListDeployEventsParams = z.infer<typeof deployEventSchemas.list>;
 
@@ -14,68 +15,34 @@ type ListDeployEventsParams = z.infer<typeof deployEventSchemas.list>;
  */
 export async function listDeployEventsHandler(
   params: ListDeployEventsParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, buildTriggerId, page, filter } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
-    // Prepare the query parameters
-    const queryParams: Record<string, any> = {};
-
-    // Add pagination parameters if provided
-    if (params.page) {
-      if (params.page.offset !== undefined) queryParams.page_offset = params.page.offset;
-      if (params.page.limit !== undefined) queryParams.page_limit = params.page.limit;
-    }
-
-    // Add filter parameters if provided
-    if (params.filter) {
-      if (params.filter.eventType !== undefined) queryParams.filter_event_type = params.filter.eventType;
-    }
-
-    // Fetch deploy events for the specific build trigger
-    const deployEvents = await client.buildEvents.list({
-      ...queryParams,
-      buildTriggerId: params.buildTriggerId
+    // Fetch deploy events for the specific build trigger with optional filters
+    const deployEvents = await client.listDeployEvents({
+      build_trigger_id: buildTriggerId
     });
 
     // Format the response
-    return createResponse({
-      build_trigger_id: params.buildTriggerId,
-      events: deployEvents.map((event: any) => ({
-        id: event.id,
-        type: event.type,
-        event_type: event.event_type,
-        data: event.data,
-        created_at: event.created_at
-      })),
+    return createResponse(JSON.stringify({
+      build_trigger_id: buildTriggerId,
+      events: deployEvents,
       total: deployEvents.length,
-    });
+    }, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to access deploy events."
       );
     }
 
     // Handle not found errors for the build trigger
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
         `No build trigger found with ID: ${params.buildTriggerId}`
       );

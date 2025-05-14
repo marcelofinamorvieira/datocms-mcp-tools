@@ -7,14 +7,15 @@
 import type { z } from "zod";
 import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import type { recordsSchemas } from "../../schemas.js";
+import type { Item, RecordFilter, RecordQueryParams, McpResponse } from "../../types.js";
 
 /**
  * Handler function for querying DatoCMS records with various filters
  */
-export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.query>) => {
+export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.query>): Promise<McpResponse> => {
   const { 
     apiToken, 
     textSearch, 
@@ -36,9 +37,9 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
     // Initialize DatoCMS client
     const client = getClient(apiToken, environment);
     
-    // Prepare query parameters
-    const queryParams: Record<string, unknown> = {
-      version,
+    // Prepare query parameters with proper typing
+    const queryParams: RecordQueryParams = {
+      version: version as "published" | "current",
       nested
     };
     
@@ -59,35 +60,61 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
     // Add pagination parameters
     queryParams.page = pageParams;
     
+    // Build filter object using Record<string, unknown> to avoid type issues
+    // The CMA client expects a plain object with specific properties
+    let filter: Record<string, unknown> | undefined;
+    
     // Handle filter logic based on provided parameters
     if (textSearch) {
       // Text search query
-      queryParams.filter = { query: textSearch } as Record<string, unknown>;
+      filter = { query: textSearch };
       if (modelName) {
-        (queryParams.filter as Record<string, unknown>).type = modelName;
+        filter.type = modelName;
       }
     } else if (ids) {
       // IDs-based query
-      queryParams.filter = { ids } as Record<string, unknown>;
+      filter = { 
+        ids: Array.isArray(ids) ? ids : [ids]
+      };
     } else if (modelId || modelName) {
       // Model-based query with or without field filtering
-      queryParams.filter = { 
+      filter = { 
         type: modelId || modelName 
-      } as Record<string, unknown>;
+      };
       
       // Add field filtering if provided
       if (fields && Object.keys(fields).length > 0) {
-        (queryParams.filter as Record<string, unknown>).fields = fields;
+        Object.entries(fields).forEach(([fieldName, fieldValue]) => {
+          if (filter) {
+            // Add field filter with simple structure
+            filter[fieldName] = { eq: fieldValue };
+          }
+        });
       }
 
       // Add locale filter if provided
       if (locale) {
-        (queryParams.filter as Record<string, unknown>).locale = locale;
+        filter.locale = locale;
       }
     }
     
+    // Assign the filter to query params if it exists
+    if (filter) {
+      queryParams.filter = filter;
+    }
+    
     try {
-      const paginatedItems = await client.items.list(queryParams);
+      // Use type assertion to handle the client's expected types
+      // This allows us to maintain our enhanced type system while still working with the client
+      const clientParams = queryParams as any; // Use any here to bridge the gap between our types and client types
+      
+      // Type the response properly
+      const paginatedItems = await client.items.list(clientParams) as Item[] & {
+        meta?: { 
+          total_count?: number;
+          [key: string]: unknown;
+        }
+      };
 
       // Return enhanced response for empty results with metadata
       if (paginatedItems.length === 0) {
@@ -103,16 +130,8 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
         }, null, 2));
       }
       
-      // Check for meta property safely without TypeScript errors
-      // The DatoCMS API response types don't always include meta in their TypeScript definitions
-      const totalCount = (
-        // Use type assertion to safely access meta if it exists
-        'meta' in paginatedItems && 
-        typeof paginatedItems.meta === 'object' && 
-        paginatedItems.meta !== null && 
-        'total_count' in paginatedItems.meta && 
-        typeof paginatedItems.meta.total_count === 'number'
-      ) ? paginatedItems.meta.total_count : paginatedItems.length;
+      // Check for meta property with better typing
+      const totalCount = paginatedItems.meta?.total_count ?? paginatedItems.length;
       
       // Calculate if there might be more records
       const hasMoreRecords = paginatedItems.length === pageParams.limit && 
@@ -136,7 +155,7 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
         }, null, 2));
       }
       
-      // Process items to filter locales
+      // Process items to filter locales with better typing
       const allItems = paginatedItems.map(item => 
         returnMostPopulatedLocale(item, returnAllLocales)
       );
@@ -153,7 +172,7 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
         return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
       }
       
-      // Generic API error handling
+      // Generic API error handling with improved type safety
       return createErrorResponse(`Error querying DatoCMS records: ${extractDetailedErrorInfo(apiError)}`);
     }
   } catch (error: unknown) {

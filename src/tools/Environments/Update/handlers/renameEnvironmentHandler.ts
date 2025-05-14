@@ -4,24 +4,28 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
+import type { McpResponse } from "../../environmentTypes.js";
+import { createEnvironmentClient } from "../../environmentClient.js";
 
 /**
  * Handler for renaming a DatoCMS environment
+ * 
+ * @param args - The arguments for renaming an environment
+ * @returns A response with the updated environment or an error message
  */
-export const renameEnvironmentHandler = async (args: z.infer<typeof environmentSchemas.rename>) => {
+export const renameEnvironmentHandler = async (args: z.infer<typeof environmentSchemas.rename>): Promise<McpResponse> => {
   const { apiToken, environmentId, newId } = args;
   
   try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken);
+    // Initialize our type-safe environment client
+    const environmentClient = createEnvironmentClient(apiToken);
     
     try {
-      // Rename the environment
-      const environment = await client.environments.rename(environmentId, {
+      // Rename the environment using our type-safe client
+      const environment = await environmentClient.renameEnvironment(environmentId, {
         id: newId
       });
       

@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookCallSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type ResendWebhookCallParams = z.infer<typeof webhookCallSchemas.resend>;
 
@@ -14,54 +15,34 @@ type ResendWebhookCallParams = z.infer<typeof webhookCallSchemas.resend>;
  */
 export async function resendWebhookCallHandler(
   params: ResendWebhookCallParams
-) {
+): Promise<McpResponse> {
   try {
-    // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
-
-    // Use the client's baseURL and apiToken to make a direct API call for resending a webhook
-    // Since the specific method might not be available in the client SDK
-    const baseClient = client as any;
+    const { apiToken, environment, callId } = params;
     
-    // Access the HTTP client used by the DatoCMS client
-    await baseClient.client.request({
-      method: 'POST',
-      url: `/webhook-calls/${params.callId}/resend`,
-      params: { webhook_id: params.webhookId }
-    });
+    // Initialize the client with the API token and environment
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
+
+    // Resend the webhook call with proper typing
+    const webhookCall = await client.resendWebhookCall(callId);
 
     // Return success response
-    return createResponse({
+    return createResponse(JSON.stringify({
       success: true,
-      message: `Webhook call with ID ${params.callId} for webhook ${params.webhookId} has been successfully resent.`
-    });
+      message: `Webhook call with ID ${callId} has been successfully resent.`,
+      webhook_call: webhookCall
+    }, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to resend webhook calls."
       );
     }
 
     // Handle not found errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
-        `No webhook call found with ID: ${params.callId} for webhook: ${params.webhookId}`
+        `No webhook call found with ID: ${params.callId}`
       );
     }
 

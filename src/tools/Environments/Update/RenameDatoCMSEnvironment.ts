@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { getClient } from "../../../utils/clientManager.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpResponse } from "../environmentTypes.js";
+import { createEnvironmentClient } from "../environmentClient.js";
 
 /**
  * Registers the RenameDatoCMSEnvironment tool with the MCP server
@@ -26,15 +27,14 @@ export const registerRenameDatoCMSEnvironment = (server: McpServer) => {
       destructiveHint: false // This tool doesn't destroy anything
     },
     // Handler function for renaming an environment
-    async ({ apiToken, environmentId, newId, targetEnvironment }) => {
+    async ({ apiToken, environmentId, newId, targetEnvironment }): Promise<McpResponse> => {
       try {
-        // Initialize DatoCMS client
-        const clientParameters = targetEnvironment ? { apiToken, environment: targetEnvironment } : { apiToken };
-        const client = getClient(apiToken, environment);
+        // Initialize our type-safe environment client
+        const environmentClient = createEnvironmentClient(apiToken, targetEnvironment);
         
         try {
-          // Rename the environment
-          const environment = await client.environments.rename(environmentId, {
+          // Rename the environment using our type-safe client
+          const environment = await environmentClient.renameEnvironment(environmentId, {
             id: newId
           });
           

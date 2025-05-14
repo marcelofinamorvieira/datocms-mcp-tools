@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { getClient } from "../../utils/clientManager.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { returnMostPopulatedLocale } from "../../utils/returnMostPopulatedLocale.js";
+
+// Import type definitions
+import type { HandlerResponse, DatoCMSApiError, isDatoCMSApiError } from "./types.js";
 
 // Import the record action schemas and handlers
 import { recordsSchemas, recordActionsList } from "./schemas.js";
@@ -70,29 +73,29 @@ type RecordAction = keyof typeof recordsSchemas;
 export const registerRecordsRouter = (server: McpServer) => {
   const actionEnum = z.enum(recordActionsList as [string, ...string[]]);
   
+  // Define the parameter schema using raw properties for compatibility with server.tool
+  // This avoids the type error with the server.tool method
   server.tool(
-    // Tool name
     "datocms_records",
-    // Parameter schema with types using discriminated union based on action
     {
       action: actionEnum,
-      args: z.record(z.any()).optional().describe("Arguments for the action to perform. You MUST call datocms_parameters first to know what arguments are required for this action."),
+      args: z.record(z.any()).optional().describe("Arguments for the action to perform. You MUST call datocms_parameters first to know what arguments are required for this action.")
     },
-    // Annotations for the tool
     {
       title: "DatoCMS Records",
       description: "Manage DatoCMS records - items (records) that are instances of item types (models)."
     },
-    // Handler function for the records router
-    async ({ action, args = {} }) => {
+    async (args) => {
+      const { action, args: actionArgs = {} } = args;
+      
       try {
         // ALWAYS CHECK FOR PARAMETERS FIRST
         // If there are no arguments, or very few args for non-trivial operations,
         // redirect users to get_parameters first
         const shouldSuggestParams = (
           // These conditions indicate the user is likely not providing proper parameters
-          Object.keys(args).length === 0 || 
-          (Object.keys(args).length < 3 && ['query', 'create', 'update', 'bulk_publish', 'bulk_destroy'].includes(action))
+          Object.keys(actionArgs).length === 0 || 
+          (Object.keys(actionArgs).length < 3 && ['query', 'create', 'update', 'bulk_publish', 'bulk_destroy'].includes(action))
         );
         
         if (shouldSuggestParams) {
@@ -116,7 +119,7 @@ This will show you all the required parameters and their types.`);
         
         // Validate arguments against the schema
         try {
-          const validatedArgs = actionSchema.parse(args);
+          const validatedArgs = actionSchema.parse(actionArgs);
           
           // Route to the appropriate handler based on the action
           switch (validAction) {
@@ -181,7 +184,7 @@ ${errorFormatted}
 REQUIRED PARAMETERS FOR '${action.toUpperCase()}' ACTION:
 ${JSON.stringify(schemaInfo, null, 2)}
 
-To see proper documentation, use the 'datocms_parameters' tool first with:\n\n  action: "datocms_parameters",\n  args: {\n    resource: "records",\n    action: "${action}"\n  }`);
+To see proper documentation, use the 'datocms_parameters' tool first with:\\n\\n  action: "datocms_parameters",\\n  args: {\\n    resource: "records",\\n    action: "${action}"\\n  }`);
           }
           return createErrorResponse(`Error validating arguments: ${extractDetailedErrorInfo(error)}`);
         }

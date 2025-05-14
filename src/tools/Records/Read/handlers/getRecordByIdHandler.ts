@@ -6,15 +6,20 @@
 
 import type { z } from "zod";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import { getClient } from "../../../../utils/clientManager.js";
 import type { recordsSchemas } from "../../schemas.js";
+import type { Item, McpResponse } from "../../types.js";
+import { isPublished, hasScheduledPublication, hasScheduledUnpublishing } from "../../advancedTypes.js";
 
 /**
  * Handler to retrieve a specific DatoCMS record by its ID
+ * 
+ * @param args - Parameters for getting a record by ID
+ * @returns A formatted response with the record data or error message
  */
-export const getRecordByIdHandler = async (args: z.infer<typeof recordsSchemas.get>) => {
+export const getRecordByIdHandler = async (args: z.infer<typeof recordsSchemas.get>): Promise<McpResponse> => {
   const { apiToken, itemId, version = "published", returnAllLocales = false, nested = true, environment } = args;
   
   try {
@@ -22,18 +27,36 @@ export const getRecordByIdHandler = async (args: z.infer<typeof recordsSchemas.g
     const client = getClient(apiToken, environment);
     
     try {
-      // Prepare query parameters
-      const queryParams: Record<string, unknown> = {
-        version,
+      // Prepare query parameters with proper typing
+      const queryParams = {
+        version: version as "published" | "current",
         nested
       };
     
-      // Retrieve the item
-      const item = await client.items.find(itemId, queryParams);
+      // Retrieve the item with proper typing
+      const item: Item = await client.items.find(itemId, queryParams);
       
       // If no item found, return error
       if (!item) {
         return createErrorResponse(`Error: Record with ID '${itemId}' was not found.`);
+      }
+
+      // Use the type guards to provide additional context about the record
+      let additionalInfo = '';
+      if (isPublished(item)) {
+        additionalInfo += `\nRecord Status: Published (published on ${new Date(item.meta.published_at!).toLocaleString()})`;
+      } else if (item.meta.status === 'draft') {
+        additionalInfo += '\nRecord Status: Draft (not yet published)';
+      } else if (item.meta.status === 'updated') {
+        additionalInfo += `\nRecord Status: Updated (published version from ${new Date(item.meta.published_at!).toLocaleString()}, with unpublished changes)`;
+      }
+
+      if (hasScheduledPublication(item)) {
+        additionalInfo += `\nScheduled Publication: ${new Date(item.meta.publication_scheduled_at!).toLocaleString()}`;
+      }
+
+      if (hasScheduledUnpublishing(item)) {
+        additionalInfo += `\nScheduled Unpublishing: ${new Date(item.meta.unpublishing_scheduled_at!).toLocaleString()}`;
       }
 
       // Process the item to filter locales (saves on tokens) unless returnAllLocales is true
@@ -50,7 +73,7 @@ export const getRecordByIdHandler = async (args: z.infer<typeof recordsSchemas.g
                                   serializedRecord.includes('"localized":true');
 
         if (hasLocalizedFields) {
-          return createResponse(`${serializedRecord}
+          return createResponse(`${serializedRecord}${additionalInfo}
 
 NOTE: This record contains localized fields (shown as objects with locale keys like { "en": "value", "it": "value" }).
 When updating these fields, you MUST include values for ALL locales that should be preserved, not just the ones you're updating.`);
@@ -58,7 +81,7 @@ When updating these fields, you MUST include values for ALL locales that should 
       }
 
       // Convert to JSON and create response (will be chunked only if necessary)
-      return createResponse(serializedRecord);
+      return createResponse(`${serializedRecord}${additionalInfo}`);
       
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {

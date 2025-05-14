@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type DeleteBuildTriggerParams = z.infer<typeof buildTriggerSchemas.delete>;
 
@@ -14,44 +15,31 @@ type DeleteBuildTriggerParams = z.infer<typeof buildTriggerSchemas.delete>;
  */
 export async function deleteBuildTriggerHandler(
   params: DeleteBuildTriggerParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, buildTriggerId } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
     // Delete the build trigger
-    await client.buildTriggers.destroy(params.buildTriggerId);
+    await client.deleteBuildTrigger(buildTriggerId);
 
     // Return success response
-    return createResponse({
+    return createResponse(JSON.stringify({
       success: true,
-      message: `Build trigger with ID ${params.buildTriggerId} has been successfully deleted.`
-    });
+      message: `Build trigger with ID ${buildTriggerId} has been successfully deleted.`
+    }, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to delete build triggers."
       );
     }
 
     // Handle not found errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
         `No build trigger found with ID: ${params.buildTriggerId}`
       );

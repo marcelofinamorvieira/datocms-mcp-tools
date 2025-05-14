@@ -1,8 +1,9 @@
-import { getClient } from "../../../../../utils/clientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { z } from "zod";
+import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { z } from "zod";
+import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
+import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
 
 type TriggerBuildParams = z.infer<typeof buildTriggerSchemas.trigger>;
 
@@ -14,48 +15,32 @@ type TriggerBuildParams = z.infer<typeof buildTriggerSchemas.trigger>;
  */
 export async function triggerBuildHandler(
   params: TriggerBuildParams
-) {
+): Promise<McpResponse> {
   try {
+    const { apiToken, environment, buildTriggerId } = params;
+    
     // Initialize the client with the API token and environment
-    const clientParams = params.environment 
-      ? { apiToken: params.apiToken, environment: params.environment } 
-      : { apiToken: params.apiToken };
-    const client = getClient(apiToken, environment);
+    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
 
-    // Trigger the build
-    const result = await client.buildTriggers.trigger(params.buildTriggerId);
+    // Trigger the build with proper typing
+    const deployEvent = await client.triggerBuild(buildTriggerId);
 
-    // Return success response with type assertion since the API might return incomplete data
-    const resultData = result as any;
-    return createResponse({
+    // Return success response with typed data
+    return createResponse(JSON.stringify({
       success: true,
-      message: `Build triggered successfully for build trigger ID: ${params.buildTriggerId}`,
-      build_id: resultData?.id || "unknown",
-      status: resultData?.status || "triggered",
-      started_at: resultData?.started_at || new Date().toISOString(),
-    });
+      message: `Build triggered successfully for build trigger ID: ${buildTriggerId}`,
+      deploy_event: deployEvent
+    }, null, 2));
   } catch (error) {
     // Handle authorization errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 401 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')))
-    ) {
+    if (isAuthorizationError(error)) {
       return createErrorResponse(
         "The provided API token does not have permission to trigger builds."
       );
     }
 
     // Handle not found errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 404 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
-    ) {
+    if (isNotFoundError(error)) {
       return createErrorResponse(
         `No build trigger found with ID: ${params.buildTriggerId}`
       );
