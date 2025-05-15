@@ -11,13 +11,7 @@ import { uploadsSchemas } from "../../schemas.js";
 export const bulkDestroyUploadsHandler = async (
   args: z.infer<typeof uploadsSchemas.bulk_destroy>
 ) => {
-  const { apiToken, uploadIds, confirmation, environment } = args;
-
-  if (!confirmation) {
-    return createErrorResponse(
-      "Explicit confirmation=true is required for bulk delete."
-    );
-  }
+  const { apiToken, uploadIds, environment } = args;
   if (!uploadIds.length) {
     return createErrorResponse("No upload IDs provided.");
   }

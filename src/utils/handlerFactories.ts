@@ -214,7 +214,7 @@ export function createUpdateHandler<T, R>(options: RetrieveHandlerOptions<T, R>)
 }
 
 /**
- * Creates a handler function for delete operations with confirmation check
+ * Creates a handler function for delete operations
  */
 export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>) {
   const { schema, entityName, idParam, clientAction } = options;
@@ -222,15 +222,9 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>) {
   return async (args: z.infer<typeof schema>) => {
     try {
       // Extract parameters
-      const confirmation = (args as any).confirmation;
       const apiToken = (args as any).apiToken;
       const environment = (args as any).environment;
       const entityId = args[idParam];
-      
-      // Check for explicit confirmation
-      if (confirmation !== true) {
-        return createErrorResponse(`Error: You must provide explicit confirmation to delete this ${entityName}. Set 'confirmation: true' to confirm.`);
-      }
       
       // Initialize DatoCMS client
       const client = getClient(apiToken, environment);

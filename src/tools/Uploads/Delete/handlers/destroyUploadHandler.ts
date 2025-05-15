@@ -14,16 +14,9 @@ export const destroyUploadHandler = async (
   const {
     apiToken,
     uploadId,
-    confirmation,
     returnOnlyConfirmation,
     environment
   } = args;
-
-  if (!confirmation) {
-    return createErrorResponse(
-      "Explicit confirmation=true is required to delete an upload."
-    );
-  }
 
   try {
     const client = getClient(apiToken, environment);

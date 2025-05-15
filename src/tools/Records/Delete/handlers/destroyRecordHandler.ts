@@ -14,12 +14,7 @@ import type { recordsSchemas } from "../../schemas.js";
  * Handler function for deleting a DatoCMS record
  */
 export const destroyRecordHandler = async (args: z.infer<typeof recordsSchemas.destroy>) => {
-  const { apiToken, itemId, confirmation, returnOnlyConfirmation = false, environment } = args;
-  
-  // Require explicit confirmation due to destructive nature
-  if (!confirmation) {
-    return createErrorResponse("Error: Explicit confirmation is required to delete the record. Set 'confirmation' parameter to true to proceed with deletion.");
-  }
+  const { apiToken, itemId, returnOnlyConfirmation = false, environment } = args;
 
   try {
     // Initialize DatoCMS client

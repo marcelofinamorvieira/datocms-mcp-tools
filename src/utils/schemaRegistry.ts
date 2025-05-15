@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { lazy } from "./lazySchema.js";
-import { apiTokenSchema, environmentSchema, destructiveConfirmationSchema, paginationSchema, fieldTypeSchema } from "./sharedSchemas.js";
+import { apiTokenSchema, environmentSchema, paginationSchema, fieldTypeSchema } from "./sharedSchemas.js";
 
 /**
  * Schema registry for the DatoCMS MCP server
@@ -18,7 +18,7 @@ export const schemaRegistry = {
   
   environment: lazy(() => environmentSchema),
   
-  confirmation: lazy(() => destructiveConfirmationSchema),
+  confirmation: lazy(() => z.boolean().optional()),
   
   // ID schemas
   recordId: lazy(() => z.string().min(1).describe(
@@ -90,8 +90,7 @@ export const basicGet = z.object({
  */
 export const basicDelete = z.object({
   apiToken: schemaRegistry.apiToken,
-  environment: schemaRegistry.environment,
-  confirmation: schemaRegistry.confirmation
+  environment: schemaRegistry.environment
 });
 
 /**
@@ -118,8 +117,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      recordId: schemaRegistry.recordId,
-      confirmation: schemaRegistry.confirmation
+      recordId: schemaRegistry.recordId
     })),
     
     publish: lazy(() => createSchema({
@@ -139,8 +137,7 @@ export const domainSchemas = {
       })),
       
       delete: lazy(() => createSchema({
-        itemTypeId: schemaRegistry.itemTypeId,
-        confirmation: schemaRegistry.confirmation
+        itemTypeId: schemaRegistry.itemTypeId
       }))
     },
     
@@ -150,8 +147,7 @@ export const domainSchemas = {
       })),
       
       delete: lazy(() => createSchema({
-        fieldId: schemaRegistry.fieldId,
-        confirmation: schemaRegistry.confirmation
+        fieldId: schemaRegistry.fieldId
       }))
     },
     
@@ -161,8 +157,7 @@ export const domainSchemas = {
       })),
       
       delete: lazy(() => createSchema({
-        fieldsetId: schemaRegistry.fieldsetId,
-        confirmation: schemaRegistry.confirmation
+        fieldsetId: schemaRegistry.fieldsetId
       }))
     }
   },
@@ -174,8 +169,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      environmentId: schemaRegistry.environmentId,
-      confirmation: schemaRegistry.confirmation
+      environmentId: schemaRegistry.environmentId
     })),
     
     promote: lazy(() => createSchema({
@@ -190,8 +184,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      webhookId: schemaRegistry.webhookId,
-      confirmation: schemaRegistry.confirmation
+      webhookId: schemaRegistry.webhookId
     }))
   },
   
@@ -202,8 +195,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      buildTriggerId: schemaRegistry.buildTriggerId,
-      confirmation: schemaRegistry.confirmation
+      buildTriggerId: schemaRegistry.buildTriggerId
     }))
   },
   
@@ -214,8 +206,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      collaboratorId: schemaRegistry.collaboratorId,
-      confirmation: schemaRegistry.confirmation
+      collaboratorId: schemaRegistry.collaboratorId
     }))
   },
   
@@ -226,8 +217,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      tokenId: schemaRegistry.tokenId,
-      confirmation: schemaRegistry.confirmation
+      tokenId: schemaRegistry.tokenId
     }))
   },
   
@@ -238,8 +228,7 @@ export const domainSchemas = {
     })),
     
     delete: lazy(() => createSchema({
-      uploadId: schemaRegistry.uploadId,
-      confirmation: schemaRegistry.confirmation
+      uploadId: schemaRegistry.uploadId
     }))
   }
 }

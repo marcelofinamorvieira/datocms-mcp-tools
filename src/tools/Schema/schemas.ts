@@ -7,7 +7,6 @@ import {
   createListSchema,
   createDeleteSchema,
   paginationSchema,
-  destructiveConfirmationSchema,
   fieldTypeSchema
 } from "../../utils/sharedSchemas.js";
 

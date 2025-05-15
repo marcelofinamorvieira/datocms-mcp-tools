@@ -228,9 +228,6 @@ export const uploadsSchemas = {
     .object({
       apiToken: apiToken(),
       uploadId: uploadId,
-      confirmation: z
-        .literal(true)
-        .describe("Must be literally true to confirm deletion."),
       returnOnlyConfirmation: z
         .boolean()
         .optional()
@@ -250,7 +247,6 @@ export const uploadsSchemas = {
         .min(1)
         .max(200)
         .describe("IDs to delete (max 200)."),
-      confirmation: z.literal(true).describe("Must be true."),
       environment: z.string().optional(),
     })
     .strict(),

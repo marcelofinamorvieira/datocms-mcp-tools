@@ -49,15 +49,6 @@ export const idSchema = z.string()
   .describe("Entity identifier");
 
 /**
- * Boolean confirmation for destructive operations
- * Requires explicit true value for confirmation
- */
-export const destructiveConfirmationSchema = z.literal(true)
-  .describe(
-    "Explicit confirmation that you want to perform this destructive action. Must be set to true. This action cannot be undone."
-  );
-
-/**
  * Schema for role references, supporting multiple formats
  * DatoCMS supports both string literals and object references
  */
@@ -179,7 +170,6 @@ export function createListSchema() {
  */
 export function createDeleteSchema(entityName: string) {
   return createBaseSchema().extend({
-    [`${entityName}Id`]: createIdSchema(entityName),
-    confirmation: destructiveConfirmationSchema
+    [`${entityName}Id`]: createIdSchema(entityName)
   });
 }

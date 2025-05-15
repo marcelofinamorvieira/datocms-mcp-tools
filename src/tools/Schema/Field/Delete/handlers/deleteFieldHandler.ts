@@ -11,15 +11,7 @@ export type DeleteFieldParams = z.infer<typeof schemaSchemas.delete_field>;
  */
 export const deleteFieldHandler = async (args: DeleteFieldParams) => {
   try {
-    const { apiToken, fieldId, confirmation, environment } = args;
-
-    // Safety check for confirmation
-    if (confirmation !== true) {
-      return createErrorResponse(
-        "Confirmation required. Please set 'confirmation: true' to confirm you want to delete this field. " +
-        "This action cannot be undone and may impact existing content."
-      );
-    }
+    const { apiToken, fieldId, environment } = args;
 
     // Build the DatoCMS client
     const client = getClient(apiToken as string, environment as string);

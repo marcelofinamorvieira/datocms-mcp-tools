@@ -7,7 +7,6 @@ import {
   versionSchema as versionEnumSchema,
   returnOnlyIdsSchema,
   returnOnlyConfirmationSchema,
-  destructiveConfirmationSchema,
   orderBySchema
 } from "../../utils/sharedSchemas.js";
 import { filterCondition, filterConditions } from "./filterCondition.js";
@@ -120,14 +119,12 @@ export const recordsSchemas = {
   // Delete operations
   destroy: createBaseSchema().extend({ 
     itemId: recordIdSchema,
-    confirmation: destructiveConfirmationSchema,
     returnOnlyConfirmation: returnOnlyConfirmationSchema,
   }),
 
   bulk_destroy: createBaseSchema().extend({ 
     itemIds: z.array(z.string()).min(1)
       .describe("Array of record IDs to destroy."),
-    confirmation: destructiveConfirmationSchema,
   }),
 
   // Publication operations

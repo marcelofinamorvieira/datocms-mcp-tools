@@ -13,12 +13,7 @@ import type { schemaSchemas } from "../../../schemas.js";
  * Handler to delete a fieldset from DatoCMS
  */
 export const destroyFieldsetHandler = async (args: z.infer<typeof schemaSchemas.delete_fieldset>) => {
-  const { apiToken, fieldsetId, confirmation, environment } = args;
-  
-  // Check for explicit confirmation
-  if (confirmation !== true) {
-    return createErrorResponse("Error: You must provide explicit confirmation to delete this fieldset. Set 'confirmation: true' to confirm.");
-  }
+  const { apiToken, fieldsetId, environment } = args;
   
   try {
     // Initialize DatoCMS client

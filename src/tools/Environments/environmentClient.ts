@@ -91,8 +91,12 @@ export class EnvironmentClient {
    * @param id - Environment ID
    * @returns Promise that resolves when the environment is deleted
    */
-  async deleteEnvironment(id: string): Promise<void> {
+  async deleteEnvironment(id: string): Promise<{ success: boolean, message: string }> {
     await this.client.environments.destroy(id);
+    return { 
+      success: true, 
+      message: `Environment '${id}' has been deleted successfully` 
+    };
   }
 
   /**

@@ -16,12 +16,7 @@ import { schemaSchemas } from "../../../schemas.js";
  */
 export const deleteItemTypeHandler = async (args: z.infer<typeof schemaSchemas.delete_item_type>) => {
   try {
-    const { apiToken, itemTypeId, confirmation, environment } = args;
-    
-    // Check for explicit confirmation
-    if (confirmation !== true) {
-      return createErrorResponse("Error: You must provide explicit confirmation to delete this item type. Set 'confirmation: true' to confirm.");
-    }
+    const { apiToken, itemTypeId, environment } = args;
     
     // Initialize DatoCMS client
     const client = getClient(apiToken as string, environment as string);

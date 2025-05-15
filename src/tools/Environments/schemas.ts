@@ -5,8 +5,7 @@ import {
   createIdSchema,
   createBaseSchema,
   createRetrieveSchema,
-  createListSchema,
-  destructiveConfirmationSchema
+  createListSchema
 } from "../../utils/sharedSchemas.js";
 
 /**
@@ -36,12 +35,9 @@ export const environmentSchemas = {
   // Environment deletion operations
   delete: createBaseSchema().extend({
     environmentId: environmentIdSchema,
-    // Enhanced validation using consistent pattern instead of string-based confirmation
-    confirmation: z.union([
-      destructiveConfirmationSchema,
-      // For backward compatibility, also accept 'confirm' string
-      z.literal('confirm').describe("Type 'confirm' to confirm the deletion. This is a destructive action that cannot be undone.")
-    ]),
+    confirmation: z.literal("confirm")
+      .optional()
+      .describe("Type 'confirm' to confirm the deletion. This is required in the DeleteDatoCMSEnvironment tool but optional here for backward compatibility."),
   }),
 
   // Environment renaming operations

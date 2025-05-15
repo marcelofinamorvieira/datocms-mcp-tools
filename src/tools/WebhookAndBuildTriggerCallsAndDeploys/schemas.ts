@@ -5,8 +5,7 @@ import {
   createBaseSchema,
   createRetrieveSchema,
   createListSchema,
-  paginationSchema,
-  destructiveConfirmationSchema
+  paginationSchema
 } from "../../utils/sharedSchemas.js";
 
 import {
@@ -67,8 +66,7 @@ export const webhookSchemas = {
   }),
 
   delete: createBaseSchema().extend({
-    webhookId: z.string().min(1).describe("The ID of the webhook to delete."),
-    confirmation: destructiveConfirmationSchema.optional()
+    webhookId: z.string().min(1).describe("The ID of the webhook to delete.")
   })
 };
 
@@ -134,8 +132,7 @@ export const buildTriggerSchemas = {
   }),
 
   delete: createBaseSchema().extend({
-    buildTriggerId: z.string().min(1).describe("The ID of the build trigger to delete."),
-    confirmation: destructiveConfirmationSchema.optional()
+    buildTriggerId: z.string().min(1).describe("The ID of the build trigger to delete.")
   }),
 
   trigger: createBaseSchema().extend({

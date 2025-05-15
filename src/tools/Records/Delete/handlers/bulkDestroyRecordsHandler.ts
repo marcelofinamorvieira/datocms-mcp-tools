@@ -14,12 +14,7 @@ import type { recordsSchemas } from "../../schemas.js";
  * Handler function for deleting multiple DatoCMS records in bulk
  */
 export const bulkDestroyRecordsHandler = async (args: z.infer<typeof recordsSchemas.bulk_destroy>) => {
-  const { apiToken, itemIds, confirmation, environment } = args;
-  
-  // Require explicit confirmation due to destructive nature
-  if (!confirmation) {
-    return createErrorResponse("Error: Explicit confirmation is required to delete records. Set 'confirmation' parameter to true to proceed with deletion.");
-  }
+  const { apiToken, itemIds, environment } = args;
 
   // Check if we have any IDs to delete
   if (itemIds.length === 0) {
