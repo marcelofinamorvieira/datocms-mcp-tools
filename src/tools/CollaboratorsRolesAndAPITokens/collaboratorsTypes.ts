@@ -65,17 +65,20 @@ export interface APIToken {
   type: APITokenType;
   attributes: {
     name: string;
-    token?: string; // Only included when created or rotated
+    token?: string | null; // Only included when created or rotated
     hardcoded_type: string | null;
     created_at: string;
     updated_at: string;
+    can_access_cda?: boolean;
+    can_access_cda_preview?: boolean;
+    can_access_cma?: boolean;
   };
   relationships: {
     role: {
       data: {
         id: RoleIdentity;
         type: RoleType;
-      };
+      } | null;
     };
     creator: {
       data: {
