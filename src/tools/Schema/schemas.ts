@@ -23,6 +23,25 @@ const apiKeyPattern = /^[a-z][a-z0-9_]*$/;
 /**
  * Schemas for all schema-related actions (Item Types, Fieldsets, and Fields)
  * These schemas are used for both the schema router and describe tools.
+ * 
+ * IMPORTANT CONSTRAINTS TO BE AWARE OF:
+ * 
+ * 1. Item Type Constraints:
+ *    - orderingField and orderingDirection must be provided together or neither should be provided
+ *    - An item type cannot be both singleton and sortable at the same time
+ *    - When changing a sortable item type to singleton, first update to remove sortable, then set singleton
+ *    - When changing a singleton item type to sortable, first update to remove singleton, then set sortable
+ * 
+ * 2. Field Constraints:
+ *    - When updating a field, the existing fieldset relationship will be maintained if not explicitly changed
+ *    - Field types have specific validator requirements (e.g., rich_text fields require the rich_text_blocks validator)
+ *    - Field appearance must be compatible with the field type
+ *    - Field appearance configurations must always include an "addons" array (even if empty)
+ * 
+ * 3. Validation Rules:
+ *    - API keys must start with a lowercase letter and contain only lowercase letters, numbers, and underscores
+ *    - Most update operations require at least one field to be updated
+ *    - Validators must be appropriate for the field type
  */
 export const schemaSchemas = {
   // ItemType operations
@@ -38,18 +57,37 @@ export const schemaSchemas = {
     modularBlock: z.boolean().optional().default(false)
       .describe("Whether the item type is a modular block."),
     orderingDirection: z.enum(["asc", "desc"]).optional()
-      .describe("The direction of the ordering."),
+      .describe("The direction of the ordering. IMPORTANT: Must be provided together with orderingField."),
     orderingField: z.string().optional()
-      .describe("The field to use for ordering."),
+      .describe("The field to use for ordering. IMPORTANT: Must be provided together with orderingDirection."),
     singleton: z.boolean().optional().default(false)
-      .describe("Whether the item type is a singleton."),
+      .describe("Whether the item type is a singleton. IMPORTANT: Cannot be true when sortable is true."),
     sortable: z.boolean().optional().default(false)
-      .describe("Whether the item type is sortable."),
+      .describe("Whether the item type is sortable. IMPORTANT: Cannot be true when singleton is true."),
     titleField: z.string().optional()
       .describe("The field to use as the title."),
     tree: z.boolean().optional().default(false)
       .describe("Whether the item type is structured as a tree.")
-  }),
+  })
+  .refine(
+    data => {
+      // Both orderingField and orderingDirection must be provided together or neither should be provided
+      return (data.orderingField === undefined && data.orderingDirection === undefined) || 
+             (data.orderingField !== undefined && data.orderingDirection !== undefined);
+    },
+    {
+      message: "orderingField and orderingDirection must be provided together or neither should be provided"
+    }
+  )
+  .refine(
+    data => {
+      // Item type cannot be both singleton and sortable
+      return !(data.singleton === true && data.sortable === true);
+    },
+    {
+      message: "Item type cannot be both singleton and sortable"
+    }
+  ),
 
   duplicate_item_type: createBaseSchema().extend({
     itemTypeId: z.string().min(1).describe("The ID of the item type to duplicate."),
@@ -76,13 +114,13 @@ export const schemaSchemas = {
     modularBlock: z.boolean().optional()
       .describe("Whether the item type is a modular block."),
     orderingDirection: z.enum(["asc", "desc"]).optional()
-      .describe("The direction of the ordering."),
+      .describe("The direction of the ordering. IMPORTANT: Must be provided together with orderingField."),
     orderingField: z.string().optional()
-      .describe("The field to use for ordering."),
+      .describe("The field to use for ordering. IMPORTANT: Must be provided together with orderingDirection."),
     singleton: z.boolean().optional()
-      .describe("Whether the item type is a singleton."),
+      .describe("Whether the item type is a singleton. IMPORTANT: Cannot be true when sortable is true. If changing a sortable item type to singleton, first set sortable to false in a separate update."),
     sortable: z.boolean().optional()
-      .describe("Whether the item type is sortable."),
+      .describe("Whether the item type is sortable. IMPORTANT: Cannot be true when singleton is true. If changing a singleton item type to sortable, first set singleton to false in a separate update."),
     titleField: z.string().optional()
       .describe("The field to use as the title."),
     tree: z.boolean().optional()
@@ -91,6 +129,23 @@ export const schemaSchemas = {
     data => Object.keys(data).length > 2, // apiToken + environment + at least one field
     {
       message: "At least one field to update must be provided"
+    }
+  ).refine(
+    data => {
+      // Both orderingField and orderingDirection must be provided together or neither should be provided
+      return (data.orderingField === undefined && data.orderingDirection === undefined) || 
+             (data.orderingField !== undefined && data.orderingDirection !== undefined);
+    },
+    {
+      message: "orderingField and orderingDirection must be provided together or neither should be provided"
+    }
+  ).refine(
+    data => {
+      // Item type cannot be both singleton and sortable
+      return !(data.singleton === true && data.sortable === true);
+    },
+    {
+      message: "Item type cannot be both singleton and sortable"
     }
   ),
 
@@ -158,7 +213,7 @@ export const schemaSchemas = {
     localized: z.boolean().default(false)
       .describe("Whether the field is localized (translatable). Include this parameter even when using the default value."),
     fieldset_id: z.string().optional()
-      .describe("The ID of the fieldset to assign the field to. Recommended for organization."),
+      .describe("The ID of the fieldset to assign the field to. Recommended for organization. You will need to include this when updating the field later."),
     environment: environmentSchema
   }).refine(
     (data) => {
@@ -218,7 +273,7 @@ IMPORTANT NOTES:
     position: z.number().int().nonnegative().optional().describe("Updated position index for ordering fields."),
     hint: z.string().nullable().optional().describe("Updated additional hint text for the field."),
     localized: z.boolean().optional().describe("Whether the field is localized (translatable)."),
-    fieldset_id: z.string().optional().describe("The updated ID of the fieldset to assign the field to.")
+    fieldset_id: z.string().optional().describe("The updated ID of the fieldset to assign the field to. If not provided, the existing fieldset relationship will be maintained.")
   }).refine(
     data => Object.keys(data).length > 2, // apiToken + environment + at least one field
     {

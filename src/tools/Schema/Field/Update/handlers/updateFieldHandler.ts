@@ -16,8 +16,8 @@ export const updateFieldHandler = async (args: UpdateFieldParams) => {
     // Build the DatoCMS client
     const client = getClient(apiToken, environment);
 
-    // First, check if the field exists
-    await client.fields.find(fieldId);
+    // First, check if the field exists and get the current field data
+    const existingField = await client.fields.find(fieldId);
 
     // Create the update data object with proper structure
     const updateData: any = {
@@ -44,10 +44,17 @@ export const updateFieldHandler = async (args: UpdateFieldParams) => {
       updateData.data.attributes.validators = validators;
     }
 
-    // Handle fieldset relationship if provided
+    // Handle fieldset relationship - if not provided, maintain existing relationship
+    // This addresses the issue where fieldset relationship was lost during updates
     if (fieldset_id !== undefined) {
+      // If fieldset_id is explicitly provided, set it
       updateData.data.relationships.fieldset = {
         data: fieldset_id ? { type: "fieldset", id: fieldset_id } : null
+      };
+    } else if (existingField.fieldset) {
+      // If not provided but the field has a fieldset, maintain it
+      updateData.data.relationships.fieldset = {
+        data: { type: "fieldset", id: existingField.fieldset }
       };
     }
 
