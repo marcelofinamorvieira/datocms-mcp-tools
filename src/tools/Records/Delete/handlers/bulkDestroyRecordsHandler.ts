@@ -14,11 +14,16 @@ import type { recordsSchemas } from "../../schemas.js";
  * Handler function for deleting multiple DatoCMS records in bulk
  */
 export const bulkDestroyRecordsHandler = async (args: z.infer<typeof recordsSchemas.bulk_destroy>) => {
+  // Verify args is not undefined and contains the expected properties
+  if (!args || !args.apiToken || !args.itemIds) {
+    return createErrorResponse("Error: Missing required parameters. Required: apiToken, itemIds.");
+  }
+  
   const { apiToken, itemIds, environment } = args;
 
   // Check if we have any IDs to delete
-  if (itemIds.length === 0) {
-    return createErrorResponse("Error: No record IDs provided for deletion.");
+  if (!Array.isArray(itemIds) || itemIds.length === 0) {
+    return createErrorResponse("Error: No record IDs provided for deletion or itemIds is not an array.");
   }
   
   // Check maximum number of records (similar to bulk publish)

@@ -95,7 +95,9 @@ export const registerRecordsRouter = (server: McpServer) => {
         const shouldSuggestParams = (
           // These conditions indicate the user is likely not providing proper parameters
           Object.keys(actionArgs).length === 0 || 
-          (Object.keys(actionArgs).length < 3 && ['query', 'create', 'update', 'bulk_publish', 'bulk_destroy'].includes(action))
+          // For bulk operations, ensure we have at least apiToken and a valid array parameter
+          (action === 'bulk_destroy' && (!actionArgs.apiToken || !actionArgs.itemIds || !Array.isArray(actionArgs.itemIds))) ||
+          (Object.keys(actionArgs).length < 3 && ['query', 'create', 'update', 'bulk_publish'].includes(action))
         );
         
         if (shouldSuggestParams) {
