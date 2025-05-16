@@ -1,8 +1,9 @@
 /**
  * @file index.ts
- * @description Export all handlers for maintenance mode operations
+ * @description Exports all maintenance mode operation handlers
+ * @module tools/Environments/Maintenance/handlers
  */
 
-export { fetchMaintenanceModeHandler } from './fetchMaintenanceModeHandler.js';
-export { activateMaintenanceModeHandler } from './activateMaintenanceModeHandler.js';
-export { deactivateMaintenanceModeHandler } from './deactivateMaintenanceModeHandler.js';
+export * from './activateMaintenanceModeHandler.js';
+export * from './deactivateMaintenanceModeHandler.js';
+export * from './fetchMaintenanceModeHandler.js';
