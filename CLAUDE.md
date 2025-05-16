@@ -15,7 +15,13 @@ This project is a Model Context Protocol (MCP) server that enables Claude AI mod
 - Start the server with HTTP transport: `npm run start:http`
 - Watch mode for development: `npm run dev`
 
-### Project Structure
+### Development Workflow
+
+1. Run the TypeScript compiler in watch mode: `npm run dev`
+2. In a separate terminal, start the server: `npm run start` or `./start-server.sh`
+3. Make changes to the codebase and the server will automatically reload
+
+## Project Structure
 
 The codebase follows a modular architecture organized by domain:
 
@@ -28,6 +34,7 @@ The codebase follows a modular architecture organized by domain:
   - `Environments/` - Environment management tools
   - `CollaboratorsRolesAndAPITokens/` - Collaborator, role, and API token management
   - `WebhookAndBuildTriggerCallsAndDeploys/` - Webhook and delivery management
+  - `UI/` - UI customization tools (menu items, plugins, filters)
 
 ## Architecture
 
@@ -42,6 +49,7 @@ The codebase follows a modular architecture organized by domain:
    - `SchemaRouterTool` - Handles schema operations
    - `CollaboratorsRolesAndAPITokensRouterTool` - Manages users, roles, and API tokens
    - `WebhookAndBuildTriggerCallsAndDeploysRouterTool` - Manages webhooks and build triggers
+   - `UIRouterTool` - Manages UI customization components
 
 ### Key Design Patterns
 
@@ -57,6 +65,29 @@ The codebase follows a modular architecture organized by domain:
 4. **Two-Step Execution Flow**:
    - First call the `datocms_parameters` tool to get information about required parameters
    - Then use the `datocms_execute` tool with the proper parameters
+
+5. **Handler Factory Pattern** - Factory functions create handlers with consistent error handling and response formatting
+   - `createRetrieveHandler` - For getting single entities
+   - `createListHandler` - For listing multiple entities
+   - `createCreateHandler` - For creating new entities
+   - `createUpdateHandler` - For updating existing entities
+   - `createDeleteHandler` - For deleting entities
+
+6. **Middleware Composition** - Functionality is layered through middleware:
+   - Schema validation middleware
+   - Error handling middleware
+   - Client management middleware
+
+7. **Standardized Response Format** - All handlers return responses in a consistent format:
+   ```typescript
+   interface StandardResponse<T> {
+     success: boolean;
+     data?: T;
+     error?: string;
+     message?: string;
+     meta?: ResponseMetadata;
+   }
+   ```
 
 ### Communication Flow
 
@@ -74,7 +105,57 @@ When modifying or extending this codebase:
 2. Create appropriate Zod schemas for parameter validation in domain-specific schema files
 3. Implement error handling using the utility functions in `src/utils/errorHandlers.ts`
 4. Register new tools in `src/index.ts` within the `createServer` function
+5. Use handler factory functions for common operations:
+   ```typescript
+   export const getResourceHandler = createRetrieveHandler({
+     domain: "resources",
+     schemaName: "get",
+     schema: resourceSchemas.get,
+     entityName: "Resource",
+     idParam: "resourceId",
+     clientAction: async (client, args) => {
+       return await client.resources.find(args.resourceId);
+     }
+   });
+   ```
+6. Follow the standardized directory structure:
+   ```
+   src/
+   ├── tools/
+   │   ├── <Domain>/                                 # Domain name in PascalCase (e.g., Records)
+   │   │   ├── <Operation>/                          # Operation name in PascalCase (e.g., Create, Read)
+   │   │   │   ├── handlers/                         # All handlers for this operation
+   │   │   │   │   ├── <action><Entity>Handler.ts    # Handler files: verb + entity
+   │   │   │   │   └── index.ts                      # Exports all handlers
+   │   │   │   └── index.ts                          # Operation exports
+   │   │   ├── <Domain>RouterTool.ts                 # Router for this domain
+   │   │   ├── schemas.ts                            # All schemas for this domain
+   │   │   └── index.ts                              # Domain exports
+   ```
 
 ## API Client
 
 The project uses `@datocms/cma-client-node` to interact with the DatoCMS Content Management API. Refer to the [DatoCMS CMA documentation](https://www.datocms.com/docs/content-management-api) for API details.
+
+## Client Management
+
+The project uses a unified client manager to handle client initialization and reuse:
+
+```typescript
+// Get a default client
+const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+
+// Get a typed records client
+const recordsClient = UnifiedClientManager.getRecordsClient(apiToken, environment);
+
+// Get a collaborators client
+const collaboratorsClient = UnifiedClientManager.getCollaboratorsClient(apiToken, environment);
+```
+
+## Configuration with Claude Desktop
+
+To configure Claude Desktop to work with this server:
+
+1. Open Claude Desktop settings
+2. Add tool with command: `/path/to/datocms-mcp-server/start-server.sh`
+3. Set auto-start and enable the tool
