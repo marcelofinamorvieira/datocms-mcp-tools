@@ -3,8 +3,8 @@
  * Creates and manages typed client instances.
  */
 
-import { getClient } from '../../utils/clientManager.js';
-import { CollaboratorsClient, createTypedCollaboratorsClient } from './collaboratorsClient.js';
+import { UnifiedClientManager } from '../../utils/unifiedClientManager.js';
+import { CollaboratorsClient } from './collaboratorsClient.js';
 
 /**
  * Creates a typed collaborators client from an API token and optional environment.
@@ -17,6 +17,5 @@ export function createTypedCollaboratorsClientFromToken(
   apiToken: string,
   environment?: string
 ): CollaboratorsClient {
-  const client = getClient(apiToken, environment);
-  return createTypedCollaboratorsClient(client);
+  return UnifiedClientManager.getCollaboratorsClient(apiToken, environment);
 }

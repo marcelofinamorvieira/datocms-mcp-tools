@@ -1,14 +1,11 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import fetch, { Response as FetchResponse } from "node-fetch";
 import fs from "node:fs/promises";
 import path from "node:path";
 import mime from "mime-types";
-import {
-  isAuthorizationError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
+import { withErrorHandling } from "../../../../utils/errorHandlerWrapper.js";
 import { uploadsSchemas } from "../../schemas.js";
 
 interface UploadRequestResponse {
@@ -23,7 +20,7 @@ const getFilenameFromUrl = (url: string) => {
   return clean.substring(clean.lastIndexOf("/") + 1) || "downloaded-file";
 };
 
-export const createUploadHandler = async (
+export const createUploadHandlerImplementation = async (
   args: z.infer<typeof uploadsSchemas.create>
 ) => {
   const {
@@ -50,9 +47,7 @@ export const createUploadHandler = async (
   if (url) {
     const res = await fetch(url);
     if (!res.ok) {
-      return createErrorResponse(
-        `Error fetching remote file: ${res.status} ${res.statusText}`
-      );
+      throw new Error(`Error fetching remote file: ${res.status} ${res.statusText}`);
     }
     fileContent = Buffer.from(await res.arrayBuffer());
     fileContentType = res.headers.get("content-type") || "application/octet-stream";
@@ -65,14 +60,12 @@ export const createUploadHandler = async (
     try {
       fileContent = await fs.readFile(filePath);
     } catch (err) {
-      return createErrorResponse(
-        `Error reading file: ${err instanceof Error ? err.message : String(err)}`
-      );
+      throw new Error(`Error reading file: ${err instanceof Error ? err.message : String(err)}`);
     }
     fileContentType = mime.lookup(filePath) || "application/octet-stream";
     actualFilename = filename || path.basename(filePath);
   } else {
-    return createErrorResponse("Either 'url' or 'path' must be provided.");
+    throw new Error("Either 'url' or 'path' must be provided.");
   }
 
   // 2) Request upload permission
@@ -95,18 +88,14 @@ export const createUploadHandler = async (
       }
     );
   } catch (err) {
-    return createErrorResponse(
-      `Error requesting upload permission: ${
-        err instanceof Error ? err.message : String(err)
-      }`
-    );
+    throw new Error(`Error requesting upload permission: ${err instanceof Error ? err.message : String(err)}`);
   }
+  
   if (!uploadRequestRes.ok) {
     const txt = await uploadRequestRes.text();
-    return createErrorResponse(
-      `Upload request failed: ${uploadRequestRes.status} ${txt}`
-    );
+    throw new Error(`Upload request failed: ${uploadRequestRes.status} ${txt}`);
   }
+  
   const reqData = (await uploadRequestRes.json()) as UploadRequestResponse;
   const uploadId = reqData.data.id;
   const bucketUrl = reqData.data.attributes.url;
@@ -118,37 +107,38 @@ export const createUploadHandler = async (
     headers: { ...bucketHeaders, "Content-Type": fileContentType },
     body: fileContent
   });
+  
   if (!bucketRes.ok) {
     const txt = await bucketRes.text();
-    return createErrorResponse(
-      `Error uploading file to bucket: ${bucketRes.status} ${txt}`
-    );
+    throw new Error(`Error uploading file to bucket: ${bucketRes.status} ${txt}`);
   }
 
   // 4) Create upload resource
-  const client = getClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
-  try {
-    const payload: any = {
-      uploadId,
-      path: uploadId
-    };
-    if (id) payload.id = id;
-    if (author !== undefined) payload.author = author;
-    if (copyright !== undefined) payload.copyright = copyright;
-    if (notes !== undefined) payload.notes = notes;
-    if (tags) payload.tags = tags;
-    if (default_field_metadata) payload.default_field_metadata = default_field_metadata;
-    if (upload_collection !== undefined) payload.upload_collection = upload_collection;
-    if (url && skipCreationIfAlreadyExists)
-      payload.skip_creation_if_already_exists = skipCreationIfAlreadyExists;
+  const payload: any = {
+    uploadId,
+    path: uploadId
+  };
+  if (id) payload.id = id;
+  if (author !== undefined) payload.author = author;
+  if (copyright !== undefined) payload.copyright = copyright;
+  if (notes !== undefined) payload.notes = notes;
+  if (tags) payload.tags = tags;
+  if (default_field_metadata) payload.default_field_metadata = default_field_metadata;
+  if (upload_collection !== undefined) payload.upload_collection = upload_collection;
+  if (url && skipCreationIfAlreadyExists)
+    payload.skip_creation_if_already_exists = skipCreationIfAlreadyExists;
 
-    const upload = await client.uploads.create(payload);
-    return createResponse(JSON.stringify(upload, null, 2));
-  } catch (apiError: unknown) {
-    if (isAuthorizationError(apiError)) {
-      return createErrorResponse("Invalid or unauthorized API token.");
-    }
-    throw apiError;
-  }
+  const upload = await client.uploads.create(payload);
+  return createResponse(JSON.stringify(upload, null, 2));
 };
+
+// Wrap with consistent error handling
+export const createUploadHandler = withErrorHandling(
+  createUploadHandlerImplementation,
+  {
+    handlerName: "createUpload",
+    resourceType: "upload"
+  }
+);

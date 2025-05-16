@@ -14,7 +14,7 @@ import type {
   FieldTypes
 } from './types.js';
 import { validateItemFields, extractTypedFields, TypedRecord } from './advancedTypes.js';
-import { getClient } from '../../utils/clientManager.js';
+import { UnifiedClientManager } from '../../utils/unifiedClientManager.js';
 
 /**
  * Type-safe client for working with DatoCMS records
@@ -29,7 +29,7 @@ export class TypedRecordsClient {
    * @param environment - Optional environment name
    */
   constructor(apiToken: string, environment?: string) {
-    this.client = getClient(apiToken, environment);
+    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment);
   }
   
   /**

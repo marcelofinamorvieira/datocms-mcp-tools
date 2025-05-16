@@ -13,6 +13,7 @@ import fetch from "node-fetch";
 // Import all tool registration functions
 // Several tools are consolidated into router tools
 import { registerRecordsRouter } from "./tools/Records/RecordsRouterTool.js";
+import { registerEnhancedRecordsRouter } from "./tools/Records/EnhancedRecordsRouterTool.js";
 import { registerGetParametersTool } from "./tools/DocumentationTool.js";
 import {
   registerProjectRouter,
@@ -24,7 +25,8 @@ import {
   registerUIRouter
 } from "./tools/index.js";
 
-// Import Upload Collection tools directly from their location
+// Import schema initializer to register all schemas in the registry
+import { initializeSchemas } from "./utils/schemaInitializer.js";
 
 // Apply fetch polyfill for DatoCMS client compatibility
 // @ts-ignore - Type definition mismatch between node-fetch and global fetch
@@ -36,6 +38,9 @@ globalThis.fetch = fetch;
  * @returns {McpServer} A configured MCP server instance with all DatoCMS tools registered
  */
 const createServer = (): McpServer => {
+  // Initialize all schemas in the registry
+  initializeSchemas();
+  
   // Initialize the MCP server with identifying metadata
   const server = new McpServer({
     name: "DatoCMSTools",
@@ -46,6 +51,7 @@ const createServer = (): McpServer => {
   // Register DatoCMS tools with clear order (parameters first, then execution)
   registerGetParametersTool(server);      // Parameters tool MUST be registered FIRST
   registerRecordsRouter(server);          // Execute tool for records
+  registerEnhancedRecordsRouter(server);  // Enhanced records router with improved error handling
   registerProjectRouter(server);          // Project actions
   registerUploadsRouter(server);          // All uploads actions (router)
   registerEnvironmentRouter(server);      // Environment and maintenance mode actions

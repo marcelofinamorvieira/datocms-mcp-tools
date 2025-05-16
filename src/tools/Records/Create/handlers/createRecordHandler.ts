@@ -4,15 +4,15 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { withErrorHandling } from "../../../../utils/errorHandlerWrapper.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
  * Handler function for creating a new DatoCMS record
  */
-export const createRecordHandler = async (args: z.infer<typeof recordsSchemas.create>) => {
+export const createRecordHandlerImplementation = async (args: z.infer<typeof recordsSchemas.create>) => {
   const { 
     apiToken, 
     itemType, 
@@ -21,71 +21,37 @@ export const createRecordHandler = async (args: z.infer<typeof recordsSchemas.cr
     environment 
   } = args;
   
-  try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
-    
-    try {
-      // Create the item
-      const createdItem = await client.items.create({
-        item_type: { 
-          id: itemType, 
-          type: "item_type" 
-        },
-        ...data
-      });
-      
-      // If no item returned, return error
-      if (!createdItem) {
-        return createErrorResponse(`Error: Failed to create a new record of type '${itemType}'.`);
-      }
-
-      // Return only confirmation message if requested (to save on tokens)
-      if (returnOnlyConfirmation) {
-        return createResponse(`Successfully created record with ID '${createdItem.id}' of type '${itemType}'.`);
-      }
-
-      // Otherwise return the full record data
-      return createResponse(JSON.stringify(createdItem, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Item type with ID '${itemType}' was not found.`);
-      }
-      
-      // Format API errors for better understanding
-      const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
-      
-      // Extract detailed error information and return it
-      const detailedErrorMessage = extractDetailedErrorInfo(apiError);
-
-      // Check for common validation errors
-      if (detailedErrorMessage.includes("Validation failed") || detailedErrorMessage.includes("422")) {
-        // Check for localization-specific errors
-        if (detailedErrorMessage.includes("locales")) {
-          return createErrorResponse(`Localization error creating DatoCMS record: ${detailedErrorMessage}
-
-Please check that:
-1. For localized fields, you've provided values for all required locales (if 'All locales required' is enabled for the model)
-2. The locales are consistent across all localized fields (if a field has values for locales 'en' and 'it', all other localized fields must have the same locales)
-3. You're using the correct locale codes as defined in your DatoCMS project settings
-
-Use the Schema tools to check which fields are localized. Localized fields require an object with locale codes as keys, e.g., { title: { en: 'English Title', it: 'Italian Title' } }`);
-        }
-
-        return createErrorResponse(`Validation error creating DatoCMS record: ${detailedErrorMessage}
-
-Please check that your field values match the required format for each field type. Refer to the DatoCMS API documentation for field type requirements: https://www.datocms.com/docs/content-management-api/resources/item/create#field-type-values`);
-      }
-
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error creating DatoCMS record: ${extractDetailedErrorInfo(error)}`);
+  // Initialize DatoCMS client using the unified client manager
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  
+  // Create the item
+  const createdItem = await client.items.create({
+    item_type: { 
+      id: itemType, 
+      type: "item_type" 
+    },
+    ...data
+  });
+  
+  // If no item returned, throw an error
+  if (!createdItem) {
+    throw new Error(`Failed to create a new record of type '${itemType}'.`);
   }
+
+  // Return only confirmation message if requested (to save on tokens)
+  if (returnOnlyConfirmation) {
+    return createResponse(`Successfully created record with ID '${createdItem.id}' of type '${itemType}'.`);
+  }
+
+  // Otherwise return the full record data
+  return createResponse(JSON.stringify(createdItem, null, 2));
 };
+
+// Wrap with consistent error handling
+export const createRecordHandler = withErrorHandling(
+  createRecordHandlerImplementation,
+  {
+    handlerName: "createRecord",
+    resourceType: "record"
+  }
+);
