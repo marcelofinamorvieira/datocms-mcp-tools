@@ -1,7 +1,9 @@
 /**
  * @file unifiedClientManager.ts
  * @description Unified client management system for DatoCMS MCP handlers
- * Provides centralized client creation, caching, and lifecycle management
+ * @module utils
+ *
+ * Provides centralized client creation, caching, and lifecycle management.
  */
 
 import { buildClient, Client } from "@datocms/cma-client-node";

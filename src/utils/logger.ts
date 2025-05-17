@@ -1,3 +1,9 @@
+/**
+ * @file logger.ts
+ * @description Simple file-based logger for server diagnostics
+ * @module utils
+ */
+
 import fs from 'fs';
 import path from 'path';
 

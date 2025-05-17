@@ -1,6 +1,9 @@
 /**
- * Standard error messages for schema validation
- * Provides consistent, helpful error messages for common validation errors
+ * @file errorMessages.ts
+ * @description Standard error messages for schema validation
+ * @module utils
+ *
+ * Provides consistent, helpful error messages for common validation errors.
  */
 
 export const errorMessages = {
