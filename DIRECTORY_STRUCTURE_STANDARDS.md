@@ -77,7 +77,7 @@ Type definition files should follow this pattern:
 ## Implementation Steps
 
 1. First, fix the Environments domain which has the most inconsistencies:
-   - Merge `Maintenence Mode` into `Maintenance`
+   - Merged `Maintenence Mode` into `Maintenance`
    - Standardize folder names (List → Read, Retrieve → Read, etc.)
    - Move direct implementation files to handler pattern
 
