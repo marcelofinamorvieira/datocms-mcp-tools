@@ -12,8 +12,9 @@
 
 /* ---------- Helpers ---------- */
 
-// Two-letter code optionally followed by region, e.g. "en" or "en-US".
-const LOCALE_REGEX = /^[a-z]{2}(?:-[A-Z]{2})?$/;
+// Two-letter language code optionally followed by a 2-3 letter region code
+// in either case, e.g. "en", "en-US" or "pt-br".
+const LOCALE_REGEX = /^[a-z]{2}(?:-[a-zA-Z]{2,3})?$/;
 
 /** True if the key looks like a locale code. */
 const isLocaleKey = (key: string): boolean => LOCALE_REGEX.test(key);
