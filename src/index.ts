@@ -27,6 +27,7 @@ import {
 
 // Import schema initializer to register all schemas in the registry
 import { initializeSchemas } from "./utils/schemaInitializer.js";
+import logger from "./utils/logger.js";
 
 // Apply fetch polyfill for DatoCMS client compatibility
 // @ts-ignore - Type definition mismatch between node-fetch and global fetch
@@ -85,10 +86,10 @@ const main = async (): Promise<void> => {
     // Connect transport to the MCP server
     server.connect(transport);
     
-    console.error("DatoCMS MCP server started and ready");
+    logger.info("DatoCMS MCP server started and ready");
     
   } catch (error) {
-    console.error("Error starting MCP server:", error);
+    logger.error("Error starting MCP server:", error);
     process.exit(1);
   }
 };

@@ -4,6 +4,7 @@ import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { ListAPITokensResponse, isCollaboratorsAuthError } from "../../../collaboratorsTypes.js";
 import { createTypedCollaboratorsClientFromToken } from "../../../collaboratorsClientManager.js";
+import logger from "../../../../../utils/logger.js";
 
 type Params = z.infer<typeof apiTokenSchemas.list_tokens>;
 
@@ -36,13 +37,13 @@ export const listTokensHandler = async (params: Params): Promise<ListAPITokensRe
       }
 
       // Log the error for debugging
-      console.warn(`Error in listTokensHandler API call: ${apiError}`);
+      logger.warn(`Error in listTokensHandler API call: ${apiError}`);
 
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error) {
-    console.error(`Failed to list API tokens: ${error}`);
+    logger.error(`Failed to list API tokens: ${error}`);
     
     // Try to extract tokens from the error message
     const errorStr = String(error);
@@ -85,12 +86,12 @@ export const listTokensHandler = async (params: Params): Promise<ListAPITokensRe
           };
         }
       } catch (parseError) {
-        console.error('Failed to extract tokens from error:', parseError);
+        logger.error('Failed to extract tokens from error:', parseError);
       }
     }
     
     // Fallback to an empty list rather than failing
-    console.warn('Returning empty token list due to error');
+    logger.warn('Returning empty token list due to error');
     return {
       success: true,
       data: []
