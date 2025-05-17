@@ -47,8 +47,8 @@ The server follows a modular router-based architecture:
 ### Installation
 
 ```bash
-git clone https://github.com/datocms/datocms-mcp-server.git
-cd datocms-mcp-server
+git clone https://github.com/datocms/datocms-mcp-tools.git
+cd datocms-mcp-tools
 npm install
 npm run build
 ```
@@ -90,7 +90,7 @@ npm run start:http
 Configure Claude Desktop to work with the server:
 
 1. Open Claude Desktop settings
-2. Add tool with command: `/path/to/datocms-mcp-server/start-server.sh`
+2. Add tool with command: `/path/to/datocms-mcp-tools/start-server.sh`
 3. Set auto-start and enable the tool
 
 For advanced configuration options and integrations, see the [detailed documentation](https://docs.datocms.com/claude-integration).
