@@ -13,7 +13,7 @@ import { z } from "zod";
  */
 
 const apiToken = () =>
-  z.string().min(1).describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not halucinate.");
+  z.string().min(1).describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate.");
 
 const uploadId = z
   .string()
