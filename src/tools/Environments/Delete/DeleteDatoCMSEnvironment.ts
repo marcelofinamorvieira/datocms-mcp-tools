@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { getClient } from "../../../utils/clientManager.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
-import { createResponse } from "../../../utils/responseHandlers.js";
+import { isAuthorizationError, isNotFoundError, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
+import {
+  createStandardSuccessResponse,
+  createStandardErrorResponse,
+  createStandardMcpResponse
+} from "../../../utils/standardResponse.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 /**
@@ -28,7 +32,10 @@ export const registerDeleteDatoCMSEnvironment = (server: McpServer) => {
     async ({ apiToken, environmentId, confirmation }) => {
       // Validate confirmation
       if (confirmation !== "confirm") {
-        return createErrorResponse("Error: You must explicitly confirm deletion by setting confirmation to 'confirm'.");
+        const response = createStandardErrorResponse(
+          "You must explicitly confirm deletion by setting confirmation to 'confirm'."
+        );
+        return createStandardMcpResponse(response);
       }
       
       try {
@@ -38,31 +45,41 @@ export const registerDeleteDatoCMSEnvironment = (server: McpServer) => {
         
         try {
           // Delete the environment
-          const environment = await client.environments.destroy(environmentId);
-          
-          // The destroy method doesn't always return environment data, so we check for success differently
-          return createResponse(JSON.stringify({ success: true, message: `Environment '${environmentId}' has been deleted successfully` }, null, 2));
+          await client.environments.destroy(environmentId);
+
+          const response = createStandardSuccessResponse(
+            { success: true },
+            `Environment '${environmentId}' has been deleted successfully`
+          );
+          return createStandardMcpResponse(response);
           
         } catch (apiError: unknown) {
           if (isAuthorizationError(apiError)) {
-            return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+            const response = createStandardErrorResponse(
+              "Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.",
+              { error_code: "INVALID_API_TOKEN" }
+            );
+            return createStandardMcpResponse(response);
           }
           
           if (isNotFoundError(apiError)) {
-            return createErrorResponse(`Error: Environment with ID '${environmentId}' was not found.`);
+            const response = createStandardErrorResponse(
+              `Environment with ID '${environmentId}' was not found.`,
+              { error_code: "ENVIRONMENT_NOT_FOUND" }
+            );
+            return createStandardMcpResponse(response);
           }
           
-          // Re-throw other API errors to be caught by the outer catch
-          throw apiError;
+          const response = createStandardErrorResponse(apiError);
+          return createStandardMcpResponse(response);
         }
       } catch (error: unknown) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: `Error deleting environment: ${extractDetailedErrorInfo(error)}`
-          }]
-        };
+        const response = createStandardErrorResponse(
+          `Error deleting environment: ${extractDetailedErrorInfo(error)}`
+        );
+        return createStandardMcpResponse(response);
       }
     }
   );
 };
+

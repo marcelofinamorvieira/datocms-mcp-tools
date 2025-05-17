@@ -4,8 +4,12 @@
  */
 
 import type { z } from "zod";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import {
+  createStandardSuccessResponse,
+  createStandardErrorResponse,
+  createStandardMcpResponse
+} from "../../../../utils/standardResponse.js";
+import { isAuthorizationError, isNotFoundError, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
 import type { McpResponse } from "../../environmentTypes.js";
 import { createEnvironmentClient } from "../../environmentClient.js";
@@ -30,24 +34,37 @@ export const renameEnvironmentHandler = async (args: z.infer<typeof environmentS
       });
       
       if (!environment) {
-        return createErrorResponse(`Error: Failed to rename environment with ID '${environmentId}'.`);
+        const response = createStandardErrorResponse(
+          `Failed to rename environment with ID '${environmentId}'.`,
+          { error_code: "ENVIRONMENT_NOT_FOUND" }
+        );
+        return createStandardMcpResponse(response);
       }
-      
-      return createResponse(JSON.stringify(environment, null, 2));
+
+      const response = createStandardSuccessResponse(environment as any);
+      return createStandardMcpResponse(response);
       
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+        const response = createStandardErrorResponse("Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.", { error_code: "INVALID_API_TOKEN" });
+        return createStandardMcpResponse(response);
       }
-      
       if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Environment with ID '${environmentId}' was not found.`);
+        const response = createStandardErrorResponse(
+          `Environment with ID '${environmentId}' was not found.`,
+          { error_code: "ENVIRONMENT_NOT_FOUND" }
+        );
+        return createStandardMcpResponse(response);
       }
       
       // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+      const response = createStandardErrorResponse(apiError);
+        return createStandardMcpResponse(response);
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error renaming environment: ${extractDetailedErrorInfo(error)}`);
+    const response = createStandardErrorResponse(
+      `Error renaming environment: ${extractDetailedErrorInfo(error)}`
+    );
+    return createStandardMcpResponse(response);
   }
 };

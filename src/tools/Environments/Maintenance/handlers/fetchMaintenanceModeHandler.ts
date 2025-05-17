@@ -5,8 +5,12 @@
 
 import type { z } from "zod";
 import { getClient } from "../../../../utils/clientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import {
+  createStandardSuccessResponse,
+  createStandardErrorResponse,
+  createStandardMcpResponse
+} from "../../../../utils/standardResponse.js";
+import { isAuthorizationError, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
 
 /**
@@ -22,22 +26,32 @@ export const fetchMaintenanceModeHandler = async (args: z.infer<typeof environme
     try {
       // Fetch maintenance mode status
       const maintenanceMode = await client.maintenanceMode.find();
-      
+
       if (!maintenanceMode) {
-        return createErrorResponse("Error: Failed to fetch maintenance mode status.");
+        const response = createStandardErrorResponse("Failed to fetch maintenance mode status.");
+        return createStandardMcpResponse(response);
       }
-      
-      return createResponse(JSON.stringify(maintenanceMode, null, 2));
+
+      const response = createStandardSuccessResponse(maintenanceMode as any);
+      return createStandardMcpResponse(response);
       
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+        const response = createStandardErrorResponse(
+          "Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.",
+          { error_code: "INVALID_API_TOKEN" }
+        );
+        return createStandardMcpResponse(response);
       }
-      
+
       // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+      const response = createStandardErrorResponse(apiError);
+      return createStandardMcpResponse(response);
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error fetching maintenance mode status: ${extractDetailedErrorInfo(error)}`);
+    const response = createStandardErrorResponse(
+      `Error fetching maintenance mode status: ${extractDetailedErrorInfo(error)}`
+    );
+    return createStandardMcpResponse(response);
   }
 };

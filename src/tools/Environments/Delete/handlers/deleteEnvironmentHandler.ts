@@ -5,8 +5,12 @@
 
 import type { z } from "zod";
 import { getClient } from "../../../../utils/clientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import {
+  createStandardSuccessResponse,
+  createStandardErrorResponse,
+  createStandardMcpResponse
+} from "../../../../utils/standardResponse.js";
+import { isAuthorizationError, isNotFoundError, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
 
 /**
@@ -17,29 +21,42 @@ export const deleteEnvironmentHandler = async (args: z.infer<typeof environmentS
   
   try {
     // Initialize DatoCMS client - don't pass environmentId when deleting the environment
-    // This was causing issues because we're trying to initialize client with the environment we're deleting
     const client = getClient(apiToken);
-    
+
     try {
       // Delete the environment
-      const environment = await client.environments.destroy(environmentId);
-      
-      // The destroy method doesn't always return environment data, so we check for success differently
-      return createResponse(JSON.stringify({ success: true, message: `Environment '${environmentId}' has been deleted successfully` }, null, 2));
-      
+      await client.environments.destroy(environmentId);
+
+      const response = createStandardSuccessResponse(
+        { success: true },
+        `Environment '${environmentId}' has been deleted successfully`
+      );
+      return createStandardMcpResponse(response);
+
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+        const response = createStandardErrorResponse(
+          "Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.",
+          { error_code: "INVALID_API_TOKEN" }
+        );
+        return createStandardMcpResponse(response);
       }
-      
+
       if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Environment with ID '${environmentId}' was not found.`);
+        const response = createStandardErrorResponse(
+          `Environment with ID '${environmentId}' was not found.`,
+          { error_code: "ENVIRONMENT_NOT_FOUND" }
+        );
+        return createStandardMcpResponse(response);
       }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+
+      const response = createStandardErrorResponse(apiError);
+      return createStandardMcpResponse(response);
     }
   } catch (error: unknown) {
-    return createErrorResponse(`Error deleting environment: ${extractDetailedErrorInfo(error)}`);
+    const response = createStandardErrorResponse(
+      `Error deleting environment: ${extractDetailedErrorInfo(error)}`
+    );
+    return createStandardMcpResponse(response);
   }
 };
