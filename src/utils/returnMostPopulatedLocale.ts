@@ -1,13 +1,11 @@
 /**
- * Recursively inspects a generic JSON‐like structure and:
- * 1. Detects which locale (e.g. "en", "pt-BR") carries the most non-empty values.
- * 2. Returns a copy of the structure where any localized field keeps only that dominant locale.
+ * @file returnMostPopulatedLocale.ts
+ * @description Determines the most populated locale within a structured object
+ * @module utils
  *
- * This utility helps save on tokens when sending responses by eliminating redundant localized content
- * while preserving the most populated locale's data. It's especially helpful for multilingual records
- * where sending all locales would significantly increase token usage.
- * 
- * Useful for records that mix localized and non-localized fields.
+ * Recursively inspects a JSON-like object, detects which locale carries the most
+ * non-empty values, and returns a copy keeping only that locale in localized fields.
+ * This helps reduce token usage when responding with multilingual content.
  */
 
 /* ---------- Helpers ---------- */

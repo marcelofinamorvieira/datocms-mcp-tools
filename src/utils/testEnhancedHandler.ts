@@ -1,7 +1,9 @@
 /**
  * @file testEnhancedHandler.ts
  * @description Test file for the enhanced handler factory
- * This file tests the functionality of the enhanced handler factory
+ * @module utils
+ *
+ * This file tests the functionality of the enhanced handler factory.
  */
 
 import { UnifiedClientManager, ClientType } from './unifiedClientManager.js';

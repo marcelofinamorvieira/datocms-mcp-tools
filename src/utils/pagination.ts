@@ -1,3 +1,11 @@
+/**
+ * @file pagination.ts
+ * @description Pagination utilities and constants used across the server
+ * @module utils
+ *
+ * Provides helpers for standardizing pagination parameters in schemas and handlers.
+ */
+
 import { z } from "zod";
 import { paginationSchema } from "./sharedSchemas.js";
 

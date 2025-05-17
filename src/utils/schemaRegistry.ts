@@ -1,6 +1,7 @@
 /**
  * @file schemaRegistry.ts
  * @description Centralized schema registry for standardized validation across the application
+ * @module utils
  */
 
 import { z } from "zod";

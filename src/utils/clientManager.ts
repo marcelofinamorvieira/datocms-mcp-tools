@@ -1,3 +1,11 @@
+/**
+ * @file clientManager.ts
+ * @description Functions for creating DatoCMS clients with optional environment support
+ * @module utils
+ *
+ * Provides simple helpers to instantiate API clients used throughout the server.
+ */
+
 import { buildClient, Client } from "@datocms/cma-client-node";
 
 /**

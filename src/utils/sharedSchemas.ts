@@ -1,11 +1,13 @@
+/**
+ * @file sharedSchemas.ts
+ * @description Reusable Zod schemas shared across domains
+ * @module utils
+ *
+ * Provides consistent validation patterns to reduce duplication.
+ */
+
 import { z } from "zod";
 import { errorMessages } from "./errorMessages.js";
-
-/**
- * Shared Zod schemas for common patterns used throughout the DatoCMS MCP server.
- * These schemas provide consistent validation patterns that can be reused across
- * different domain areas to ensure consistency and reduce duplication.
- */
 
 /**
  * API Token schema used for authentication

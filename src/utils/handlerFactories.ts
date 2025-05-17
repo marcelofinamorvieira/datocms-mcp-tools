@@ -1,6 +1,7 @@
 /**
  * @file handlerFactories.ts
  * @description Factory functions for creating common handler patterns with proper type handling
+ * @module utils
  */
 
 import type { z } from "zod";

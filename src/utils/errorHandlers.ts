@@ -1,5 +1,7 @@
 /**
- * Utility functions for error handling and response formatting in DatoCMS MCP tools
+ * @file errorHandlers.ts
+ * @description Utility functions for error handling and response formatting
+ * @module utils
  */
 
 import { HandlerResponse, createResponse, Response } from "./responseHandlers.js";

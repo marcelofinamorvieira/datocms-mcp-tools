@@ -1,8 +1,9 @@
 /**
- * Examples for schema documentation
- * 
- * This file contains example values for various schema types
- * to provide documentation and usage guidance.
+ * @file schemaExamples.ts
+ * @description Example values for schema documentation
+ * @module utils
+ *
+ * Provides example values for various schema types to help with documentation and usage guidance.
  */
 
 /**

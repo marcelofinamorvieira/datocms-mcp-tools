@@ -1,7 +1,9 @@
 /**
  * @file errorHandlerWrapper.ts
  * @description Unified error handling wrapper for DatoCMS MCP handlers
- * Provides consistent error handling across all handlers
+ * @module utils
+ *
+ * Provides consistent error handling across all handlers.
  */
 
 import {

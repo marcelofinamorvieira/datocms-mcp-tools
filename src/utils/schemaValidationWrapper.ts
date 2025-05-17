@@ -1,6 +1,7 @@
 /**
  * @file schemaValidationWrapper.ts
  * @description Validation wrappers for standardizing schema validation across handlers
+ * @module utils
  */
 
 import { z } from "zod";
