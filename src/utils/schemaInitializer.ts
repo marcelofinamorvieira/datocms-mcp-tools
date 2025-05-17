@@ -1,6 +1,7 @@
 /**
  * @file schemaInitializer.ts
  * @description Initializes all schemas in the schema registry for global access
+ * @module utils
  */
 
 import { SchemaRegistry } from "./schemaRegistry.js";

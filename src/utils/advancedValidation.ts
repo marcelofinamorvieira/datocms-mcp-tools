@@ -1,10 +1,13 @@
+/**
+ * @file advancedValidation.ts
+ * @description Advanced validation utilities using Zod schemas
+ * @module utils
+ *
+ * Provides complex validation patterns for the DatoCMS MCP server.
+ */
+
 import { z } from "zod";
 
-/**
- * Advanced validation utilities for DatoCMS MCP server
- * 
- * Provides complex validation patterns for use with Zod schemas
- */
 
 /**
  * Types of conditions for conditional validation

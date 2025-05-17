@@ -1,11 +1,12 @@
-import { z } from "zod";
-
 /**
- * Lazy schema loading utilities for DatoCMS MCP server
- * 
- * These utilities help improve performance by deferring schema validation
- * initialization until needed, especially for large schema definitions.
+ * @file lazySchema.ts
+ * @description Utilities for lazy schema loading
+ * @module utils
+ *
+ * Helps improve performance by deferring schema validation initialization until needed.
  */
+
+import { z } from "zod";
 
 /**
  * LazySchema type for type-safe lazy schema loading

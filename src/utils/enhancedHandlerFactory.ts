@@ -1,7 +1,9 @@
 /**
  * @file enhancedHandlerFactory.ts
  * @description Enhanced factory functions for creating handlers with middleware composition
- * Combines error handling, schema validation, and client management in a unified pattern
+ * @module utils
+ *
+ * Combines error handling, schema validation, and client management in a unified pattern.
  */
 
 import type { z } from "zod";

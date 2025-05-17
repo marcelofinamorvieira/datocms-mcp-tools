@@ -1,3 +1,9 @@
+/**
+ * @file responseHandlers.ts
+ * @description Helper functions for building response messages
+ * @module utils
+ */
+
 // Define the Text Block type to avoid dependency on MCP types
 type TextBlock = {
   type: "text";
