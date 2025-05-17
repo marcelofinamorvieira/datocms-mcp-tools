@@ -14,7 +14,7 @@ export const registerRenameDatoCMSEnvironment = (server: McpServer) => {
     "RenameDatoCMSEnvironment",
     // Parameter schema with types
     {
-      apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not halucinate."),
+      apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
       environmentId: z.string().describe("The ID of the environment to rename."),
       newId: z.string().describe("The new ID for the environment. Should be kebab case"),
       targetEnvironment: z.string().optional().describe("The ID of a specific environment where you want to perform this operation (defaults to primary environment).")

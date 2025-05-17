@@ -7,7 +7,7 @@ import { z } from "zod";
 export const uploadsFilterSchemas = {
   // Read operations
   list: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not halucinate."),
+    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
     page: z.object({
       offset: z.number().int().optional().default(0).describe("The (zero-based) offset of the first entity returned in the collection (defaults to 0)."),
       limit: z.number().int().optional().default(100).describe("The maximum number of entities to return (defaults to 100, maximum is 500).")
@@ -16,7 +16,7 @@ export const uploadsFilterSchemas = {
   }),
 
   retrieve: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not halucinate."),
+    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
     uploadsFilterId: z.string().describe("The ID of the specific uploads filter to retrieve."),
     environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
   }),
