@@ -5,8 +5,10 @@ import { createResponse } from "../../utils/responseHandlers.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Import handlers from subdirectories
-import { retrieveEnvironmentHandler } from "./Retrieve/handlers/index.js";
-import { listEnvironmentsHandler } from "./List/handlers/index.js";
+import {
+  getEnvironmentHandler,
+  listEnvironmentsHandler,
+} from "./Read/handlers/index.js";
 import { deleteEnvironmentHandler } from "./Delete/handlers/index.js";
 import { renameEnvironmentHandler } from "./Update/handlers/index.js";
 import { promoteEnvironmentHandler } from "./Promote/handlers/index.js";
@@ -95,7 +97,7 @@ This will show you all the required parameters and their types.`);
           switch (validAction) {
             // Environment retrieval operations
             case "retrieve":
-              return retrieveEnvironmentHandler(validatedArgs as ActionArgsMap['retrieve']);
+              return getEnvironmentHandler(validatedArgs as ActionArgsMap['retrieve']);
             case "list":
               return listEnvironmentsHandler(validatedArgs as ActionArgsMap['list']);
 

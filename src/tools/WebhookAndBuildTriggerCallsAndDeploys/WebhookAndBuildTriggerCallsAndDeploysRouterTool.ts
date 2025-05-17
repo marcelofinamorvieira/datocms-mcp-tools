@@ -19,21 +19,27 @@ import { updateWebhookHandler } from "./Webhooks/Update/handlers/index.js";
 import { deleteWebhookHandler } from "./Webhooks/Delete/handlers/index.js";
 
 // Import webhook call handlers
-import { listWebhookCallsHandler } from "./WebhookCalls/List/handlers/index.js";
-import { retrieveWebhookCallHandler } from "./WebhookCalls/Retrieve/handlers/index.js";
+import {
+  listWebhookCallsHandler,
+  retrieveWebhookCallHandler,
+} from "./WebhookCalls/Read/handlers/index.js";
 import { resendWebhookCallHandler } from "./WebhookCalls/Resend/handlers/index.js";
 
 // Import build trigger handlers
-import { listBuildTriggersHandler } from "./BuildTriggers/List/handlers/index.js";
-import { retrieveBuildTriggerHandler } from "./BuildTriggers/Retrieve/handlers/index.js";
+import {
+  listBuildTriggersHandler,
+  retrieveBuildTriggerHandler,
+} from "./BuildTriggers/Read/handlers/index.js";
 import { createBuildTriggerHandler } from "./BuildTriggers/Create/handlers/index.js";
 import { updateBuildTriggerHandler } from "./BuildTriggers/Update/handlers/index.js";
 import { deleteBuildTriggerHandler } from "./BuildTriggers/Delete/handlers/index.js";
 import { triggerBuildHandler } from "./BuildTriggers/Trigger/handlers/index.js";
 
 // Import deploy event handlers
-import { listDeployEventsHandler } from "./DeployEvents/List/handlers/index.js";
-import { retrieveDeployEventHandler } from "./DeployEvents/Retrieve/handlers/index.js";
+import {
+  listDeployEventsHandler,
+  retrieveDeployEventHandler,
+} from "./DeployEvents/Read/handlers/index.js";
 
 import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 

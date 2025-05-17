@@ -1,2 +1,1 @@
-export * from './List/handlers/index.js';
-export * from './Retrieve/handlers/index.js';
+export * from './Read/handlers/index.js';
