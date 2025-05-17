@@ -69,6 +69,12 @@ npm run dev
 npm run start:http
 ```
 
+### Logging
+
+Server output is written to both the console and `logs/server.log` using a custom
+logger. Each entry includes a timestamp, log level, and message which makes the
+output easier for Codex to parse and for developers to debug.
+
 ## Usage with Claude
 
 ### Basic Workflow

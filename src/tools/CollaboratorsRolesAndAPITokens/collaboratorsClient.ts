@@ -4,6 +4,7 @@
  */
 
 import { Client } from '@datocms/cma-client-node';
+import logger from '../../utils/logger.js';
 import {
   APIToken,
   APITokenIdentity,
@@ -54,7 +55,7 @@ const collaboratorsAdapters = {
   toCollaborator: (rawData: any): Collaborator => {
     // Create a safe version of the data with defaults for missing properties
     if (!rawData) {
-      console.warn('Received null or undefined collaborator data, creating placeholder');
+      logger.warn('Received null or undefined collaborator data, creating placeholder');
       rawData = {};
     }
     
@@ -95,7 +96,7 @@ const collaboratorsAdapters = {
   toRole: (rawData: any): Role => {
     // Create a safe version of the data with defaults for missing properties
     if (!rawData) {
-      console.warn('Received null or undefined role data, creating placeholder');
+      logger.warn('Received null or undefined role data, creating placeholder');
       rawData = {};
     }
     
@@ -132,7 +133,7 @@ const collaboratorsAdapters = {
     try {
       // If we got null/undefined data, create a minimal placeholder
       if (!rawData) {
-        console.warn('Received null or undefined API token data, creating placeholder');
+        logger.warn('Received null or undefined API token data, creating placeholder');
         return {
           id: 'unknown',
           type: 'api_token' as const,
@@ -192,7 +193,7 @@ const collaboratorsAdapters = {
       
       return token;
     } catch (error) {
-      console.error('Error converting API token:', error);
+      logger.error('Error converting API token:', error);
       
       // Return a minimal valid token as fallback
       return {
@@ -216,7 +217,7 @@ const collaboratorsAdapters = {
   toInvitation: (rawData: any): Invitation => {
     // Create a safe version of the data with defaults for missing properties
     if (!rawData) {
-      console.warn('Received null or undefined invitation data, creating placeholder');
+      logger.warn('Received null or undefined invitation data, creating placeholder');
       rawData = {};
     }
     
@@ -505,7 +506,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
           try {
             return collaboratorsAdapters.toAPIToken(response);
           } catch (mapError) {
-            console.warn(`Error mapping API token ${id}: ${mapError}`);
+            logger.warn(`Error mapping API token ${id}: ${mapError}`);
           }
         }
         
@@ -536,7 +537,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
         };
       } catch (error) {
         const apiError = error as any;
-        console.warn(`Error finding API token ${id}: ${apiError}`);
+        logger.warn(`Error finding API token ${id}: ${apiError}`);
         
         // Check if this is a not found error
         if (apiError.response && apiError.response.status === 404) {
@@ -565,7 +566,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
         throw error; // Re-throw not found error
       }
       
-      console.warn(`Unexpected error in findAPIToken: ${error}`);
+      logger.warn(`Unexpected error in findAPIToken: ${error}`);
       
       // Try to handle any other errors gracefully
       return {
@@ -602,10 +603,10 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
             try {
               tokens.push(collaboratorsAdapters.toAPIToken(response));
             } catch (mapError) {
-              console.warn(`Error mapping single API token response: ${mapError}`);
+              logger.warn(`Error mapping single API token response: ${mapError}`);
             }
           } else {
-            console.warn(`Unexpected response type from API for accessTokens.list: ${typeof response}`);
+            logger.warn(`Unexpected response type from API for accessTokens.list: ${typeof response}`);
           }
         } else {
           // We got an array, process each token
@@ -614,19 +615,19 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
               try {
                 tokens.push(collaboratorsAdapters.toAPIToken(rawToken));
               } catch (mapError) {
-                console.warn(`Error mapping API token: ${mapError}`);
+                logger.warn(`Error mapping API token: ${mapError}`);
               }
             }
           }
         }
       } catch (apiError) {
-        console.warn(`Error fetching API tokens: ${apiError}`);
+        logger.warn(`Error fetching API tokens: ${apiError}`);
       }
       
       // Return whatever tokens we were able to process, even if empty
       return tokens;
     } catch (error: any) {
-      console.warn(`Unexpected error in listAPITokens: ${error}`);
+      logger.warn(`Unexpected error in listAPITokens: ${error}`);
       return []; // Return empty array rather than failing
     }
   }
@@ -635,7 +636,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
     try {
       // Validate input parameters
       if (!params || !params.role || !params.name) {
-        console.warn('Missing required parameters for createAPIToken: name and role are required');
+        logger.warn('Missing required parameters for createAPIToken: name and role are required');
         throw collaboratorsErrorFactory.createValidationError(
           'Missing required parameters', 
           [{ field: 'name/role', message: 'Name and role are required fields' }]
@@ -657,7 +658,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
         response = await this.client.accessTokens.create(apiParams);
       } catch (error) {
         const createError = error as any;
-        console.warn(`Error creating API token: ${createError}`);
+        logger.warn(`Error creating API token: ${createError}`);
         
         // Create a placeholder token but with the actual token value if possible
         let token = null;
@@ -690,7 +691,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
       
       // Validate response before adapting
       if (!response || typeof response !== 'object') {
-        console.warn(`Invalid response from API for accessTokens.create: ${JSON.stringify(response)}`);
+        logger.warn(`Invalid response from API for accessTokens.create: ${JSON.stringify(response)}`);
         
         // Create a minimal valid token to return
         return {
@@ -718,7 +719,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
       try {
         return collaboratorsAdapters.toAPIToken(response);
       } catch (mapError) {
-        console.warn(`Error mapping created API token: ${mapError}`);
+        logger.warn(`Error mapping created API token: ${mapError}`);
         
         // Attempt to extract the token value if it exists
         let token = null;
@@ -756,7 +757,7 @@ export class TypedCollaboratorsClient implements CollaboratorsClient {
         throw error; // Re-throw typed errors
       }
       
-      console.warn(`Unexpected error in createAPIToken: ${error}`);
+      logger.warn(`Unexpected error in createAPIToken: ${error}`);
       this.handleAPIError(error);
     }
   }

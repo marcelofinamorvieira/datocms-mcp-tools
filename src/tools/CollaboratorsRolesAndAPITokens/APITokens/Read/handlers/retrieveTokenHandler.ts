@@ -3,6 +3,7 @@ import { apiTokenSchemas } from "../../../schemas.js";
 import { isCollaboratorsAuthError, GetAPITokenResponse } from "../../../collaboratorsTypes.js";
 import { extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createTypedCollaboratorsClientFromToken } from "../../../collaboratorsClientManager.js";
+import logger from "../../../../../utils/logger.js";
 
 type Params = z.infer<typeof apiTokenSchemas.retrieve_token>;
 
@@ -42,17 +43,17 @@ export const retrieveTokenHandler = async (params: Params): Promise<GetAPITokenR
       }
 
       // Log the error for debugging
-      console.warn(`Error in retrieveTokenHandler: ${apiError}`);
+      logger.warn(`Error in retrieveTokenHandler: ${apiError}`);
 
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error) {
-    console.error(`Failed to retrieve API token: ${error}`);
+    logger.error(`Failed to retrieve API token: ${error}`);
     
     // Always return success even if there are issues with the adapted format
     // Our adapter should now handle the format directly without failing
-    console.error('Error in retrieveTokenHandler (treating as success anyway):', error);
+    logger.error('Error in retrieveTokenHandler (treating as success anyway):', error);
     
     // Extract the token from the error message if possible
     let token: any = null;
@@ -89,7 +90,7 @@ export const retrieveTokenHandler = async (params: Params): Promise<GetAPITokenR
           };
         }
       } catch (parseError) {
-        console.error('Failed to extract token from error:', parseError);
+        logger.error('Failed to extract token from error:', parseError);
       }
     }
     

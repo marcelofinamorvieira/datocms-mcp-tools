@@ -10,6 +10,7 @@ import { uiSchemas } from "../tools/UI/schemas.js";
 import { projectSchemas } from "../tools/Project/schemas.js";
 import { uploadsSchemas } from "../tools/Uploads/schemas.js";
 import { environmentSchemas } from "../tools/Environments/schemas.js";
+import logger from "./logger.js";
 
 // Import webhook and build trigger schemas
 import { 
@@ -60,9 +61,9 @@ export function initializeSchemas(): void {
     SchemaRegistry.registerBulk("roles", roleSchemas);
     SchemaRegistry.registerBulk("api_tokens", apiTokenSchemas);
     
-    console.error("All schemas registered successfully");
+    logger.info("All schemas registered successfully");
   } catch (error) {
-    console.error("Error registering schemas:", error);
+    logger.error("Error registering schemas:", error);
   }
 }
 
