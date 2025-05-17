@@ -157,5 +157,5 @@ const collaboratorsClient = UnifiedClientManager.getCollaboratorsClient(apiToken
 To configure Claude Desktop to work with this server:
 
 1. Open Claude Desktop settings
-2. Add tool with command: `/path/to/datocms-mcp-server/start-server.sh`
+2. Add tool with command: `/path/to/datocms-mcp-tools/start-server.sh`
 3. Set auto-start and enable the tool
