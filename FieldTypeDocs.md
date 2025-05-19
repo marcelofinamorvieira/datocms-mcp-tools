@@ -306,6 +306,7 @@ await createField(model, {
 **Valid Validators:**
 - `required: {}`
 - `unique: {}`
+- `slug_title_field: { title_field_id: "title_field_id" }`
 
 **Presentation Options:**
 ```javascript
@@ -343,10 +344,44 @@ await createField(model, {
   validators: {
     required: {},
     unique: {}
+    slug_title_field: { title_field_id: "title_field_id" }
   }
 });
 ```
 
+
+## Rich Text Field
+
+**Field Type:** `rich_text`
+
+**Required Validators:**
+ - `rich_text_blocks`
+
+**Presentation Options:**
+```javascript
+appearance: {
+  editor: "rich_text",
+  parameters: { start_collapsed: false },
+  addons: []
+}
+```
+
+**Complete Example:**
+```javascript
+await createField(model, {
+  label: "Rich Text Content",
+  api_key: "rich_text_content",
+  field_type: "rich_text",
+  appearance: {
+    editor: "rich_text",
+    parameters: { start_collapsed: false },
+    addons: []
+  },
+  validators: {
+    rich_text_blocks: { item_types: [] }
+  }
+});
+```
 ## Structured Text Field
 
 **Field Type:** `structured_text`

@@ -21,7 +21,8 @@ export const slugTemplate = {
   },
   validators: {
     required: {},
-    unique: {}
+    unique: {},
+    slug_title_field: { title_field_id: "title_field_id" }
   }
 };
 
