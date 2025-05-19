@@ -263,7 +263,7 @@ await createField(model, {
 **Presentation Options:**
 ```javascript
 appearance: {
-  editor: "lat_lon_editor",  // IMPORTANT: Use this instead of "map"
+  editor: "map",  // Use 'map' with the API (not 'lat_lon_editor')
   parameters: {},
   addons: []
 }
@@ -281,7 +281,7 @@ await createField(model, {
   field_type: "lat_lon",
   hint: "Select the geographical location for this event",
   appearance: {
-    editor: "lat_lon_editor",
+    editor: "map",
     parameters: {},
     addons: []
   },

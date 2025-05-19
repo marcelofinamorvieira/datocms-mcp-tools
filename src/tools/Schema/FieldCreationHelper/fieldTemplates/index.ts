@@ -47,7 +47,7 @@ export const fieldTemplates: FieldTemplatesMap = {
     markdown: textTemplates.markdownTemplate
   },
   lat_lon: {
-    lat_lon_editor: locationTemplates.locationTemplate
+    map: locationTemplates.locationTemplate
   },
   slug: {
     slug: seoTemplates.slugTemplate
