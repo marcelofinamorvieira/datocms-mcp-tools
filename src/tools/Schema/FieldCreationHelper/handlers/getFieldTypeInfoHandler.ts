@@ -801,6 +801,76 @@ const fieldTypeDocs = {
         })
       }
     },
+    rich_text: {
+      description: "Rich text content with blocks",
+      validators: {
+        rich_text_blocks: {
+          description: "REQUIRED - allowed block models",
+          example: { item_types: ["block_model_id"] }
+        }
+      },
+      appearances: {
+        rich_text: {
+          description: "Rich text editor",
+          parameters: { start_collapsed: { description: "Start collapsed", default: false } },
+          example: {
+            editor: "rich_text",
+            parameters: { start_collapsed: false },
+            addons: []
+          }
+        }
+      },
+      defaultValue: { description: "Not supported" },
+      fullExample: {
+        label: "Rich Text Content",
+        api_key: "rich_text_content",
+        field_type: "rich_text",
+        hint: "Rich text content",
+        appearance: {
+          editor: "rich_text",
+          parameters: { start_collapsed: false },
+          addons: []
+        },
+        validators: {
+          rich_text_blocks: { item_types: [] }
+        }
+      }
+    },
+    structured_text: {
+      description: "Structured text content",
+      validators: {
+        structured_text_blocks: {
+          description: "REQUIRED - allowed block models",
+          example: { item_types: ["block_model_id"] }
+        }
+      },
+      appearances: {
+        structured_text: {
+          description: "Structured text editor",
+          parameters: {},
+          example: {
+            editor: "structured_text",
+            parameters: {},
+            addons: []
+          }
+        }
+      },
+      defaultValue: { description: "Not supported" },
+      fullExample: {
+        label: "Structured Content",
+        api_key: "structured_content",
+        field_type: "structured_text",
+        hint: "Structured text content",
+        appearance: {
+          editor: "structured_text",
+          parameters: {},
+          addons: []
+        },
+        validators: {
+          structured_text_blocks: { item_types: [] }
+        }
+      }
+    },
     single_block: {
       description: "Single modular content block",
       validators: {

@@ -179,6 +179,19 @@ export const itemsNumberValidatorSchema = z.object({
 });
 
 /**
+ * Single block blocks validator
+ * For single_block fields - REQUIRED for single_block fields
+ */
+export const singleBlockBlocksValidatorSchema = z.object({
+  single_block_blocks: z.object({
+    item_types: z.array(z.string())
+      .describe("Array of allowed block model IDs. Can be empty array: []")
+  }).describe(
+    "REQUIRED validator for single_block fields. Example: { \"item_types\": [] }"
+  )
+});
+
+/**
  * Rich text blocks validator
  * For rich_text fields - REQUIRED for rich_text fields
  */
@@ -278,7 +291,7 @@ const requiredValidatorsMap: Record<string, string[]> = {
   structured_text: ['structured_text_blocks'],
   link: ['item_item_type'],
   links: ['items_item_type'],
-  single_block: ['item_item_type'],
+  single_block: ['single_block_blocks'],
   video: ['video_url']
 };
 
@@ -393,7 +406,7 @@ const validatorsMap: ValidatorMapping = {
   ],
   single_block: [
     requiredValidatorSchema,
-    itemItemTypeValidatorSchema
+    singleBlockBlocksValidatorSchema
   ],
   video: [
     requiredValidatorSchema,
@@ -459,5 +472,6 @@ export default {
   structuredTextMarksValidatorSchema,
   structuredTextNodesValidatorSchema,
   dateTimeValidatorSchema,
-  videoUrlValidatorSchema
+  videoUrlValidatorSchema,
+  singleBlockBlocksValidatorSchema
 };

@@ -27,6 +27,13 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
         "Add { \"structured_text_blocks\": { \"item_types\": [] } } to validators."
       );
     }
+
+    if (field_type === 'single_block' && (!validators || !validators.single_block_blocks)) {
+      return createErrorResponse(
+        "Missing required validator 'single_block_blocks' for single_block field. " +
+        "Add { \"single_block_blocks\": { \"item_types\": [] } } to validators."
+      );
+    }
     
     // String field with string_radio_group/string_select needs enum validator
     if (field_type === 'string' && appearance && 
@@ -225,7 +232,8 @@ function getDefaultEditor(fieldType: string): string {
     lat_lon: "map",
     seo: "seo",
     video: "video",
-    slug: "slug"
+    slug: "slug",
+    single_block: "framed_single_block"
   };
 
   return editorMap[fieldType] || "default_editor";
