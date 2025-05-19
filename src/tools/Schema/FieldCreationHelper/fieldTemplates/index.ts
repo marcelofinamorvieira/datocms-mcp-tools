@@ -8,6 +8,9 @@ import textTemplates from './textFieldTemplates.js';
 import locationTemplates from './locationFieldTemplates.js';
 import seoTemplates from './seoFieldTemplates.js';
 import jsonTemplates from './jsonFieldTemplates.js';
+import richTextTemplates from './richTextFieldTemplates.js';
+import structuredTextTemplates from './structuredTextFieldTemplates.js';
+import singleBlockTemplates from './singleBlockFieldTemplates.js';
 
 // Define field template structure
 export interface FieldTemplate {
@@ -59,6 +62,15 @@ export const fieldTemplates: FieldTemplatesMap = {
     json_editor: jsonTemplates.jsonEditorTemplate,
     string_multi_select: jsonTemplates.multiSelectTemplate,
     string_checkbox_group: jsonTemplates.checkboxGroupTemplate
+  },
+  rich_text: {
+    rich_text: richTextTemplates.richTextTemplate
+  },
+  structured_text: {
+    structured_text: structuredTextTemplates.structuredTextTemplate
+  },
+  single_block: {
+    framed_single_block: singleBlockTemplates.singleBlockTemplate
   }
 };
 

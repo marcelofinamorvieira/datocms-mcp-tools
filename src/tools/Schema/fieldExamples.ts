@@ -390,3 +390,24 @@ export const structuredTextFieldExample: Field = {
   },
   position: 17
 };
+
+// Single block field
+export const singleBlockFieldExample: Field = {
+  id: 'single_block_field_example',
+  label: 'Hero Block',
+  field_type: 'single_block',
+  api_key: 'hero_block',
+  hint: 'Select a single content block to use as hero',
+  localized: false,
+  validators: {
+    single_block_blocks: {
+      item_types: []
+    }
+  },
+  appearance: {
+    editor: 'framed_single_block',
+    parameters: { start_collapsed: false },
+    addons: []
+  },
+  position: 18
+};
