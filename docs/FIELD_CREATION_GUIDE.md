@@ -236,6 +236,7 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
      "validators": {
        "required": {},
        "unique": {}
+      "slug_title_field": { "title_field_id": "title_field_id" }
      }
    }
    ```
@@ -271,6 +272,25 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
   }
   ```
 
+### Rich Text Fields
+
+Rich text fields require the `rich_text_blocks` validator and a few key parameters.
+
+```javascript
+{
+  "label": "Rich Text Content",
+  "api_key": "rich_text_content",
+  "field_type": "rich_text",
+  "appearance": {
+    "editor": "rich_text",
+    "parameters": { "start_collapsed": false },
+    "addons": []
+  },
+  "validators": {
+    "rich_text_blocks": { "item_types": [] }
+  }
+}
+```
 ### Structured Text Fields
 
 Structured text fields require specific validators and parameters.
