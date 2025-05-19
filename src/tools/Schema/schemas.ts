@@ -205,12 +205,12 @@ export const schemaSchemas = {
     field_type: fieldTypeSchema
       .describe("The type of field to create. Each type requires specific validators and appearance configurations."),
     validators: z.lazy(() => z.record(z.unknown())
-      .describe("Validators for the field. Required validators vary by field_type - for example, rich_text fields REQUIRE the rich_text_blocks validator with at least an empty item_types array. Example for rich_text: { \"rich_text_blocks\": { \"item_types\": [] } }")),
+      .describe("Validators for the field. CRITICAL VALIDATORS BY TYPE:\n- For string_radio_group/string_select: MUST include { \"enum\": { \"values\": [\"option_a\", \"option_b\"] } } with values matching your options\n- For link fields: MUST include { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For links fields: MUST include { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For slug fields: Use { \"required\": {}, \"unique\": {} }\n- For rich_text fields: MUST include { \"rich_text_blocks\": { \"item_types\": [] } }")),
     appearance: z.lazy(() => z.object({
       editor: z.string()
-        .describe("The editor type to use for this field. Must be compatible with the field_type. Example for rich_text fields: \"rich_text\""),
+        .describe("The editor type to use for this field. CRITICAL MAPPINGS:\n- string fields: \"single_line\", \"string_radio_group\", or \"string_select\"\n- text fields: \"textarea\", \"wysiwyg\", or \"markdown\"\n- lat_lon fields: \"map\" (IMPORTANT: use \"map\" not \"lat_lon_editor\")\n- json fields: \"json_editor\", \"string_multi_select\", or \"string_checkbox_group\"\n- link fields: \"link_select\"\n- slug fields: \"slug\"\n- boolean fields: \"boolean\"\n- color fields: \"color_picker\""),
       parameters: z.record(z.unknown()).default({})
-        .describe("Editor-specific parameters. Structure depends on the chosen editor."),
+        .describe("Editor-specific parameters. Common examples:\n- For string_radio_group: { \"radios\": [{\"label\": \"Option A\", \"value\": \"option_a\"}] }\n- For string_select: { \"options\": [{\"label\": \"Option A\", \"value\": \"option_a\"}] }\n- For string_checkbox_group: { \"options\": [{\"label\": \"Feature\", \"value\": \"feature\"}] } (not \"checkboxes\")\n- For slug: { \"url_prefix\": \"https://example.com/\" }"),
       addons: z.array(fieldAddonSchema).default([])
         .describe("Field addons to apply. IMPORTANT: Always include this field, at minimum as an empty array.")
     }).describe("Appearance configuration for the field. Structure depends on field_type. IMPORTANT: Always include 'addons' array even if empty.")),
@@ -250,16 +250,112 @@ export const schemaSchemas = {
     {
       message: "Validators or appearance configuration is not valid for the specified field type. Each field type requires specific validators and appearance settings. See examples for guidance."
     }
-  ).describe(`Schema for creating a field in DatoCMS. Requirements differ by field_type.
-Examples:
-1. String field: ${JSON.stringify(stringFieldExample, null, 2)}
-2. Rich Text field: ${JSON.stringify(richTextFieldExample, null, 2)}
-3. Text field: ${JSON.stringify(textFieldExample, null, 2)}
+  ).describe(`Schema for creating a field in DatoCMS. Each field type has specific requirements.
 
-IMPORTANT NOTES:
-- Always include the 'addons' array in appearance, even if empty
-- Rich text fields REQUIRE the rich_text_blocks validator
-- Each field type requires specific editors in the appearance configuration
+🔴 COMPLETE WORKING EXAMPLES BY FIELD TYPE:
+
+1. String with radio group (most commonly fails):
+{
+  "action": "create_field",
+  "args": {
+    "apiToken": "your_api_token",
+    "itemTypeId": "your_item_type_id",
+    "label": "Category",
+    "api_key": "category",
+    "field_type": "string",
+    "validators": {
+      "enum": {"values": ["option_a", "option_b"]}
+    },
+    "appearance": {
+      "editor": "string_radio_group",
+      "parameters": {"radios": [{"label": "Option A", "value": "option_a"}, {"label": "Option B", "value": "option_b"}]},
+      "addons": []
+    },
+    "localized": false
+  }
+}
+
+2. Text with textarea appearance (commonly fails):
+{
+  "action": "create_field",
+  "args": {
+    "apiToken": "your_api_token",
+    "itemTypeId": "your_item_type_id",
+    "label": "Description",
+    "api_key": "description",
+    "field_type": "text",
+    "appearance": {
+      "editor": "textarea",
+      "parameters": {"placeholder": "Enter text..."},
+      "addons": []
+    },
+    "validators": {},
+    "localized": false
+  }
+}
+
+3. Location field (REQUIRES "map" editor):
+{
+  "action": "create_field",
+  "args": {
+    "apiToken": "your_api_token",
+    "itemTypeId": "your_item_type_id",
+    "label": "Location",
+    "api_key": "location",
+    "field_type": "lat_lon",
+    "appearance": {
+      "editor": "map",
+      "parameters": {},
+      "addons": []
+    },
+    "validators": {"required": {}},
+    "localized": false
+  }
+}
+
+4. JSON field (checkbox group):
+{
+  "action": "create_field",
+  "args": {
+    "apiToken": "your_api_token",
+    "itemTypeId": "your_item_type_id",
+    "label": "Features",
+    "api_key": "features",
+    "field_type": "json",
+    "appearance": {
+      "editor": "string_checkbox_group",
+      "parameters": {"options": [{"label": "Feature A", "value": "feature_a"}, {"label": "Feature B", "value": "feature_b"}]},
+      "addons": []
+    },
+    "validators": {},
+    "localized": false
+  }
+}
+
+5. Slug field:
+{
+  "action": "create_field",
+  "args": {
+    "apiToken": "your_api_token",
+    "itemTypeId": "your_item_type_id",
+    "label": "URL Slug",
+    "api_key": "url_slug",
+    "field_type": "slug",
+    "appearance": {
+      "editor": "slug",
+      "parameters": {"url_prefix": "https://example.com/"},
+      "addons": []
+    },
+    "validators": {"required": {}, "unique": {}},
+    "localized": false
+  }
+}
+
+🔴 CRITICAL REQUIREMENTS:
+- ALWAYS include 'addons: []' in appearance
+- For location (lat_lon) fields, use "editor": "map" (not "lat_lon_editor")
+- For string fields with radio/select, enum validator values MUST match option values
+- For JSON checkbox groups, use "options" parameter (not "checkboxes")
 `),
 
   update_field: createBaseSchema().extend({

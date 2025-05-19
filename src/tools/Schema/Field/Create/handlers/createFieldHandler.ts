@@ -54,11 +54,21 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       );
     }
 
+    // Ensure addons array is present
+    let processedAppearance = appearance;
     if (appearance && !appearance.addons) {
-      return createErrorResponse(
-        "Missing required 'addons' array in appearance configuration. " +
-        "Always include it, at minimum as an empty array: { \"addons\": [] }"
-      );
+      processedAppearance = {
+        ...appearance,
+        addons: []
+      };
+    }
+
+    // Correct editor name for lat_lon field type
+    if (field_type === 'lat_lon' && processedAppearance && processedAppearance.editor === 'lat_lon_editor') {
+      processedAppearance = {
+        ...processedAppearance,
+        editor: 'map'
+      };
     }
 
     // Build the DatoCMS client
@@ -71,7 +81,7 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
         ...restFieldData,
         field_type: field_type,
         validators: validators || {},
-        appearance: appearance || { editor: getDefaultEditor(field_type), parameters: {}, addons: [] }
+        appearance: processedAppearance || { editor: getDefaultEditor(field_type), parameters: {}, addons: [] }
       }
     };
 
@@ -139,12 +149,47 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
     // Provide detailed error for field creation errors
     if (errorMessage.includes("INVALID_FORMAT") || errorMessage.includes("INVALID_FIELD")) {
       return createErrorResponse(
-        `Error creating field: The API payload structure might be incorrect. 
-        
-Field creation requires a specific JSON structure with 'type' and 'attributes' properties.
-Check docs/FIELD_CREATION_GUIDE.md for examples.
+        `Error creating field: The field configuration is invalid. 
+
+🔴 COMMON ISSUES AND SOLUTIONS:
+
+1. For string fields with "string_radio_group" or "string_select" appearance:
+   REQUIRED: Matching enum validators
+   {
+     "validators": {
+       "enum": {"values": ["option_a", "option_b"]}
+     },
+     "appearance": {
+       "editor": "string_radio_group",
+       "parameters": {"radios": [{"label": "Option A", "value": "option_a"}, {"label": "Option B", "value": "option_b"}]},
+       "addons": []
+     }
+   }
+
+2. For location (lat_lon) fields:
+   REQUIRED: Use "map" as the editor name
+   {
+     "field_type": "lat_lon",
+     "appearance": {
+       "editor": "map",
+       "parameters": {},
+       "addons": []
+     }
+   }
+
+3. For text fields:
+   REQUIRED: Include empty addons array
+   {
+     "field_type": "text",
+     "appearance": {
+       "editor": "textarea",
+       "parameters": {"placeholder": "Enter text..."},
+       "addons": []
+     }
+   }
 
 Field Type: ${args.field_type}
+Editor: ${args.appearance?.editor || 'not specified'}
 Error Details: ${errorMessage}`
       );
     }
