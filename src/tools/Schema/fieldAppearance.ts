@@ -143,10 +143,17 @@ export const modularContentAppearanceSchema = baseAppearanceSchema.extend({
   parameters: z.object({
     toolbar_options: z.array(z.string()).optional().describe("Toolbar options to include"),
     enable_paste_filters: z.boolean().optional().default(true).describe("Whether to enable paste filters"),
-    start_collapsed: z.boolean().optional().default(false).describe("Whether to start in collapsed state")
+    start_collapsed: z.boolean().optional().default(false).describe("Whether to start in collapsed state"),
+    blocks_start_collapsed: z.boolean().optional().describe(
+      "Whether block nodes should be collapsed by default (structured_text only)"
+    )
   }).optional().default({ start_collapsed: false })
-    .describe("Editor parameters. Example: { \"start_collapsed\": false }")
-}).describe("Appearance for rich text and structured text fields. Example: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }");
+    .describe(
+      "Editor parameters. Example: { \"start_collapsed\": false, \"blocks_start_collapsed\": false }"
+    )
+}).describe(
+  "Appearance for rich text and structured text fields. Example: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
+);
 
 /**
  * Link field appearance
@@ -206,17 +213,21 @@ export const colorAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * JSON field appearance
- * IMPORTANT: For json fields, there are three editor types:
- * 1. "json_editor" - Standard JSON editor
- * 2. "string_multi_select" - Multi-select dropdown
- * 3. "string_checkbox_group" - Multiple checkbox selection (use "options" parameter)
+ * IMPORTANT: For json fields, two stable editor types are supported:
+ * 1. "string_multi_select" - Multi-select dropdown
+ * 2. "string_checkbox_group" - Multiple checkbox selection (use "options" parameter)
+ * The "json_editor" appearance is documented but currently rejected by the API.
  */
 export const jsonAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.enum(["json_editor", "string_multi_select", "string_checkbox_group"])
-    .describe("Editor type for JSON field. Use 'json_editor' for raw JSON editing, 'string_multi_select' for dropdown multi-select, or 'string_checkbox_group' for checkbox group."),
+  editor: z.enum(["string_multi_select", "string_checkbox_group"])
+    .describe(
+      "Editor type for JSON field. Use 'string_multi_select' for dropdown multi-select or 'string_checkbox_group' for checkbox group."
+    ),
   parameters: z.record(z.unknown()).optional().default({})
     .describe("Editor parameters. For string_checkbox_group, use 'options' not 'checkboxes'. Example for checkbox_group: { \"options\": [{\"label\": \"Option\", \"value\": \"option\"}] }")
-}).describe("Appearance for JSON fields with proper configuration. Example: { \"editor\": \"json_editor\", \"parameters\": {}, \"addons\": [] }");
+}).describe(
+  "Appearance for JSON fields with proper configuration. Example: { \"editor\": \"string_multi_select\", \"parameters\": { \"options\": [] }, \"addons\": [] }"
+);
 
 /**
  * Geo coordinates field appearance
@@ -290,7 +301,7 @@ const fieldTypeToEditorMap: Record<string, string[]> = {
   link: ["link_select"],
   links: ["links_select"],
   color: ["color_picker"],
-  json: ["json_editor", "string_multi_select", "string_checkbox_group"],
+  json: ["string_multi_select", "string_checkbox_group"],
   lat_lon: ["map", "lat_lon_editor"],
   seo: ["seo"],
   video: ["video"],

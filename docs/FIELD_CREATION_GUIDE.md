@@ -98,7 +98,7 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 
 3. **Editor Names**: Some editor names have important requirements:
    - For `lat_lon` fields, the correct API editor name is `"map"` not `"lat_lon_editor"`
-   - For `json` fields, use `"editor": "json_editor"` not `"json"`
+   - For `json` fields, prefer `"string_multi_select"` or `"string_checkbox_group"` editors; `json_editor` often fails
    - For `link` fields, use `"editor": "link_select"` 
    - For `links` fields, use `"editor": "links_select"`
 
@@ -267,9 +267,32 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
        "parameters": {},
        "addons": []
      },
-     "validators": { "required": {} }
-   }
-   ```
+   "validators": { "required": {} }
+  }
+  ```
+
+### Structured Text Fields
+
+Structured text fields require specific validators and parameters.
+
+```javascript
+{
+  "label": "Structured Content",
+  "api_key": "structured_content",
+  "field_type": "structured_text",
+  "appearance": {
+    "editor": "structured_text",
+    "parameters": { "blocks_start_collapsed": false },
+    "addons": []
+  },
+  "validators": {
+    "structured_text_blocks": { "item_types": [] },
+    "structured_text_links": { "item_types": [] }
+  }
+}
+```
+
+   *Note*: Despite being documented, the `json_editor` appearance is often rejected by the API. Use one of the other appearances if you encounter validation errors.
 
 2. **Multi-Select**:
    ```javascript

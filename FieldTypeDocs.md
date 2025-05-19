@@ -183,6 +183,7 @@ await createField(model, {
    }
    ```
    - DO NOT use `min_lines` or `max_lines` parameters despite documentation
+   - ⚠️ The API often rejects `json_editor` as invalid. Prefer one of the other appearances.
 
 2. **Multi-Select Dropdown (`string_multi_select`):**
    ```javascript
@@ -233,8 +234,13 @@ await createField(model, {
   field_type: "json",
   hint: "Enter JSON data for advanced configuration options",
   appearance: {
-    editor: "json_editor",
-    parameters: {},
+    editor: "string_checkbox_group",
+    parameters: {
+      options: [
+        { label: "Feature A", value: "feature_a" },
+        { label: "Feature B", value: "feature_b" }
+      ]
+    },
     addons: []
   },
   validators: {
@@ -318,6 +324,7 @@ appearance: {
 - String value: `default_value: "default-slug"`
 
 **Complete Example:**
+
 ```javascript
 await createField(model, {
   label: "Page Slug",
@@ -336,6 +343,43 @@ await createField(model, {
   validators: {
     required: {},
     unique: {}
+  }
+});
+```
+
+## Structured Text Field
+
+**Field Type:** `structured_text`
+
+**Required Validators:**
+ - `structured_text_blocks`
+ - `structured_text_links`
+
+**Presentation Options:**
+
+```javascript
+appearance: {
+  editor: "structured_text",
+  parameters: { blocks_start_collapsed: false },
+  addons: []
+}
+```
+
+**Complete Example:**
+
+```javascript
+await createField(model, {
+  label: "Structured Content",
+  api_key: "structured_content",
+  field_type: "structured_text",
+  appearance: {
+    editor: "structured_text",
+    parameters: { blocks_start_collapsed: false },
+    addons: []
+  },
+  validators: {
+    structured_text_blocks: { item_types: [] },
+    structured_text_links: { item_types: [] }
   }
 });
 ```

@@ -132,9 +132,8 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
 
       if (errorMessage.includes("start_collapsed")) {
         return createErrorResponse(
-          "Invalid parameter 'start_collapsed' for the specified field type's appearance. " +
-          "Make sure you're using the correct parameters for your field type's editor. " +
-          "For rich_text fields, use: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
+          "Invalid parameter 'start_collapsed'. For structured_text use 'blocks_start_collapsed', " +
+          "and for rich_text use: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
         );
       }
     }

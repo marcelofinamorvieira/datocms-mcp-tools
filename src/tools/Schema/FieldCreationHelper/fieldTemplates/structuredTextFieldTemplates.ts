@@ -9,11 +9,12 @@ export const structuredTextTemplate = {
   hint: "Structured text content",
   appearance: {
     editor: "structured_text",
-    parameters: {},
+    parameters: { blocks_start_collapsed: false },
     addons: []
   },
   validators: {
-    structured_text_blocks: { item_types: [] }
+    structured_text_blocks: { item_types: [] },
+    structured_text_links: { item_types: [] }
   }
 };
 

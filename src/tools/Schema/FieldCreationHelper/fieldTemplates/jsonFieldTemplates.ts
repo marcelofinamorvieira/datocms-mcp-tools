@@ -5,6 +5,8 @@
 
 /**
  * JSON field with json editor appearance
+ * NOTE: The DatoCMS API currently rejects 'json_editor' as invalid. Use one of
+ * the other templates instead.
  */
 export const jsonEditorTemplate = {
   label: "Advanced Settings",
