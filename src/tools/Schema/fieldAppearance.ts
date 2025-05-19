@@ -32,17 +32,19 @@ const baseAppearanceSchema = z.object({
  * For string and text fields
  */
 export const textAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.enum([
-    "single_line", "multi_line", "wysiwyg"
-  ]).describe("Editor type to use for the field. Common values: 'single_line', 'multi_line', 'wysiwyg'."),
-  parameters: z.object({
-    heading: z.boolean().optional().default(false).describe("Whether to display as a heading"),
-    api_key: z.boolean().optional().default(false).describe("Whether this is an API key field (applies special validation)"),
-    monospace: z.boolean().optional().default(false).describe("Whether to use monospace font"),
-    disable_code_highlighting: z.boolean().optional().default(false).describe("Whether to disable code highlighting in editor"),
-    html_requirements: z.boolean().optional().default(false).describe("Whether to enforce HTML formatting requirements")
-  }).optional().default({})
-    .describe("Editor parameters. Example: { \"heading\": false }")
+  editor: z.enum(["textarea", "wysiwyg", "markdown"]).describe(
+    "Editor type to use for text fields. Use 'textarea', 'wysiwyg', or 'markdown'."
+  ),
+  parameters: z
+    .object({
+      placeholder: z
+        .string()
+        .optional()
+        .describe("Placeholder text shown when field is empty")
+    })
+    .optional()
+    .default({})
+    .describe("Editor parameters. Example: { \"placeholder\": \"Enter text...\" }")
 });
 
 /**
@@ -68,7 +70,9 @@ export const stringAppearanceSchema = baseAppearanceSchema.extend({
  * Text field appearance
  * Specific to text fields (multi-line)
  */
-export const textareaAppearanceSchema = textAppearanceSchema.describe("Appearance for text fields. Example: { \"editor\": \"multi_line\", \"parameters\": { \"rows\": 4 }, \"addons\": [] }");
+export const textareaAppearanceSchema = textAppearanceSchema.describe(
+  "Appearance for text fields. Example: { \"editor\": \"textarea\", \"parameters\": { \"placeholder\": \"Enter text...\" }, \"addons\": [] }"
+);
 
 /**
  * Boolean field appearance
@@ -149,15 +153,29 @@ export const modularContentAppearanceSchema = baseAppearanceSchema.extend({
  * For link and links fields
  */
 export const linkAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.enum([
-    "link_editor", "links_editor", "embedded"
-  ]).describe("Editor type to use for the field. For single links use 'link_editor', for multiple 'links_editor'."),
+  editor: z
+    .enum(["link_select", "links_select"])
+    .describe(
+      "Editor type to use for the field. Use 'link_select' for single links or 'links_select' for multiple."
+    ),
   parameters: z.object({
     display_mode: z.enum(["list", "grid", "table"]).optional().describe("How to display linked items"),
     filter_types: z.array(z.string()).optional().describe("Types to filter in selection UI")
   }).optional().default({})
     .describe("Editor parameters. Example: { \"display_mode\": \"list\" }")
-}).describe("Appearance for link fields. Example: { \"editor\": \"link_editor\", \"parameters\": {}, \"addons\": [] }");
+}).describe("Appearance for link fields. Example: { \"editor\": \"link_select\", \"parameters\": {}, \"addons\": [] }");
+
+/**
+ * Single block field appearance
+ */
+export const singleBlockAppearanceSchema = baseAppearanceSchema.extend({
+  editor: z.enum(["framed_single_block", "frameless_single_block"]).describe(
+    "Editor type for single_block fields. Use 'framed_single_block' or 'frameless_single_block'."
+  ),
+  parameters: z.object({}).optional().default({}).describe("No additional parameters required")
+}).describe(
+  "Appearance for single_block fields. Example: { \"editor\": \"framed_single_block\", \"parameters\": {}, \"addons\": [] }"
+);
 
 /**
  * Media field appearance
@@ -225,6 +243,22 @@ export const seoAppearanceSchema = baseAppearanceSchema.extend({
 }).describe("Appearance for SEO fields. Example: { \"editor\": \"seo\", \"parameters\": {}, \"addons\": [] }");
 
 /**
+ * Slug field appearance
+ * IMPORTANT: Always include addons array, even if empty
+ */
+export const slugAppearanceSchema = baseAppearanceSchema.extend({
+  editor: z.literal("slug").describe("Editor type for slug field. Use 'slug'."),
+  parameters: z
+    .object({
+      url_prefix: z.string().optional().describe("URL prefix displayed before the slug"),
+      placeholder: z.string().optional().describe("Placeholder text for the slug field")
+    })
+    .optional()
+    .default({})
+    .describe("Editor parameters for slug fields. Example: { \"url_prefix\": \"https://example.com/\" }")
+}).describe("Appearance for slug fields. Example: { \"editor\": \"slug\", \"parameters\": { \"url_prefix\": \"https://example.com/\" }, \"addons\": [] }");
+
+/**
  * Video field appearance
  * IMPORTANT: Always include addons array, even if empty
  */
@@ -253,15 +287,15 @@ const fieldTypeToEditorMap: Record<string, string[]> = {
   date_time: ["date_time_picker"],
   file: ["file"],
   gallery: ["gallery", "media_gallery"],
-  link: ["link_editor", "embedded", "link_select"],
-  links: ["links_editor", "links_select"],
+  link: ["link_select"],
+  links: ["links_select"],
   color: ["color_picker"],
   json: ["json_editor", "string_multi_select", "string_checkbox_group"],
   lat_lon: ["map", "lat_lon_editor"],
   seo: ["seo"],
   video: ["video"],
   slug: ["slug"],
-  single_block: ["framed_single_block"]
+  single_block: ["framed_single_block", "frameless_single_block"]
 };
 
 /**
@@ -288,8 +322,8 @@ export function createAppearanceSchema(fieldType: string) {
     lat_lon: geoAppearanceSchema,
     seo: seoAppearanceSchema,
     video: videoAppearanceSchema,
-    slug: stringAppearanceSchema,
-    single_block: linkAppearanceSchema
+    slug: slugAppearanceSchema,
+    single_block: singleBlockAppearanceSchema
   };
 
   const validEditors = fieldTypeToEditorMap[fieldType] || ["default_editor"];

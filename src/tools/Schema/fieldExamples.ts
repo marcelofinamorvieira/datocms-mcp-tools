@@ -57,7 +57,7 @@ export const textFieldExample: Field = {
   appearance: {
     editor: 'textarea',
     parameters: {
-      rows: 5
+      placeholder: 'Enter detailed description here...'
     },
     addons: []
   },
@@ -213,7 +213,7 @@ export const singleLinkFieldExample: Field = {
     }
   },
   appearance: {
-    editor: 'link_editor',
+    editor: 'link_select',
     parameters: {},
     addons: []
   },
@@ -235,7 +235,7 @@ export const multiLinkFieldExample: Field = {
     }
   },
   appearance: {
-    editor: 'links_editor',
+    editor: 'links_select',
     parameters: {
       max_results: 10
     },
