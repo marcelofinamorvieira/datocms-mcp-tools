@@ -453,15 +453,15 @@ const fieldTypeDocs = {
         required: { description: "Makes the field required" }
       },
       appearances: {
-        lat_lon_editor: {
+        map: {
           description: "Map location picker interface",
           parameters: {},
           example: {
-            editor: "lat_lon_editor",
+            editor: "map",
             parameters: {},
             addons: []
           },
-          notes: "Use editor: 'lat_lon_editor', not 'map' as in some documentation"
+          notes: "Use editor: 'map' for location fields"
         }
       },
       defaultValue: {
@@ -474,7 +474,7 @@ const fieldTypeDocs = {
         field_type: "lat_lon",
         hint: "Select the geographical location for this event",
         appearance: {
-          editor: "lat_lon_editor",
+          editor: "map",
           parameters: {},
           addons: []
         },

@@ -49,7 +49,20 @@ export const textAppearanceSchema = baseAppearanceSchema.extend({
  * String field appearance
  * Specific to string fields
  */
-export const stringAppearanceSchema = textAppearanceSchema.describe("Appearance for string fields. Example: { \"editor\": \"single_line\", \"parameters\": { \"heading\": false }, \"addons\": [] }");
+export const stringAppearanceSchema = baseAppearanceSchema.extend({
+  editor: z.enum([
+    "single_line",
+    "string_radio_group",
+    "string_select"
+  ]).describe(
+    "Editor type to use for string fields. Use 'single_line', 'string_radio_group', or 'string_select'."
+  ),
+  parameters: z.record(z.unknown()).optional().default({}).describe(
+    "Editor parameters. For radio/select editors use 'radios' or 'options' arrays as appropriate."
+  )
+}).describe(
+  "Appearance for string fields. Example: { \"editor\": \"single_line\", \"parameters\": {}, \"addons\": [] }"
+);
 
 /**
  * Text field appearance
@@ -223,13 +236,13 @@ export const videoAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * Map of field types to appropriate editor values
- * IMPORTANT: For `lat_lon` fields, both "lat_lon_editor" and "map" are included,
- * but "lat_lon_editor" is strongly recommended as it works more reliably.
+ * IMPORTANT: For `lat_lon` fields the correct API value is "map".
+ * "lat_lon_editor" remains for legacy compatibility but may fail validation.
  * For string fields, "string_radio_group" and "string_select" require matching enum validators.
  * For json fields, "string_multi_select" and "string_checkbox_group" require properly formatted options.
  */
 const fieldTypeToEditorMap: Record<string, string[]> = {
-  string: ["single_line", "textarea", "wysiwyg", "string_radio_group", "string_select"],
+  string: ["single_line", "string_radio_group", "string_select"],
   text: ["textarea", "wysiwyg", "markdown"],
   rich_text: ["rich_text"],
   structured_text: ["structured_text"],
@@ -244,7 +257,7 @@ const fieldTypeToEditorMap: Record<string, string[]> = {
   links: ["links_editor", "links_select"],
   color: ["color_picker"],
   json: ["json_editor", "string_multi_select", "string_checkbox_group"],
-  lat_lon: ["lat_lon_editor", "map"],
+  lat_lon: ["map", "lat_lon_editor"],
   seo: ["seo"],
   video: ["video"],
   slug: ["slug"],
