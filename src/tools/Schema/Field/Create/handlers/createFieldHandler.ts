@@ -74,15 +74,18 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
     // Build the DatoCMS client
     const client = getClient(apiToken, environment);
 
-    // Prepare field data for the API
+    // Prepare field data for the API. The DatoCMS client expects just the
+    // attribute object and will automatically wrap it in the JSON:API format.
     const fieldData: any = {
-      type: "field",
-      attributes: {
-        ...restFieldData,
-        field_type: field_type,
-        validators: validators || {},
-        appearance: processedAppearance || { editor: getDefaultEditor(field_type), parameters: {}, addons: [] }
-      }
+      ...restFieldData,
+      field_type: field_type,
+      validators: validators || {},
+      appearance:
+        processedAppearance || {
+          editor: getDefaultEditor(field_type),
+          parameters: {},
+          addons: []
+        }
     };
 
     // Create the field
