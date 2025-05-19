@@ -59,7 +59,6 @@ export const fieldTemplates: FieldTemplatesMap = {
     seo: seoTemplates.seoTemplate
   },
   json: {
-    json_editor: jsonTemplates.jsonEditorTemplate,
     string_multi_select: jsonTemplates.multiSelectTemplate,
     string_checkbox_group: jsonTemplates.checkboxGroupTemplate
   },

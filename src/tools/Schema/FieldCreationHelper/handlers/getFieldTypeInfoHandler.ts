@@ -842,15 +842,19 @@ const fieldTypeDocs = {
         structured_text_blocks: {
           description: "REQUIRED - allowed block models",
           example: { item_types: ["block_model_id"] }
+        },
+        structured_text_links: {
+          description: "REQUIRED - allowed linked item types",
+          example: { item_types: ["item_model_id"] }
         }
       },
       appearances: {
         structured_text: {
           description: "Structured text editor",
-          parameters: {},
+          parameters: { blocks_start_collapsed: { description: "Start collapsed", default: false } },
           example: {
             editor: "structured_text",
-            parameters: {},
+            parameters: { blocks_start_collapsed: false },
             addons: []
           }
         }
@@ -863,11 +867,12 @@ const fieldTypeDocs = {
         hint: "Structured text content",
         appearance: {
           editor: "structured_text",
-          parameters: {},
+          parameters: { blocks_start_collapsed: false },
           addons: []
         },
         validators: {
-          structured_text_blocks: { item_types: [] }
+          structured_text_blocks: { item_types: [] },
+          structured_text_links: { item_types: [] }
         }
       }
     },
@@ -1026,7 +1031,7 @@ FIELD CREATION TEMPLATES: Use these verified templates to avoid validation error
 1. ALWAYS include 'addons: []' in appearance (mandatory but undocumented)
 2. Use CORRECT editor names:
    - For locations: use "map" (not "lat_lon_editor")
-   - For JSON: use "json_editor" (not "json")
+   - For JSON: prefer "string_multi_select" or "string_checkbox_group" ("json_editor" often fails)
    - For text: include appearance.addons even for "textarea"
 3. String radio/select groups: enum validator values MUST match your option values exactly
 4. JSON checkbox groups: use "options" parameter (not "checkboxes")

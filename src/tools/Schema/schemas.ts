@@ -50,7 +50,7 @@ export const schemaSchemas = {
     environment: environmentSchema.optional().default("main"),
     fieldType: z.string().optional().describe("Optional field type to get specific information about (e.g., 'string', 'text', 'lat_lon', 'json'). If not provided, returns a list of all available field types with their supported appearances."),
     appearance: z.string().optional().describe("Optional appearance type to get specific template for (e.g., 'string_radio_group', 'map', 'string_checkbox_group'). If provided, fieldType must also be provided.")
-  }).describe("Get verified field templates with working configurations to prevent validation errors in DatoCMS. Provides correct structure for problematic field types that commonly fail in creation requests. Includes templates for string_radio_group, string_select, textarea, wysiwyg, markdown, lat_lon, slug, and json fields with various appearances. All templates include the critical 'addons' array, proper editor names, and required validator configurations. For specialized fields, returns specific guidance (e.g., \"Use json_editor instead of json\", \"Use map instead of lat_lon_editor\", \"Remember to match enum validators with option values\")."),
+  }).describe("Get verified field templates with working configurations to prevent validation errors in DatoCMS. Provides correct structure for problematic field types that commonly fail in creation requests. Includes templates for string_radio_group, string_select, textarea, wysiwyg, markdown, lat_lon, slug, and json fields with various appearances. All templates include the critical 'addons' array, proper editor names, and required validator configurations. For specialized fields, returns specific guidance (e.g., \"Use string_multi_select instead of json_editor\", \"Use map instead of lat_lon_editor\", \"Remember to match enum validators with option values\")."),
 
   // ItemType operations
   create_item_type: createBaseSchema().extend({
@@ -208,7 +208,15 @@ export const schemaSchemas = {
       .describe("Validators for the field. CRITICAL VALIDATORS BY TYPE:\n- For string_radio_group/string_select: MUST include { \"enum\": { \"values\": [\"option_a\", \"option_b\"] } } with values matching your options\n- For link fields: MUST include { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For links fields: MUST include { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For slug fields: Use { \"required\": {}, \"unique\": {} }\n- For rich_text fields: MUST include { \"rich_text_blocks\": { \"item_types\": [] } }")),
     appearance: z.lazy(() => z.object({
       editor: z.string()
-        .describe("The editor type to use for this field. CRITICAL MAPPINGS:\n- string fields: \"single_line\", \"string_radio_group\", or \"string_select\"\n- text fields: \"textarea\", \"wysiwyg\", or \"markdown\"\n- lat_lon fields: \"map\" (IMPORTANT: use \"map\" not \"lat_lon_editor\")\n- json fields: \"json_editor\", \"string_multi_select\", or \"string_checkbox_group\"\n- link fields: \"link_select\"\n- slug fields: \"slug\"\n- boolean fields: \"boolean\"\n- color fields: \"color_picker\""),
+        .describe(`The editor type to use for this field. CRITICAL MAPPINGS:
+- string fields: "single_line", "string_radio_group", or "string_select"
+- text fields: "textarea", "wysiwyg", or "markdown"
+- lat_lon fields: "map" (IMPORTANT: use "map" not "lat_lon_editor")
+- json fields: "string_multi_select" or "string_checkbox_group" (json_editor currently fails)
+- link fields: "link_select"
+- slug fields: "slug"
+- boolean fields: "boolean"
+- color fields: "color_picker"`),
       parameters: z.record(z.unknown()).default({})
         .describe("Editor-specific parameters. Common examples:\n- For string_radio_group: { \"radios\": [{\"label\": \"Option A\", \"value\": \"option_a\"}] }\n- For string_select: { \"options\": [{\"label\": \"Option A\", \"value\": \"option_a\"}] }\n- For string_checkbox_group: { \"options\": [{\"label\": \"Feature\", \"value\": \"feature\"}] } (not \"checkboxes\")\n- For slug: { \"url_prefix\": \"https://example.com/\" }"),
       addons: z.array(fieldAddonSchema).default([])

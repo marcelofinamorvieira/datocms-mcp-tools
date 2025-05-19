@@ -363,8 +363,13 @@ export const jsonFieldExample: Field = {
   localized: false,
   validators: {},
   appearance: {
-    editor: 'json_editor',
-    parameters: {},
+    editor: 'string_checkbox_group',
+    parameters: {
+      options: [
+        { label: 'Feature A', value: 'feature_a' },
+        { label: 'Feature B', value: 'feature_b' }
+      ]
+    },
     addons: []
   },
   position: 16
@@ -381,11 +386,14 @@ export const structuredTextFieldExample: Field = {
   validators: {
     structured_text_blocks: {
       item_types: []
+    },
+    structured_text_links: {
+      item_types: []
     }
   },
   appearance: {
     editor: 'structured_text',
-    parameters: {},
+    parameters: { blocks_start_collapsed: false },
     addons: []
   },
   position: 17
