@@ -18,10 +18,8 @@ async function testFieldCreation() {
     // Get the client
     const client = getClient(API_TOKEN, ENVIRONMENT);
     
-    console.log('Starting field creation tests...');
     
     // Test 1: String field with single_line
-    console.log('\nTest 1: Creating string field with single_line editor...');
     try {
       const stringField = await client.fields.create(ITEM_TYPE_ID, {
         type: 'field',
@@ -37,13 +35,10 @@ async function testFieldCreation() {
           }
         }
       });
-      console.log(`✅ Success: Created string field with ID ${stringField.id}`);
     } catch (error) {
-      console.error('❌ Failed:', error);
     }
     
     // Test 2: String field with radio_group
-    console.log('\nTest 2: Creating string field with string_radio_group editor...');
     try {
       const radioField = await client.fields.create(ITEM_TYPE_ID, {
         type: 'field',
@@ -68,13 +63,10 @@ async function testFieldCreation() {
           }
         }
       });
-      console.log(`✅ Success: Created radio group field with ID ${radioField.id}`);
     } catch (error) {
-      console.error('❌ Failed:', error);
     }
     
     // Test 3: Text field with textarea
-    console.log('\nTest 3: Creating text field with textarea editor...');
     try {
       const textareaField = await client.fields.create(ITEM_TYPE_ID, {
         type: 'field',
@@ -90,13 +82,10 @@ async function testFieldCreation() {
           }
         }
       });
-      console.log(`✅ Success: Created textarea field with ID ${textareaField.id}`);
     } catch (error) {
-      console.error('❌ Failed:', error);
     }
     
     // Test 4: Location field
-    console.log('\nTest 4: Creating location field with map editor...');
     try {
       const locationField = await client.fields.create(ITEM_TYPE_ID, {
         type: 'field',
@@ -112,13 +101,10 @@ async function testFieldCreation() {
           }
         }
       });
-      console.log(`✅ Success: Created location field with ID ${locationField.id}`);
     } catch (error) {
-      console.error('❌ Failed:', error);
     }
     
     // Test 5: Slug field
-    console.log('\nTest 5: Creating slug field...');
     try {
       const slugField = await client.fields.create(ITEM_TYPE_ID, {
         type: 'field',
@@ -137,13 +123,10 @@ async function testFieldCreation() {
           }
         }
       });
-      console.log(`✅ Success: Created slug field with ID ${slugField.id}`);
     } catch (error) {
-      console.error('❌ Failed:', error);
     }
     
     // Test 6: JSON field with checkbox group
-    console.log('\nTest 6: Creating JSON field with checkbox group...');
     try {
       const jsonField = await client.fields.create(ITEM_TYPE_ID, {
         type: 'field',
@@ -165,15 +148,11 @@ async function testFieldCreation() {
           }
         }
       });
-      console.log(`✅ Success: Created JSON checkbox group field with ID ${jsonField.id}`);
     } catch (error) {
-      console.error('❌ Failed:', error);
     }
     
-    console.log('\nAll tests completed.');
     
   } catch (error) {
-    console.error('Error in test script:', error);
   }
 }
 

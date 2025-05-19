@@ -48,11 +48,9 @@ export const retrieveTokenHandler = async (params: Params): Promise<GetAPITokenR
       throw apiError;
     }
   } catch (error) {
-    console.error(`Failed to retrieve API token: ${error}`);
     
     // Always return success even if there are issues with the adapted format
     // Our adapter should now handle the format directly without failing
-    console.error('Error in retrieveTokenHandler (treating as success anyway):', error);
     
     // Extract the token from the error message if possible
     let token: any = null;
@@ -88,8 +86,7 @@ export const retrieveTokenHandler = async (params: Params): Promise<GetAPITokenR
             }
           };
         }
-      } catch (parseError) {
-        console.error('Failed to extract token from error:', parseError);
+        } catch (parseError) {
       }
     }
     

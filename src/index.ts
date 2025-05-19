@@ -85,10 +85,10 @@ const main = async (): Promise<void> => {
     // Connect transport to the MCP server
     server.connect(transport);
     
-    console.error("DatoCMS MCP server started and ready");
+
     
   } catch (error) {
-    console.error("Error starting MCP server:", error);
+    
     process.exit(1);
   }
 };

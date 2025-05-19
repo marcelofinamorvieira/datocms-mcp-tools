@@ -192,7 +192,6 @@ const collaboratorsAdapters = {
       
       return token;
     } catch (error) {
-      console.error('Error converting API token:', error);
       
       // Return a minimal valid token as fallback
       return {

@@ -42,7 +42,6 @@ export const listTokensHandler = async (params: Params): Promise<ListAPITokensRe
       throw apiError;
     }
   } catch (error) {
-    console.error(`Failed to list API tokens: ${error}`);
     
     // Try to extract tokens from the error message
     const errorStr = String(error);
@@ -84,8 +83,7 @@ export const listTokensHandler = async (params: Params): Promise<ListAPITokensRe
             data: convertedTokens
           };
         }
-      } catch (parseError) {
-        console.error('Failed to extract tokens from error:', parseError);
+        } catch (parseError) {
       }
     }
     

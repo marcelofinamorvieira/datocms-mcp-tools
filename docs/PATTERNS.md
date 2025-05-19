@@ -106,13 +106,10 @@ export function withLogging<T, R>(
   operationName: string
 ): (args: T) => Promise<R> {
   return async function(args: T): Promise<R> {
-    console.log(`Operation ${operationName} started with args:`, args);
     try {
       const result = await handler(args);
-      console.log(`Operation ${operationName} completed successfully`);
       return result;
     } catch (error) {
-      console.error(`Operation ${operationName} failed:`, error);
       throw error;
     }
   };
@@ -349,7 +346,6 @@ export async function performOperation() {
   
   if (result.status === 'error') {
     // Handle error
-    console.error(result.message);
     return null;
   }
   

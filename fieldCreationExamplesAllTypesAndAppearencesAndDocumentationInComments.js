@@ -842,7 +842,6 @@ async function run() {
   });
 
   // Check the 'Returned output' tab for the result ☝️
-  console.log(field);
 }
 
 run();
@@ -884,7 +883,6 @@ async function run() {
     },
   });
 
-  console.log(field);
 }
 
 run();
@@ -936,7 +934,6 @@ async function run() {
     },
   });
 
-  console.log(field);
 }
 
 run();
@@ -962,7 +959,6 @@ const results = {
  */
 async function createField(model, fieldConfig) {
   try {
-    console.log(`Creating ${fieldConfig.field_type} field: ${fieldConfig.label}...`);
     
     // Ensure all appearance objects have addons and parameters
     if (fieldConfig.appearance) {
@@ -971,7 +967,6 @@ async function createField(model, fieldConfig) {
     }
     
     const field = await client.fields.create(model.id, fieldConfig);
-    console.log(`Successfully created ${field.field_type} field: ${field.label}`);
     
     // Track success
     results.successful.push({
@@ -982,7 +977,6 @@ async function createField(model, fieldConfig) {
     
     return field;
   } catch (error) {
-    console.error(`Error creating ${fieldConfig.field_type} field: ${fieldConfig.label}`, error);
     
     // Track failure
     results.failed.push({
@@ -1003,7 +997,6 @@ async function createField(model, fieldConfig) {
  */
 async function createComprehensiveModel() {
   try {
-    console.log('Creating comprehensive model...');
     
     // Create a new model
     const model = await client.itemTypes.create({
@@ -1012,16 +1005,13 @@ async function createComprehensiveModel() {
       singleton: false
     });
     
-    console.log(`Model created with ID: ${model.id}`);
     
     // Create a reference model for link/links fields
-    console.log('Creating a reference model...');
     const refModel = await client.itemTypes.create({
       name: `Reference Model ${randomSuffix}`,
       api_key: `reference_model${randomSuffix}`,
       singleton: false
     });
-    console.log(`Reference model created with ID: ${refModel.id}`);
     
     // Add a title field to the reference model
     await createField(refModel, {
@@ -1031,13 +1021,11 @@ async function createComprehensiveModel() {
     });
     
     // Create modular block models for structured text and rich text
-    console.log('Creating modular block models...');
     const textBlockModel = await client.itemTypes.create({
       name: `Text Block ${randomSuffix}`,
       api_key: `text_block${randomSuffix}`,
       modular_block: true
     });
-    console.log(`Text block model created with ID: ${textBlockModel.id}`);
     
     // Add text field to the block model
     await createField(textBlockModel, {
@@ -1051,7 +1039,6 @@ async function createComprehensiveModel() {
       api_key: `image_block${randomSuffix}`,
       modular_block: true
     });
-    console.log(`Image block model created with ID: ${imageBlockModel.id}`);
     
     // Add image field to the image block model
     await createField(imageBlockModel, {
@@ -1384,7 +1371,6 @@ async function createComprehensiveModel() {
         }
       });
     } catch (error) {
-      console.log("Gallery field creation failed, but continuing with other fields...");
     }
     
     // 26. Color field
@@ -1395,13 +1381,10 @@ async function createComprehensiveModel() {
         field_type: "color"
       });
     } catch (error) {
-      console.log("Color field creation failed, but continuing with other fields...");
     }
     
-    console.log(`Successfully created comprehensive model with multiple field types!`);
     return { model, refModel, textBlockModel, imageBlockModel };
   } catch (error) {
-    console.error('Error creating model or fields:', error);
     throw error;
   }
 }
@@ -1409,11 +1392,9 @@ async function createComprehensiveModel() {
 // Execute the function
 createComprehensiveModel()
   .then(() => {
-    console.log('Script completed successfully!');
     
     // Write results to file
     fs.writeFileSync('final_comprehensive_results.json', JSON.stringify(results, null, 2));
-    console.log('Results written to final_comprehensive_results.json');
     
     // Create a markdown summary
     const fieldSummary = `# Final Comprehensive DatoCMS Field Types Results
@@ -1449,6 +1430,4 @@ This script demonstrates a comprehensive set of field types available in the Dat
 `;
     
     fs.writeFileSync('final_comprehensive_results.md', fieldSummary);
-    console.log('Field summary written to final_comprehensive_results.md');
   })
-  .catch(error => console.error('Script failed:', error));
