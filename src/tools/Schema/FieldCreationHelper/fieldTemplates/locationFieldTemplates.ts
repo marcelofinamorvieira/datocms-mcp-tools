@@ -5,7 +5,7 @@
 
 /**
  * Location field with map appearance
- * NOTE: The correct editor is "lat_lon_editor", not "map" as in some documentation
+ * NOTE: For the API, the correct editor is "map", not "lat_lon_editor" 
  */
 export const locationTemplate = {
   label: "Event Location",
@@ -13,7 +13,7 @@ export const locationTemplate = {
   field_type: "lat_lon",
   hint: "Select the geographical location",
   appearance: {
-    editor: "lat_lon_editor",
+    editor: "map",
     parameters: {},
     addons: []
   },

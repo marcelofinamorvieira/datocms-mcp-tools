@@ -85,6 +85,17 @@ npm run start:http
    Claude: [executes query and returns results]
    ```
 
+### Field Creation Guidelines
+
+When creating fields in DatoCMS, follow these critical requirements:
+
+1. All field appearances must include an `addons` array (even if empty)
+2. For location fields, use `"editor": "map"` (not "lat_lon_editor")
+3. String fields with radio or select appearance require matching enum validator values
+4. JSON fields with checkbox group must use the "options" parameter
+
+See `docs/FIELD_CREATION_GUIDE.md` for detailed examples and requirements.
+
 ### Configuration
 
 Configure Claude Desktop to work with the server:

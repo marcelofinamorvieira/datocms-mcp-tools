@@ -8,6 +8,8 @@ import { buildClient, Client } from "@datocms/cma-client-node";
  * @returns A configured DatoCMS client instance
  */
 export function getClient(apiToken: string, environment?: string): Client {
-  const clientParameters = environment ? { apiToken, environment } : { apiToken };
+  const clientParameters = environment 
+    ? { apiToken, environment, baseUrl: 'https://site-api.datocms.com' } 
+    : { apiToken, baseUrl: 'https://site-api.datocms.com' };
   return buildClient(clientParameters);
 }

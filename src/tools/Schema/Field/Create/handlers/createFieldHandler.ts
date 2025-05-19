@@ -27,6 +27,32 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
         "Add { \"structured_text_blocks\": { \"item_types\": [] } } to validators."
       );
     }
+    
+    // String field with string_radio_group/string_select needs enum validator
+    if (field_type === 'string' && appearance && 
+        (appearance.editor === 'string_radio_group' || appearance.editor === 'string_select') && 
+        (!validators || !validators.enum)) {
+      return createErrorResponse(
+        `Missing required validator 'enum' for string field with ${appearance.editor} editor. ` +
+        `Add { \"enum\": { \"values\": [...] } } to validators, and ensure values match the options.`
+      );
+    }
+    
+    // Link field needs item_item_type validator
+    if (field_type === 'link' && (!validators || !validators.item_item_type)) {
+      return createErrorResponse(
+        "Missing required validator 'item_item_type' for link field. " +
+        "Add { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } } to validators."
+      );
+    }
+    
+    // Links field needs items_item_type validator
+    if (field_type === 'links' && (!validators || !validators.items_item_type)) {
+      return createErrorResponse(
+        "Missing required validator 'items_item_type' for links field. " +
+        "Add { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } } to validators."
+      );
+    }
 
     if (appearance && !appearance.addons) {
       return createErrorResponse(
@@ -40,10 +66,13 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
 
     // Prepare field data for the API
     const fieldData: any = {
-      ...restFieldData,
-      field_type: field_type,
-      validators: validators || {},
-      appearance: appearance || { editor: getDefaultEditor(field_type), parameters: {}, addons: [] }
+      type: "field",
+      attributes: {
+        ...restFieldData,
+        field_type: field_type,
+        validators: validators || {},
+        appearance: appearance || { editor: getDefaultEditor(field_type), parameters: {}, addons: [] }
+      }
     };
 
     // Create the field
@@ -90,7 +119,38 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       }
     }
 
+    // Provide more specific guidance
+    if (errorMessage.includes("appearance.editor")) {
+      if (args.field_type === "lat_lon") {
+        return createErrorResponse(
+          `Error creating lat_lon field: Make sure you're using "editor": "map" (not "lat_lon_editor") in the appearance. ${errorMessage}`
+        );
+      } else if (args.field_type === "json") {
+        return createErrorResponse(
+          `Error creating json field: Make sure you're using one of: "json_editor", "string_multi_select", or "string_checkbox_group" as the editor. ${errorMessage}`
+        );
+      } else {
+        return createErrorResponse(
+          `Error with field editor: Invalid editor for field type ${args.field_type}. Check docs/FIELD_CREATION_GUIDE.md for the correct editor names. ${errorMessage}`
+        );
+      }
+    }
+    
+    // Provide detailed error for field creation errors
+    if (errorMessage.includes("INVALID_FORMAT") || errorMessage.includes("INVALID_FIELD")) {
+      return createErrorResponse(
+        `Error creating field: The API payload structure might be incorrect. 
+        
+Field creation requires a specific JSON structure with 'type' and 'attributes' properties.
+Check docs/FIELD_CREATION_GUIDE.md for examples.
+
+Field Type: ${args.field_type}
+Error Details: ${errorMessage}`
+      );
+    }
+    
     return createErrorResponse(`Error creating field: ${errorMessage}`);
+    
   }
 };
 
@@ -114,7 +174,7 @@ function getDefaultEditor(fieldType: string): string {
     links: "links_editor",
     color: "color_picker",
     json: "json_editor",
-    lat_lon: "lat_lon_editor",
+    lat_lon: "map",
     seo: "seo",
     video: "video",
     slug: "slug"

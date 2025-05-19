@@ -955,7 +955,7 @@ FIELD CREATION TEMPLATES: Use these verified templates to avoid validation error
 
 1. ALWAYS include 'addons: []' in appearance (mandatory but undocumented)
 2. Use CORRECT editor names:
-   - For locations: use "lat_lon_editor" (not "map")
+   - For locations: use "map" (not "lat_lon_editor")
    - For JSON: use "json_editor" (not "json")
    - For text: include appearance.addons even for "textarea"
 3. String radio/select groups: enum validator values MUST match your option values exactly
@@ -998,7 +998,7 @@ Location Field:
   "api_key": "location",
   "field_type": "lat_lon",
   "appearance": {
-    "editor": "lat_lon_editor",  /* ← Use this, not "map" */
+    "editor": "map",  /* ← Use this, not "lat_lon_editor" */
     "parameters": {},
     "addons": []  /* ← REQUIRED! */
   }

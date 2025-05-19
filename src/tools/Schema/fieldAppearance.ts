@@ -189,17 +189,17 @@ export const jsonAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * Geo coordinates field appearance
- * IMPORTANT: Use "lat_lon_editor" rather than "map" for better compatibility
+ * IMPORTANT: Use "map" as the editor name for the API
  */
 export const geoAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.enum(["lat_lon_editor", "map"])
-    .describe("Editor type for geo coordinates field. Use 'lat_lon_editor' not 'map' for better compatibility."),
+  editor: z.enum(["map", "lat_lon_editor"])
+    .describe("Editor type for geo coordinates field. IMPORTANT: Use 'map' with the API, not 'lat_lon_editor'."),
   parameters: z.object({
     map_provider: z.enum(["google", "mapbox"]).optional().describe("Map provider to use"),
     default_zoom: z.number().int().min(1).max(22).optional().describe("Default zoom level")
   }).optional().default({})
     .describe("Editor parameters. Example: { \"default_zoom\": 10 }")
-}).describe("Appearance for geo coordinate fields. Example: { \"editor\": \"lat_lon_editor\", \"parameters\": {}, \"addons\": [] }");
+}).describe("Appearance for geo coordinate fields. Example: { \"editor\": \"map\", \"parameters\": {}, \"addons\": [] }");
 
 /**
  * SEO field appearance
