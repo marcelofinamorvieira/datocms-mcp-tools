@@ -175,21 +175,25 @@ export const colorAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * JSON field appearance
+ * IMPORTANT: For json fields, there are three editor types:
+ * 1. "json_editor" - Standard JSON editor
+ * 2. "string_multi_select" - Multi-select dropdown
+ * 3. "string_checkbox_group" - Multiple checkbox selection (use "options" parameter)
  */
 export const jsonAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.literal("json_editor").describe("Editor type for JSON field. Use 'json_editor'."),
-  parameters: z.object({
-    schema: z.record(z.unknown()).optional().describe("JSON schema to use for validation"),
-    collapse_properties: z.boolean().optional().default(false).describe("Whether to collapse properties by default")
-  }).optional().default({})
-    .describe("Editor parameters. Example: { \"collapse_properties\": false }")
-}).describe("Appearance for JSON fields. Example: { \"editor\": \"json_editor\", \"parameters\": {}, \"addons\": [] }");
+  editor: z.enum(["json_editor", "string_multi_select", "string_checkbox_group"])
+    .describe("Editor type for JSON field. Use 'json_editor' for raw JSON editing, 'string_multi_select' for dropdown multi-select, or 'string_checkbox_group' for checkbox group."),
+  parameters: z.record(z.unknown()).optional().default({})
+    .describe("Editor parameters. For string_checkbox_group, use 'options' not 'checkboxes'. Example for checkbox_group: { \"options\": [{\"label\": \"Option\", \"value\": \"option\"}] }")
+}).describe("Appearance for JSON fields with proper configuration. Example: { \"editor\": \"json_editor\", \"parameters\": {}, \"addons\": [] }");
 
 /**
  * Geo coordinates field appearance
+ * IMPORTANT: Use "lat_lon_editor" rather than "map" for better compatibility
  */
 export const geoAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.literal("lat_lon_editor").describe("Editor type for geo coordinates field. Use 'lat_lon_editor'."),
+  editor: z.enum(["lat_lon_editor", "map"])
+    .describe("Editor type for geo coordinates field. Use 'lat_lon_editor' not 'map' for better compatibility."),
   parameters: z.object({
     map_provider: z.enum(["google", "mapbox"]).optional().describe("Map provider to use"),
     default_zoom: z.number().int().min(1).max(22).optional().describe("Default zoom level")
@@ -199,6 +203,7 @@ export const geoAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * SEO field appearance
+ * IMPORTANT: Always include addons array, even if empty
  */
 export const seoAppearanceSchema = baseAppearanceSchema.extend({
   editor: z.literal("seo").describe("Editor type for SEO field. Use 'seo'."),
@@ -208,6 +213,7 @@ export const seoAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * Video field appearance
+ * IMPORTANT: Always include addons array, even if empty
  */
 export const videoAppearanceSchema = baseAppearanceSchema.extend({
   editor: z.literal("video").describe("Editor type for video field. Use 'video'."),
@@ -217,9 +223,13 @@ export const videoAppearanceSchema = baseAppearanceSchema.extend({
 
 /**
  * Map of field types to appropriate editor values
+ * IMPORTANT: For `lat_lon` fields, both "lat_lon_editor" and "map" are included,
+ * but "lat_lon_editor" is strongly recommended as it works more reliably.
+ * For string fields, "string_radio_group" and "string_select" require matching enum validators.
+ * For json fields, "string_multi_select" and "string_checkbox_group" require properly formatted options.
  */
 const fieldTypeToEditorMap: Record<string, string[]> = {
-  string: ["single_line", "textarea", "wysiwyg"],
+  string: ["single_line", "textarea", "wysiwyg", "string_radio_group", "string_select"],
   text: ["textarea", "wysiwyg", "markdown"],
   rich_text: ["rich_text"],
   structured_text: ["structured_text"],
@@ -230,14 +240,15 @@ const fieldTypeToEditorMap: Record<string, string[]> = {
   date_time: ["date_time_picker"],
   file: ["file"],
   gallery: ["gallery", "media_gallery"],
-  link: ["link_editor", "embedded"],
-  links: ["links_editor"],
+  link: ["link_editor", "embedded", "link_select"],
+  links: ["links_editor", "links_select"],
   color: ["color_picker"],
-  json: ["json_editor"],
-  lat_lon: ["lat_lon_editor"],
+  json: ["json_editor", "string_multi_select", "string_checkbox_group"],
+  lat_lon: ["lat_lon_editor", "map"],
   seo: ["seo"],
   video: ["video"],
-  slug: ["slug"]
+  slug: ["slug"],
+  single_block: ["framed_single_block"]
 };
 
 /**

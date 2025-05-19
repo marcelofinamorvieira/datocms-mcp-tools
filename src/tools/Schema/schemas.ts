@@ -44,6 +44,14 @@ const apiKeyPattern = /^[a-z][a-z0-9_]*$/;
  *    - Validators must be appropriate for the field type
  */
 export const schemaSchemas = {
+  // FieldCreationHelper operations
+  get_field_type_info: z.object({
+    apiToken: apiTokenSchema,
+    environment: environmentSchema.optional().default("main"),
+    fieldType: z.string().optional().describe("Optional field type to get specific information about (e.g., 'string', 'text', 'lat_lon', 'json'). If not provided, returns a list of all available field types with their supported appearances."),
+    appearance: z.string().optional().describe("Optional appearance type to get specific template for (e.g., 'string_radio_group', 'lat_lon_editor', 'string_checkbox_group'). If provided, fieldType must also be provided.")
+  }).describe("Get verified field templates with working configurations to prevent validation errors in DatoCMS. Provides correct structure for problematic field types that commonly fail in creation requests. Includes templates for string_radio_group, string_select, textarea, wysiwyg, markdown, lat_lon, slug, and json fields with various appearances. All templates include the critical 'addons' array, proper editor names, and required validator configurations. For specialized fields, returns specific guidance (e.g., \"Use json_editor instead of json\", \"Use lat_lon_editor instead of map\", \"Remember to match enum validators with option values\")."),
+
   // ItemType operations
   create_item_type: createBaseSchema().extend({
     name: z.string().min(1).describe("The name of the new Item Type (model)."),
@@ -321,3 +329,8 @@ IMPORTANT NOTES:
 
 // Create an array of all available schema actions for the enum
 export const schemaActionsList = Object.keys(schemaSchemas) as Array<keyof typeof schemaSchemas>;
+
+// Field Type Documentation
+export const fieldTypeDocumentationIds = [
+  "get_field_type_info"
+];
