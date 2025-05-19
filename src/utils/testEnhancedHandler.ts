@@ -39,7 +39,6 @@ const testHandler = createListHandler({
   },
   clientAction: async (client, args) => {
     // Mock client action
-    console.log('Client action called with:', args);
     return [{ id: '1', name: 'Test 1' }, { id: '2', name: 'Test 2' }];
   },
   formatResult: (results) => {
@@ -53,27 +52,18 @@ const testHandler = createListHandler({
 // Test the handler
 async function runTest() {
   try {
-    console.log('Testing enhanced handler factory...');
-    
     // Test with valid input
-    const validResult = await testHandler({ 
+    const validResult = await testHandler({
       apiToken: 'test-token',
       environment: 'test-env' 
     });
-    console.log('Valid input result:', validResult);
-    
     // Test with invalid input (should be caught by schema validation)
     try {
       // @ts-ignore - Deliberately testing with invalid input
       const invalidResult = await testHandler({});
-      console.log('Invalid input result:', invalidResult);
     } catch (error) {
-      console.log('Error caught (expected):', error);
     }
-    
-    console.log('Test completed successfully!');
   } catch (error) {
-    console.error('Test failed:', error);
   }
 }
 

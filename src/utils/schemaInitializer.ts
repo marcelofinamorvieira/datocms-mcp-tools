@@ -60,9 +60,9 @@ export function initializeSchemas(): void {
     SchemaRegistry.registerBulk("roles", roleSchemas);
     SchemaRegistry.registerBulk("api_tokens", apiTokenSchemas);
     
-    console.error("All schemas registered successfully");
+
   } catch (error) {
-    console.error("Error registering schemas:", error);
+
   }
 }
 
