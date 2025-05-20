@@ -111,6 +111,20 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       };
     }
 
+    // Provide default parameters for structured text fields
+    if (field_type === 'structured_text') {
+      processedAppearance = {
+        editor: 'structured_text',
+        parameters: {
+          blocks_start_collapsed: false,
+          show_links_target_blank: true,
+          show_links_meta_editor: true,
+          ...(processedAppearance?.parameters || {})
+        },
+        addons: processedAppearance?.addons || []
+      };
+    }
+
     // Build the DatoCMS client
     const client = getClient(apiToken, environment);
 
