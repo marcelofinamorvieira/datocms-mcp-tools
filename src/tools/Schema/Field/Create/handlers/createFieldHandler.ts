@@ -165,8 +165,9 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
 
       if (errorMessage.includes("start_collapsed")) {
         return createErrorResponse(
-          "Invalid parameter 'start_collapsed'. For structured_text use 'blocks_start_collapsed', " +
-          "and for rich_text use: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
+          "The 'start_collapsed' parameter is only valid for rich_text fields (as 'start_collapsed') " +
+          "and structured_text fields (as 'blocks_start_collapsed'). " +
+          "Single_block fields do not support collapsed parameters. Remove 'start_collapsed' from the appearance."
         );
       }
 
