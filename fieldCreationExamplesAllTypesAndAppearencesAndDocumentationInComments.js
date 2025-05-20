@@ -510,13 +510,8 @@ previews	Array<String>	✅	Specify which previews should be visible to editors. 
 rich_text
 Built-in editor for Modular content fields.
 
-Parameter	Type	Required	Description
-start_collapsed	Boolean		Whether you want block records collapsed by default or not
 framed_single_block
-Built-in editor for Single block fields.
-
-Parameter	Type	Required	Description
-start_collapsed	Boolean		Whether you want block record collapsed by default or not
+Built-in editor for Single block fields. No additional parameters are required.
 structured_text
 Built-in editor for Structured text fields.
 
