@@ -217,6 +217,25 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 }
 ```
 
+### Color Fields
+
+Color fields must use the `color_picker` editor. The API requires the
+`enable_alpha` parameter to be explicitly set to `false`.
+
+```javascript
+{
+  "label": "Brand Color",
+  "api_key": "brand_color",
+  "field_type": "color",
+  "appearance": {
+    "editor": "color_picker",
+    "parameters": { "enable_alpha": false },
+    "addons": []
+  },
+  "validators": { "required": {} }
+}
+```
+
 ### SEO Fields
 
 1. **Slug**:
@@ -274,7 +293,9 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 
 ### Rich Text Fields
 
-Rich text fields require the `rich_text_blocks` validator and a few key parameters.
+Rich text fields require the `rich_text_blocks` validator. The appearance uses
+the `start_collapsed` parameter (do **not** use `blocks_start_collapsed`, which
+is for structured text fields).
 
 ```javascript
 {
@@ -302,7 +323,11 @@ Structured text fields require specific validators and parameters.
   "field_type": "structured_text",
   "appearance": {
     "editor": "structured_text",
-    "parameters": { "blocks_start_collapsed": false },
+    "parameters": {
+      "blocks_start_collapsed": false,
+      "show_links_target_blank": true,
+      "show_links_meta_editor": true
+    },
     "addons": []
   },
   "validators": {
@@ -375,6 +400,9 @@ Single block fields allow editors to select a single modular block record. The `
 ```
 
 ## Reference Fields
+
+Reference fields point to other item types. Ensure the target models are created
+before you add a link or links field referencing them.
 
 1. **Single Link**:
    ```javascript
