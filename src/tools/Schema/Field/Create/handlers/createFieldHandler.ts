@@ -111,6 +111,15 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       };
     }
 
+    // Remove unsupported parameters for single_block fields
+    if (field_type === 'single_block' && processedAppearance?.parameters) {
+      const { start_collapsed, ...restParams } = processedAppearance.parameters as any;
+      processedAppearance = {
+        ...processedAppearance,
+        parameters: restParams
+      };
+    }
+
     // Build the DatoCMS client
     const client = getClient(apiToken, environment);
 

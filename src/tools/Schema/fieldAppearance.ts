@@ -133,26 +133,79 @@ export const enumAppearanceSchema = baseAppearanceSchema.extend({
 }).describe("Appearance for enum fields. Example: { \"editor\": \"dropdown\", \"parameters\": {}, \"addons\": [] }");
 
 /**
- * Modular content field appearance
- * For rich_text, structured_text fields
+ * Rich text field appearance
  */
-export const modularContentAppearanceSchema = baseAppearanceSchema.extend({
-  editor: z.enum([
-    "rich_text", "structured_text", "markdown"
-  ]).describe("Editor type to use for the field. For rich_text fields, use 'rich_text'."),
-  parameters: z.object({
-    toolbar_options: z.array(z.string()).optional().describe("Toolbar options to include"),
-    enable_paste_filters: z.boolean().optional().default(true).describe("Whether to enable paste filters"),
-    start_collapsed: z.boolean().optional().default(false).describe("Whether to start in collapsed state"),
-    blocks_start_collapsed: z.boolean().optional().describe(
-      "Whether block nodes should be collapsed by default (structured_text only)"
-    )
-  }).optional().default({ start_collapsed: false })
+export const richTextAppearanceSchema = baseAppearanceSchema.extend({
+  editor: z.literal("rich_text").describe("Editor type for rich_text fields. Use 'rich_text'."),
+  parameters: z
+    .object({
+      start_collapsed: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Whether you want block records collapsed by default")
+    })
+    .optional()
+    .default({ start_collapsed: false })
     .describe(
-      "Editor parameters. Example: { \"start_collapsed\": false, \"blocks_start_collapsed\": false }"
+      "Editor parameters for rich text fields. Example: { \"start_collapsed\": false }"
     )
 }).describe(
-  "Appearance for rich text and structured text fields. Example: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
+  "Appearance for rich text fields. Example: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
+);
+
+/**
+ * Structured text field appearance
+ */
+export const structuredTextAppearanceSchema = baseAppearanceSchema.extend({
+  editor: z.literal("structured_text").describe("Editor type for structured_text fields. Use 'structured_text'."),
+  parameters: z
+    .object({
+      nodes: z
+        .array(
+          z.enum(["blockquote", "code", "heading", "link", "list", "thematicBreak"])
+        )
+        .optional()
+        .describe("Specify which nodes the field should allow."),
+      marks: z
+        .array(
+          z.enum([
+            "strong",
+            "emphasis",
+            "underline",
+            "strikethrough",
+            "code",
+            "highlight"
+          ])
+        )
+        .optional()
+        .describe("Specify which marks the field should allow."),
+      heading_levels: z
+        .array(z.number().int().min(1).max(6))
+        .optional()
+        .describe(
+          "If nodes includes 'heading', specify which heading levels the field should allow."
+        ),
+      blocks_start_collapsed: z
+        .boolean()
+        .optional()
+        .describe("Whether you want block nodes collapsed by default"),
+      show_links_target_blank: z
+        .boolean()
+        .optional()
+        .describe("Show the 'Open this link in a new tab?' checkbox"),
+      show_links_meta_editor: z
+        .boolean()
+        .optional()
+        .describe("Show the complete meta editor for links")
+    })
+    .optional()
+    .default({})
+    .describe(
+      "Editor parameters for structured text fields. Example: { \"nodes\": [\"heading\"], \"show_links_target_blank\": true }"
+    )
+}).describe(
+  "Appearance for structured text fields. Example: { \"editor\": \"structured_text\", \"parameters\": { \"nodes\": [\"heading\"] }, \"addons\": [] }"
 );
 
 /**
@@ -322,8 +375,8 @@ export function createAppearanceSchema(fieldType: string) {
     date: dateAppearanceSchema,
     date_time: dateAppearanceSchema,
     enum: enumAppearanceSchema,
-    rich_text: modularContentAppearanceSchema,
-    structured_text: modularContentAppearanceSchema,
+    rich_text: richTextAppearanceSchema,
+    structured_text: structuredTextAppearanceSchema,
     link: linkAppearanceSchema,
     links: linkAppearanceSchema,
     file: mediaAppearanceSchema,
