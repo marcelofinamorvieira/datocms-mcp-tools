@@ -52,12 +52,36 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
         "Add { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } } to validators."
       );
     }
-    
+
+    // Validate item_item_type array
+    if (
+      field_type === 'link' &&
+      (validators as any)?.item_item_type &&
+      (!Array.isArray((validators as any).item_item_type.item_types) ||
+        (validators as any).item_item_type.item_types.length === 0)
+    ) {
+      return createErrorResponse(
+        "The 'item_item_type' validator must include an 'item_types' array with at least one valid item type ID."
+      );
+    }
+
     // Links field needs items_item_type validator
     if (field_type === 'links' && (!validators || !validators.items_item_type)) {
       return createErrorResponse(
         "Missing required validator 'items_item_type' for links field. " +
         "Add { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } } to validators."
+      );
+    }
+
+    // Validate items_item_type array
+    if (
+      field_type === 'links' &&
+      (validators as any)?.items_item_type &&
+      (!Array.isArray((validators as any).items_item_type.item_types) ||
+        (validators as any).items_item_type.item_types.length === 0)
+    ) {
+      return createErrorResponse(
+        "The 'items_item_type' validator must include an 'item_types' array with at least one valid item type ID."
       );
     }
 
@@ -75,6 +99,15 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       processedAppearance = {
         ...processedAppearance,
         editor: 'map'
+      };
+    }
+
+    // Force correct editor and parameters for color fields
+    if (field_type === 'color') {
+      processedAppearance = {
+        editor: 'color_picker',
+        parameters: { enable_alpha: false, ...(processedAppearance?.parameters || {}) },
+        addons: processedAppearance?.addons || []
       };
     }
 
@@ -134,6 +167,24 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
         return createErrorResponse(
           "Invalid parameter 'start_collapsed'. For structured_text use 'blocks_start_collapsed', " +
           "and for rich_text use: { \"editor\": \"rich_text\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
+        );
+      }
+
+      if (errorMessage.includes('item_item_type')) {
+        return createErrorResponse(
+          "The item type IDs provided in 'item_item_type' are invalid or inaccessible. Verify the IDs and try again."
+        );
+      }
+
+      if (errorMessage.includes('items_item_type')) {
+        return createErrorResponse(
+          "The item type IDs provided in 'items_item_type' are invalid or inaccessible. Verify the IDs and try again."
+        );
+      }
+
+      if (args.field_type === 'color') {
+        return createErrorResponse(
+          "Error creating color field. Use appearance.editor 'color_picker' and set parameters.enable_alpha to false."
         );
       }
     }

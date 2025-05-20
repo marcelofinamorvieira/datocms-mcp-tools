@@ -419,6 +419,104 @@ await createField(model, {
 });
 ```
 
+## Color Field
+
+**Field Type:** `color`
+
+**Valid Validators:**
+- `required: {}` (optional)
+
+**Presentation Options:**
+```javascript
+appearance: {
+  editor: "color_picker",
+  parameters: { enable_alpha: false },
+  addons: []
+}
+```
+- `enable_alpha` **must** be set to `false`
+- Optionally include `preset_colors` array
+
+**Complete Example:**
+```javascript
+await createField(model, {
+  label: "Brand Color",
+  api_key: "brand_color",
+  field_type: "color",
+  appearance: {
+    editor: "color_picker",
+    parameters: { enable_alpha: false },
+    addons: []
+  },
+  validators: { required: {} }
+});
+```
+
+## Link Fields
+
+### Single Link
+
+**Field Type:** `link`
+
+**Required Validator:** `item_item_type`
+
+```javascript
+appearance: {
+  editor: "link_select",
+  parameters: {},
+  addons: []
+}
+```
+
+**Complete Example:**
+```javascript
+await createField(model, {
+  label: "Primary Author",
+  api_key: "primary_author",
+  field_type: "link",
+  appearance: {
+    editor: "link_select",
+    parameters: {},
+    addons: []
+  },
+  validators: {
+    item_item_type: { item_types: ["author_model_id"] }
+  }
+});
+```
+
+### Multiple Links
+
+**Field Type:** `links`
+
+**Required Validator:** `items_item_type`
+
+```javascript
+appearance: {
+  editor: "links_select",
+  parameters: {},
+  addons: []
+}
+```
+
+**Complete Example:**
+```javascript
+await createField(model, {
+  label: "Related Articles",
+  api_key: "related_articles",
+  field_type: "links",
+  appearance: {
+    editor: "links_select",
+    parameters: {},
+    addons: []
+  },
+  validators: {
+    items_item_type: { item_types: ["article_model_id"] },
+    size: { min: 0, max: 3 }
+  }
+});
+```
+
 ## Using the FieldCreationHelper
 
 The project implements a `FieldCreationHelper` feature that provides verified templates for all field types. You can access it using the `get_field_type_info` action:
