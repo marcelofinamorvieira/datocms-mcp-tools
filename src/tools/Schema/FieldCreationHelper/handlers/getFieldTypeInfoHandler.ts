@@ -889,10 +889,10 @@ const fieldTypeDocs = {
       appearances: {
         framed_single_block: {
           description: "Block editor with frame",
-          parameters: {},
+          parameters: { start_collapsed: { description: "Start collapsed", default: false } },
           example: {
             editor: "framed_single_block",
-            parameters: {},
+            parameters: { start_collapsed: false },
             addons: []
           }
         }
@@ -908,7 +908,7 @@ const fieldTypeDocs = {
         hint: "Select a single content block to use as hero",
         appearance: {
           editor: "framed_single_block",
-          parameters: {},
+          parameters: { start_collapsed: false },
           addons: []
         },
         validators: {

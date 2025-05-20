@@ -414,7 +414,7 @@ export const singleBlockFieldExample: Field = {
   },
   appearance: {
     editor: 'framed_single_block',
-    parameters: {},
+    parameters: { start_collapsed: false },
     addons: []
   },
   position: 18

@@ -111,15 +111,6 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       };
     }
 
-    // Remove unsupported parameters for single_block fields
-    if (field_type === 'single_block' && processedAppearance?.parameters) {
-      const { start_collapsed, ...restParams } = processedAppearance.parameters as any;
-      processedAppearance = {
-        ...processedAppearance,
-        parameters: restParams
-      };
-    }
-
     // Build the DatoCMS client
     const client = getClient(apiToken, environment);
 
@@ -174,9 +165,9 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
 
       if (errorMessage.includes("start_collapsed")) {
         return createErrorResponse(
-          "The 'start_collapsed' parameter is only valid for rich_text fields (as 'start_collapsed') " +
-          "and structured_text fields (as 'blocks_start_collapsed'). " +
-          "Single_block fields do not support collapsed parameters. Remove 'start_collapsed' from the appearance."
+          "The 'start_collapsed' parameter is valid for rich_text and single_block fields. " +
+          "For structured_text fields use 'blocks_start_collapsed'. " +
+          "Ensure you only include this parameter with the appropriate field types."
         );
       }
 

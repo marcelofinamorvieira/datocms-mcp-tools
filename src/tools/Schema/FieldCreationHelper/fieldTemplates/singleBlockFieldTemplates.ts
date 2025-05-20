@@ -9,7 +9,7 @@ export const singleBlockTemplate = {
   hint: "Select a single content block",
   appearance: {
     editor: "framed_single_block",
-    parameters: {},
+    parameters: { start_collapsed: false },
     addons: []
   },
   validators: {

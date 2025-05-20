@@ -350,9 +350,29 @@ Structured text fields require specific validators and parameters.
        },
        "addons": []
      },
-     "validators": { "required": {} }
-   }
-   ```
+    "validators": { "required": {} }
+  }
+  ```
+
+### Single Block Fields
+
+Single block fields allow editors to select a single modular block record. The `start_collapsed` parameter controls whether the block editor is collapsed by default.
+
+```javascript
+{
+  "label": "Hero Block",
+  "api_key": "hero_block",
+  "field_type": "single_block",
+  "appearance": {
+    "editor": "framed_single_block",
+    "parameters": { "start_collapsed": false },
+    "addons": []
+  },
+  "validators": {
+    "single_block_blocks": { "item_types": [] }
+  }
+}
+```
 
 ## Reference Fields
 
