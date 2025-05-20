@@ -11,6 +11,8 @@ import jsonTemplates from './jsonFieldTemplates.js';
 import richTextTemplates from './richTextFieldTemplates.js';
 import structuredTextTemplates from './structuredTextFieldTemplates.js';
 import singleBlockTemplates from './singleBlockFieldTemplates.js';
+import colorTemplates from './colorFieldTemplates.js';
+import linkTemplates from './linkFieldTemplates.js';
 
 // Define field template structure
 export interface FieldTemplate {
@@ -67,6 +69,15 @@ export const fieldTemplates: FieldTemplatesMap = {
   },
   structured_text: {
     structured_text: structuredTextTemplates.structuredTextTemplate
+  },
+  color: {
+    color_picker: colorTemplates.colorPickerTemplate
+  },
+  link: {
+    link_select: linkTemplates.singleLinkTemplate
+  },
+  links: {
+    links_select: linkTemplates.multipleLinksTemplate
   },
   single_block: {
     framed_single_block: singleBlockTemplates.singleBlockTemplate
