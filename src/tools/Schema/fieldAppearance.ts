@@ -232,9 +232,21 @@ export const singleBlockAppearanceSchema = baseAppearanceSchema.extend({
   editor: z.enum(["framed_single_block", "frameless_single_block"]).describe(
     "Editor type for single_block fields. Use 'framed_single_block' or 'frameless_single_block'."
   ),
-  parameters: z.object({}).optional().default({}).describe("No additional parameters required")
+  parameters: z
+    .object({
+      start_collapsed: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Whether you want the block collapsed by default")
+    })
+    .optional()
+    .default({ start_collapsed: false })
+    .describe(
+      "Editor parameters for single block fields. Example: { \"start_collapsed\": false }"
+    )
 }).describe(
-  "Appearance for single_block fields. Example: { \"editor\": \"framed_single_block\", \"parameters\": {}, \"addons\": [] }"
+  "Appearance for single_block fields. Example: { \"editor\": \"framed_single_block\", \"parameters\": { \"start_collapsed\": false }, \"addons\": [] }"
 );
 
 /**
