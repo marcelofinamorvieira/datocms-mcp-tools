@@ -35,14 +35,55 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       );
     }
     
+    // String field with single_line editor requires heading parameter
+    if (
+      field_type === 'string' &&
+      appearance &&
+      appearance.editor === 'single_line'
+    ) {
+      if (!appearance.parameters) {
+        appearance.parameters = { heading: false } as any;
+      } else if ((appearance.parameters as any).heading === undefined) {
+        (appearance.parameters as any).heading = false;
+      }
+    }
+
     // String field with string_radio_group/string_select needs enum validator
-    if (field_type === 'string' && appearance && 
-        (appearance.editor === 'string_radio_group' || appearance.editor === 'string_select') && 
-        (!validators || !validators.enum)) {
+    if (
+      field_type === 'string' &&
+      appearance &&
+      (appearance.editor === 'string_radio_group' || appearance.editor === 'string_select') &&
+      (!validators || !validators.enum)
+    ) {
       return createErrorResponse(
         `Missing required validator 'enum' for string field with ${appearance.editor} editor. ` +
-        `Add { \"enum\": { \"values\": [...] } } to validators, and ensure values match the options.`
+          `Add { \"enum\": { \"values\": [...] } } to validators, and ensure values match the options.`
       );
+    }
+
+    // Ensure enum validator values match the radio/select options
+    if (
+      field_type === 'string' &&
+      appearance &&
+      (appearance.editor === 'string_radio_group' || appearance.editor === 'string_select') &&
+      validators &&
+      (validators as any).enum &&
+      Array.isArray((validators as any).enum.values)
+    ) {
+      const optionValues = (
+        ((appearance.parameters || {}) as any).radios ||
+        ((appearance.parameters || {}) as any).options ||
+        []
+      ).map((o: any) => o.value);
+      const enumValues = (validators as any).enum.values;
+      const mismatch =
+        optionValues.length !== enumValues.length ||
+        optionValues.some((v: any, idx: number) => v !== enumValues[idx]);
+      if (mismatch) {
+        return createErrorResponse(
+          "Validator enum values must exactly match the option values in appearance.parameters."
+        );
+      }
     }
     
     // Link field needs item_item_type validator
@@ -123,6 +164,14 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
         },
         addons: processedAppearance?.addons || []
       };
+    }
+
+    // Slug fields require slug_title_field validator referencing title field
+    if (field_type === 'slug' && (!validators || !(validators as any).slug_title_field)) {
+      return createErrorResponse(
+        "Missing required validator 'slug_title_field' for slug field. " +
+          "Add { \"slug_title_field\": { \"title_field_id\": \"<field_id>\" } } to validators."
+      );
     }
 
     // Build the DatoCMS client

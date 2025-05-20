@@ -80,6 +80,22 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 
 3. **Radio/Select Fields**: For string fields with radio or select appearance, ensure the `enum` validator has values that exactly match your options
 
+4. **Model API Keys**: When creating models, use singular `api_key` values. For example `all_field_type` instead of `all_field_types`.
+
+5. **Modular Block Models**: Set `draftModeActive` to `false` when creating modular block item types. Setting it to `true` will fail validation.
+
+6. **Single Line String Fields**: Include `heading: false` in the appearance parameters.
+
+7. **Rich Text Fields**: Always include a `rich_text_blocks` validator, even if the item type array is empty.
+
+8. **Structured Text Fields**: Must include both `structured_text_blocks` and `structured_text_links` validators.
+
+9. **Single Block Fields**: Use the validator `single_block_blocks` (not `single_block_type`).
+
+10. **Link and Links Fields**: The referenced models must exist before creating these fields.
+
+11. **Slug Fields**: Require a `slug_title_field` validator referencing the title field.
+
 ## Critical Requirements for All Fields
 
 1. **Appearance Structure**: All field appearances must have this structure:
