@@ -61,19 +61,16 @@ export const isNotFoundError = (error: unknown): boolean => {
   if (isDatoCMSApiError(error)) {
     // Return as boolean to avoid type issues
     return Boolean(
-      error.status === 404 || 
-      (error.code === 'RECORD_NOT_FOUND') || 
-      (error.message && (error.message.includes('404') || 
-                        error.message.toLowerCase().includes('not found')))
+      error.status === 404 ||
+      error.code === 'RECORD_NOT_FOUND' ||
+      error.code === 'NOT_FOUND'
     );
   }
 
   return (
     typeof error === 'object' &&
     error !== null &&
-    ('status' in error && error.status === 404 ||
-     'message' in error && typeof error.message === 'string' &&
-     (error.message.includes('404') || error.message.toLowerCase().includes('not found')))
+    'status' in error && (error as any).status === 404
   );
 };
 
