@@ -126,6 +126,17 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       );
     }
 
+    // 'required' validator not allowed on some field types
+    if (
+      validators &&
+      (validators as any).required !== undefined &&
+      (field_type === 'gallery' || field_type === 'links' || field_type === 'rich_text')
+    ) {
+      return createErrorResponse(
+        "The 'required' validator is not supported on gallery, links, or rich_text fields. Remove it from the validators object."
+      );
+    }
+
     // Ensure addons array is present
     let processedAppearance = appearance;
     if (appearance && !appearance.addons) {

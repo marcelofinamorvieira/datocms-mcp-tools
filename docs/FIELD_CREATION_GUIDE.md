@@ -96,6 +96,8 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 
 11. **Slug Fields**: Require a `slug_title_field` validator referencing the title field.
 
+12. The `required` validator is not supported on `gallery`, `links`, or `rich_text` fields. Remove it when creating these field types.
+
 ## Critical Requirements for All Fields
 
 1. **Appearance Structure**: All field appearances must have this structure:
@@ -467,6 +469,7 @@ before you add a link or links field referencing them.
    - Missing or mismatched `enum` validator values for dropdown/radio fields
    - Using the wrong editor name for certain field types
    - Parameter structure issues (e.g., using `checkboxes` instead of `options`)
+   - Applying the `required` validator to `gallery`, `links`, or `rich_text` fields
 
 2. **Default Values**:
    - Avoid setting default values for localized fields

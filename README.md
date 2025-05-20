@@ -97,6 +97,7 @@ When creating fields in DatoCMS, follow these critical requirements:
 6. Structured text fields require both `structured_text_blocks` and `structured_text_links` validators
 7. Slug fields need a `slug_title_field` validator referencing the title field
 8. Single block fields use the `single_block_blocks` validator
+9. The `required` validator is **not** supported on `gallery`, `links`, or `rich_text` fields
 
 See `docs/FIELD_CREATION_GUIDE.md` for detailed examples and requirements.
 

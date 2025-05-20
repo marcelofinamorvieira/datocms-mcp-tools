@@ -356,7 +356,6 @@ const validatorsMap: ValidatorMapping = {
     imageDimensionValidatorSchema
   ],
   gallery: [
-    requiredValidatorSchema,
     fileSizeValidatorSchema,
     fileTypeValidatorSchema,
     imageDimensionValidatorSchema,
@@ -369,7 +368,6 @@ const validatorsMap: ValidatorMapping = {
     itemItemTypeValidatorSchema
   ],
   links: [
-    requiredValidatorSchema,
     itemItemTypeValidatorSchema,
     itemsNumberValidatorSchema
   ],
