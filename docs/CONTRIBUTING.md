@@ -130,10 +130,9 @@ See [PATTERNS.md](./PATTERNS.md) for detailed examples of all patterns.
 ## Pull Request Process
 
 1. Ensure your code follows all standards and patterns
-2. Run tests to verify functionality: `npm test`
-3. Verify build works correctly: `npm run build`
-4. Update documentation if necessary
-5. Create a pull request with a clear description of changes
+2. Verify build works correctly: `npm run build`
+3. Update documentation if necessary
+4. Create a pull request with a clear description of changes
 
 ## Code Review Checklist
 
@@ -143,7 +142,6 @@ Reviewers should verify that code:
 - [ ] Uses standardized response formats
 - [ ] Has comprehensive JSDoc documentation
 - [ ] Uses appropriate design patterns
-- [ ] Passes all tests
 - [ ] Builds without errors or warnings
 
 ## Creating New Components
@@ -201,9 +199,8 @@ For a comprehensive overview of the system architecture, see [ARCHITECTURE.md](.
 
 1. Checkout a new branch for your feature
 2. Implement changes following all standards
-3. Run tests to verify functionality
-4. Build the project to check for errors
-5. Create a pull request
+3. Build the project to check for errors
+4. Create a pull request
 
 ## Common Patterns and Utilities
 
@@ -215,25 +212,6 @@ Use existing utilities where possible:
 - `schemaRegistry.ts` - For schema registration and validation
 - `errorHandlerWrapper.ts` - For consistent error handling
 
-## Testing
-
-Write tests for all new functionality:
-
-```typescript
-describe('getResourceHandler', () => {
-  it('should return a resource when found', async () => {
-    // Setup...
-    const result = await getResourceHandler(args);
-    expect(result).toEqual(expectedResponse);
-  });
-  
-  it('should return an error when not found', async () => {
-    // Setup...
-    const result = await getResourceHandler(args);
-    expect(result).toEqual(expectedErrorResponse);
-  });
-});
-```
 
 ## Documentation
 
