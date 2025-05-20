@@ -229,7 +229,6 @@ export const multiLinkFieldExample: Field = {
   hint: 'Select related articles to display',
   localized: false,
   validators: {
-    required: {},
     items_item_type: {
       item_types: ['article']
     }
@@ -277,7 +276,6 @@ export const multipleAssetFieldExample: Field = {
   hint: 'Image gallery',
   localized: false,
   validators: {
-    required: {},
     file_size: {
       max_size: 5000000
     }
