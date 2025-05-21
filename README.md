@@ -37,6 +37,17 @@ The server follows a modular router-based architecture:
 
 The records router includes a `record_url` action for building the editor URL of a specific record.
 
+## Current Limitations
+
+Record creation and update can fail when working with complex field types such as structured text or block fields. Role creation and update also fail for complex parameter sets.
+
+| Operation | Limitation |
+|-----------|------------|
+| Record creation | May fail for complex fields such as structured text or block fields |
+| Record update | May fail for complex fields such as structured text or block fields |
+| Role creation | Fails for complex parameter sets |
+| Role update | Fails for complex parameter sets |
+
 ## Getting Started
 
 ### Prerequisites
