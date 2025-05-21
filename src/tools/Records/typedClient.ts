@@ -83,7 +83,13 @@ export class TypedRecordsClient {
    * @returns Array of records
    */
   async listRecords(params?: Partial<RecordQueryParams>): Promise<Item[]> {
-    return this.client.items.list(params as any);
+    if (typeof this.client.items.list === 'function') {
+      return this.client.items.list(params as any);
+    }
+    if (typeof this.client.items.all === 'function') {
+      return this.client.items.all(params as any);
+    }
+    throw new Error('DatoCMS client does not support listing items');
   }
   
   /**
@@ -156,7 +162,13 @@ export class TypedRecordsClient {
    * @returns Array of versions
    */
   async listRecordVersions(itemId: string): Promise<ItemVersion[]> {
-    return this.client.itemVersions.list(itemId);
+    if (typeof this.client.itemVersions.list === 'function') {
+      return this.client.itemVersions.list(itemId);
+    }
+    if (typeof this.client.itemVersions.all === 'function') {
+      return this.client.itemVersions.all({ item_id: itemId });
+    }
+    throw new Error('DatoCMS client does not support listing record versions');
   }
   
   /**
