@@ -35,6 +35,8 @@ The server follows a modular router-based architecture:
 | `WebhookAndBuildTriggerCallsAndDeploysRouterTool` | Webhook and build management |
 | `UIRouterTool` | UI customization tools |
 
+The records router includes a `record_url` action for building the editor URL of a specific record.
+
 ## Getting Started
 
 ### Prerequisites

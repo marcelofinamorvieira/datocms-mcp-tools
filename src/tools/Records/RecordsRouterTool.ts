@@ -45,7 +45,7 @@ type ActionArgsMap = {
   query: z.infer<typeof recordsSchemas.query>;
   get: z.infer<typeof recordsSchemas.get>;
   references: z.infer<typeof recordsSchemas.references>;
-  editor_url_from_type: z.infer<typeof recordsSchemas.editor_url_from_type>;
+  record_url: z.infer<typeof recordsSchemas.record_url>;
   create: z.infer<typeof recordsSchemas.create>;
   update: z.infer<typeof recordsSchemas.update>;
   duplicate: z.infer<typeof recordsSchemas.duplicate>;
@@ -131,8 +131,8 @@ This will show you all the required parameters and their types.`);
               return getRecordByIdHandler(validatedArgs as ActionArgsMap['get']);
             case "references":
               return getRecordReferencesHandler(validatedArgs as ActionArgsMap['references']);
-            case "editor_url_from_type":
-              return buildRecordEditorUrlFromTypeHandler(validatedArgs as ActionArgsMap['editor_url_from_type']);
+            case "record_url":
+              return buildRecordEditorUrlFromTypeHandler(validatedArgs as ActionArgsMap['record_url']);
             case "create":
               return createRecordHandler(validatedArgs as ActionArgsMap['create']);
             case "update":

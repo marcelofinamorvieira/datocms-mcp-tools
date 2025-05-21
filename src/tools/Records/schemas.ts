@@ -26,6 +26,21 @@ const recordIdSchema = z.string()
   .describe("The ID of the specific DatoCMS record.");
 
 /**
+ * Schema for building a record editor URL using project URL and item type
+ */
+const recordEditorUrlSchema = z.object({
+  projectUrl: z.string()
+    .describe(
+      "DatoCMS project URL. If the user did not provide one yet, use the datocms_project tool with action 'get_info' to retrieve it. The URL will be under the internal_domain property."
+    ),
+  itemTypeId: z.string().describe(
+    "The item type ID from DatoCMS, typically available in the item.item_type.id property of a record."
+  ),
+  itemId: recordIdSchema,
+  environment: environmentSchema,
+});
+
+/**
  * Schemas for all record-related actions.
  * These schemas are extracted from the original record tool definitions
  * and are used for both the records router and describe tools.
@@ -74,14 +89,7 @@ export const recordsSchemas = {
       .describe("If true, returns only an array of record IDs instead of complete records. Use this to save on tokens and context window space when only IDs are needed. Default is true."),
   }),
 
-  editor_url_from_type: z.object({ 
-    projectUrl: z.string()
-      .describe("DatoCMS project URL. If the user did not provide one yet, use the datocms_project tool with action 'get_info' to retrieve it. The URL will be under the internal_domain property."),
-    itemTypeId: z.string()
-      .describe("The item type ID from DatoCMS, typically available in the item.item_type.id property of a record."),
-    itemId: recordIdSchema,
-    environment: environmentSchema
-  }),
+  record_url: recordEditorUrlSchema,
 
   // Create operations
   create: createBaseSchema().extend({
