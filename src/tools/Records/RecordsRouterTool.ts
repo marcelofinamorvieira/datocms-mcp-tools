@@ -1,12 +1,10 @@
 import { z } from "zod";
-import { getClient } from "../../utils/clientManager.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
-import { createResponse } from "../../utils/responseHandlers.js";
+import { createErrorResponse } from "../../utils/errorHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { returnMostPopulatedLocale } from "../../utils/returnMostPopulatedLocale.js";
+import { SchemaRegistry } from "../../utils/schemaRegistry.js";
 
 // Import type definitions
-import type { HandlerResponse, DatoCMSApiError, isDatoCMSApiError } from "./types.js";
+
 
 // Import the record action schemas and handlers
 import { recordsSchemas, recordActionsList } from "./schemas.js";
@@ -14,7 +12,7 @@ import { recordsSchemas, recordActionsList } from "./schemas.js";
 // Import handlers
 import { getRecordByIdHandler } from "./Read/handlers/getRecordByIdHandler.js";
 import { getRecordReferencesHandler } from "./Read/handlers/getRecordReferencesHandler.js";
-import { queryRecordsHandler } from "./Read/handlers/queryRecordsHandler.js";
+import { enhancedQueryRecordsHandler } from "./Read/handlers/enhancedQueryRecordsHandler.js";
 import { buildRecordEditorUrlFromTypeHandler } from "./Read/handlers/buildRecordEditorUrlFromTypeHandler.js";
 import { duplicateRecordHandler, createRecordHandler } from "./Create/handlers/index.js";
 import { updateRecordHandler } from "./Update/handlers/index.js";
@@ -68,9 +66,17 @@ type ActionArgsMap = {
 type RecordAction = keyof typeof recordsSchemas;
 
 /**
+ * Registers all schemas with the global registry
+ */
+function registerRecordSchemas() {
+  SchemaRegistry.registerBulk("records", recordsSchemas);
+}
+
+/**
  * Registers the Records Router tool with the MCP server
  */
 export const registerRecordsRouter = (server: McpServer) => {
+  registerRecordSchemas();
   const actionEnum = z.enum(recordActionsList as [string, ...string[]]);
   
   // Define the parameter schema using raw properties for compatibility with server.tool
@@ -87,111 +93,77 @@ export const registerRecordsRouter = (server: McpServer) => {
     },
     async (args) => {
       const { action, args: actionArgs = {} } = args;
-      
+
       try {
         // ALWAYS CHECK FOR PARAMETERS FIRST
-        // If there are no arguments, or very few args for non-trivial operations,
-        // redirect users to get_parameters first
         const shouldSuggestParams = (
-          // These conditions indicate the user is likely not providing proper parameters
-          Object.keys(actionArgs).length === 0 || 
-          // For bulk operations, ensure we have at least apiToken and a valid array parameter
+          Object.keys(actionArgs).length === 0 ||
           (action === 'bulk_destroy' && (!actionArgs.apiToken || !actionArgs.itemIds || !Array.isArray(actionArgs.itemIds))) ||
           (Object.keys(actionArgs).length < 3 && ['query', 'create', 'update', 'bulk_publish'].includes(action))
         );
-        
+
         if (shouldSuggestParams) {
-          return createErrorResponse(`⚠️ PARAMETERS REQUIRED: You need to specify the parameters for the '${action}' action. ⚠️
-
-To get the required parameters, use the datocms_parameters tool first with:
-{
-  "resource": "records",
-  "action": "${action}"
-}
-
-This will show you all the required parameters and their types.`);
+          return createErrorResponse(`⚠️ PARAMETERS REQUIRED: You need to specify the parameters for the '${action}' action. ⚠️\n\nTo get the required parameters, use the datocms_parameters tool first with:\n{\n  "resource": "records",\n  "action": "${action}"\n}\n\nThis will show you all the required parameters and their types.`);
         }
-        
-        // Get the schema for the action
+
         const validAction = action as RecordAction;
         const actionSchema = recordsSchemas[validAction];
         if (!actionSchema) {
           return createErrorResponse(`Error: Unsupported action '${action}'. Valid actions are: ${recordActionsList.join(', ')}`);
         }
-        
-        // Validate arguments against the schema
+
         try {
-          const validatedArgs = actionSchema.parse(actionArgs);
-          
-          // Route to the appropriate handler based on the action
           switch (validAction) {
             case "query":
-              return queryRecordsHandler(validatedArgs as ActionArgsMap['query']);
+              return enhancedQueryRecordsHandler(actionArgs);
             case "get":
-              return getRecordByIdHandler(validatedArgs as ActionArgsMap['get']);
+              return getRecordByIdHandler(actionArgs as ActionArgsMap['get']);
             case "references":
-              return getRecordReferencesHandler(validatedArgs as ActionArgsMap['references']);
+              return getRecordReferencesHandler(actionArgs as ActionArgsMap['references']);
             case "record_url":
-              return buildRecordEditorUrlFromTypeHandler(validatedArgs as ActionArgsMap['record_url']);
+              return buildRecordEditorUrlFromTypeHandler(actionArgs as ActionArgsMap['record_url']);
             case "create":
-              return createRecordHandler(validatedArgs as ActionArgsMap['create']);
+              return createRecordHandler(actionArgs as ActionArgsMap['create']);
             case "update":
-              return updateRecordHandler(validatedArgs as ActionArgsMap['update']);
+              return updateRecordHandler(actionArgs as ActionArgsMap['update']);
             case "duplicate":
-              return duplicateRecordHandler(validatedArgs as ActionArgsMap['duplicate']);
+              return duplicateRecordHandler(actionArgs as ActionArgsMap['duplicate']);
             case "destroy":
-              return destroyRecordHandler(validatedArgs as ActionArgsMap['destroy']);
+              return destroyRecordHandler(actionArgs as ActionArgsMap['destroy']);
             case "bulk_destroy":
-              return bulkDestroyRecordsHandler(validatedArgs as ActionArgsMap['bulk_destroy']);
+              return bulkDestroyRecordsHandler(actionArgs as ActionArgsMap['bulk_destroy']);
             case "publish":
-              return publishRecordHandler(validatedArgs as ActionArgsMap['publish']);
+              return publishRecordHandler(actionArgs as ActionArgsMap['publish']);
             case "bulk_publish":
-              return bulkPublishRecordsHandler(validatedArgs as ActionArgsMap['bulk_publish']);
+              return bulkPublishRecordsHandler(actionArgs as ActionArgsMap['bulk_publish']);
             case "unpublish":
-              return unpublishRecordHandler(validatedArgs as ActionArgsMap['unpublish']);
+              return unpublishRecordHandler(actionArgs as ActionArgsMap['unpublish']);
             case "bulk_unpublish":
-              return bulkUnpublishRecordsHandler(validatedArgs as ActionArgsMap['bulk_unpublish']);
+              return bulkUnpublishRecordsHandler(actionArgs as ActionArgsMap['bulk_unpublish']);
             case "schedule_publication":
-              return schedulePublicationHandler(validatedArgs as ActionArgsMap['schedule_publication']);
+              return schedulePublicationHandler(actionArgs as ActionArgsMap['schedule_publication']);
             case "cancel_scheduled_publication":
-              return cancelScheduledPublicationHandler(validatedArgs as ActionArgsMap['cancel_scheduled_publication']);
+              return cancelScheduledPublicationHandler(actionArgs as ActionArgsMap['cancel_scheduled_publication']);
             case "schedule_unpublication":
-              return scheduleUnpublicationHandler(validatedArgs as ActionArgsMap['schedule_unpublication']);
+              return scheduleUnpublicationHandler(actionArgs as ActionArgsMap['schedule_unpublication']);
             case "cancel_scheduled_unpublication":
-              return cancelScheduledUnpublicationHandler(validatedArgs as ActionArgsMap['cancel_scheduled_unpublication']);
+              return cancelScheduledUnpublicationHandler(actionArgs as ActionArgsMap['cancel_scheduled_unpublication']);
             case "versions_list":
-              return listRecordVersionsHandler(validatedArgs as ActionArgsMap['versions_list']);
+              return listRecordVersionsHandler(actionArgs as ActionArgsMap['versions_list']);
             case "version_get":
-              return getRecordVersionHandler(validatedArgs as ActionArgsMap['version_get']);
+              return getRecordVersionHandler(actionArgs as ActionArgsMap['version_get']);
             case "version_restore":
-              return restoreRecordVersionHandler(validatedArgs as ActionArgsMap['version_restore']);
+              return restoreRecordVersionHandler(actionArgs as ActionArgsMap['version_restore']);
             default: {
-              // This is a type check to ensure we've handled all possible actions
               const _exhaustiveCheck: never = validAction;
               return createErrorResponse(`Error: Unsupported action '${action}'. This is likely a bug.`);
             }
           }
         } catch (error) {
-          if (error instanceof z.ZodError) {
-            // Get the schema for documentation purposes
-            const schemaInfo = formatSchemaForDisplay(actionSchema);
-            
-            // Format the validation error in a helpful way
-            const errorFormatted = formatZodError(error);
-            
-            return createErrorResponse(`⚠️ VALIDATION ERROR: Your parameters for '${action}' are incorrect or incomplete! ⚠️
-
-${errorFormatted}
-
-REQUIRED PARAMETERS FOR '${action.toUpperCase()}' ACTION:
-${JSON.stringify(schemaInfo, null, 2)}
-
-To see proper documentation, use the 'datocms_parameters' tool first with:\\n\\n  action: "datocms_parameters",\\n  args: {\\n    resource: "records",\\n    action: "${action}"\\n  }`);
-          }
-          return createErrorResponse(`Error validating arguments: ${extractDetailedErrorInfo(error)}`);
+          return createErrorResponse(`Error processing '${action}' action: ${error instanceof Error ? error.message : String(error)}`);
         }
       } catch (error: unknown) {
-        return createErrorResponse(`Error in Records Router: ${extractDetailedErrorInfo(error)}`);
+        return createErrorResponse(`Error in Records Router: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   );
@@ -205,32 +177,3 @@ export function destroy() {
   // Clean up code here if needed
 }
 
-// Helper function to format schema for display
-function formatSchemaForDisplay(schema: z.ZodSchema) {
-  // Extract structure and metadata from the schema
-  const description = schema.description || "No description available";
-  
-  // Try to extract basic information about the schema
-  try {
-    // @ts-expect-error - Zod's type definitions are not consistent across versions
-    const schemaDescription = schema.describe();
-    
-    // Add a note to use the get_parameters tool
-    return {
-      ...schemaDescription,
-      note: "For more detailed parameter information, use the 'datocms_parameters' tool"
-    };
-  } catch (error) {
-    // Fallback if the schema doesn't support describe()
-    return {
-      type: "object",
-      description,
-      note: "Schema details unavailable. Use the 'datocms_parameters' tool for parameter information."
-    };
-  }
-}
-
-// Helper function to format ZodError for display
-function formatZodError(error: z.ZodError) {
-  return error.issues.map(issue => `- ${issue.path.join('.')}: ${issue.message}`).join('\n');
-}
