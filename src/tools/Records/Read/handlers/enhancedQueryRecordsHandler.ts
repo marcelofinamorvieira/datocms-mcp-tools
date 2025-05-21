@@ -124,9 +124,13 @@ export const enhancedQueryRecordsHandler = createListHandler({
     
     // Use type assertion to bridge the gap between our types and client types
     const clientParams = queryParams as any;
-    
-    // Execute the query and return the results
-    const results = await client.items.list(clientParams);
+
+    // Execute the query using the typed records client
+    // When ClientType.RECORDS is used, `client` is an instance of
+    // `TypedRecordsClient` which exposes the `listRecords` method.
+    // Using this method avoids accessing the underlying `items` property,
+    // preventing runtime errors when `client.items` is undefined.
+    const results = await client.listRecords(clientParams);
     
     // The DatoCMS client may return items with meta information
     // Here we ensure we have a consistent format by wrapping items in a result object
