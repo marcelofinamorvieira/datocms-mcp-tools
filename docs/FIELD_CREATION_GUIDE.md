@@ -97,6 +97,7 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 11. **Slug Fields**: Require a `slug_title_field` validator referencing the title field.
 
 12. The `required` validator is not supported on `gallery`, `links`, or `rich_text` fields. Remove it when creating these field types.
+13. **Prefer a Modular Approach**: When adding many fields to a model, favor a modular structure. Use link fields, block models, and structured text with blocks whenever possible. This keeps your schema flexible and provides a better editing experience.
 
 ## Critical Requirements for All Fields
 
