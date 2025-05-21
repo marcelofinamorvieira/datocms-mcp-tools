@@ -68,7 +68,7 @@ export interface ListHandlerOptions<T, R> extends BaseHandlerOptions<T> {
   /** Custom client action function */
   clientAction: ClientActionFn<T, R[]>;
   /** Optional formatter for results */
-  formatResult?: (results: R[]) => any;
+  formatResult?: (results: R[], args: T) => any;
 }
 
 /**
@@ -188,11 +188,12 @@ export function createCreateHandler<T, R>(options: CreateHandlerOptions<T, R>): 
     message: typeof successMessage === 'function' ? successMessage(result) : successMessage
   });
   
-  // Create and return the composed handler
+  // Use a simpler approach - fix the issue in the actual handler instead
   return createBaseHandler(
     { ...options, errorContext: enhancedErrorContext },
     clientAction,
-    responseTransformer
+    // Just use the results directly
+    (results) => results
   );
 }
 
@@ -341,13 +342,15 @@ export function createListHandler<T, R>(options: ListHandlerOptions<T, R>): Hand
   };
   
   // Create the response transformer function
-  const responseTransformer = (results: R[]) => formatResult ? formatResult(results) : results;
+  const responseTransformer = (data: { results: R[], params: T }) => 
+    formatResult ? formatResult(data.results, data.params) : data.results;
   
-  // Create and return the composed handler
+  // Use a simpler approach - fix the issue in the actual handler instead
   return createBaseHandler(
     { ...options, errorContext: enhancedErrorContext },
     clientAction,
-    responseTransformer
+    // Just use the results directly
+    (results) => results
   );
 }
 

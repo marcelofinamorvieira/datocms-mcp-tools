@@ -334,17 +334,19 @@ export function isAuthorizationError(error: unknown): error is DatoCMSUnauthoriz
  * Basic operators for filtering records
  */
 export type FilterOperator = 
-  | 'eq'     // equal
-  | 'neq'    // not equal
-  | 'gt'     // greater than
-  | 'gte'    // greater than or equal
-  | 'lt'     // less than
-  | 'lte'    // less than or equal
-  | 'in'     // in array
-  | 'nin'    // not in array
-  | 'cont'   // contains
-  | 'ncont'  // does not contain
-  | 'exists' // field exists
+  | 'eq'      // equal
+  | 'neq'     // not equal
+  | 'gt'      // greater than
+  | 'gte'     // greater than or equal
+  | 'lt'      // less than
+  | 'lte'     // less than or equal
+  | 'in'      // in array
+  | 'nin'     // not in array
+  | 'contains' // contains (DatoCMS API uses 'cont', but we use 'contains' for clarity)
+  | 'matches'  // matches regex pattern
+  | 'cont'    // contains (alternative name for compatibility)
+  | 'ncont'   // does not contain
+  | 'exists'  // field exists
   | 'nexists'; // field does not exist
 
 /**

@@ -143,10 +143,12 @@ export const enhancedQueryRecordsHandler = createListHandler({
   },
   
   // Result formatter function that formats the API response for the client
-  formatResult: (results) => {
-    const { returnAllLocales = false, returnOnlyIds = false } = recordsSchemas.query.parse({}) as any;
+  formatResult: (results, _args) => {
+    // Since we can't rely on args here, use defaults
+    const returnAllLocales = false;
+    const returnOnlyIds = false;
     
-    // Default pagination parameters 
+    // Use default pagination values since we can't rely on args
     const pageParams = {
       limit: 5,
       offset: 0

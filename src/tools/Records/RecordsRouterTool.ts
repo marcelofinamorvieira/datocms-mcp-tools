@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createErrorResponse } from "../../utils/errorHandlers.js";
+import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SchemaRegistry } from "../../utils/schemaRegistry.js";
 
@@ -12,7 +13,7 @@ import { recordsSchemas, recordActionsList } from "./schemas.js";
 // Import handlers
 import { getRecordByIdHandler } from "./Read/handlers/getRecordByIdHandler.js";
 import { getRecordReferencesHandler } from "./Read/handlers/getRecordReferencesHandler.js";
-import { enhancedQueryRecordsHandler } from "./Read/handlers/enhancedQueryRecordsHandler.js";
+import { queryRecordsHandler } from "./Read/handlers/queryRecordsHandler.js";
 import { buildRecordEditorUrlFromTypeHandler } from "./Read/handlers/buildRecordEditorUrlFromTypeHandler.js";
 import { duplicateRecordHandler, createRecordHandler } from "./Create/handlers/index.js";
 import { updateRecordHandler } from "./Update/handlers/index.js";
@@ -115,9 +116,25 @@ export const registerRecordsRouter = (server: McpServer) => {
         try {
           switch (validAction) {
             case "query":
-              return enhancedQueryRecordsHandler(actionArgs);
+              try {
+                // Validate args using schema
+                const validatedArgs = recordsSchemas.query.parse(actionArgs);
+                return await queryRecordsHandler(validatedArgs);
+              } catch (error) {
+                return createErrorResponse(`Error in records.list.query: ${error}`);
+              }
             case "get":
-              return getRecordByIdHandler(actionArgs as ActionArgsMap['get']);
+              try {
+                // Validate args using schema and fix id parameter mismatch
+                const validatedArgs = recordsSchemas.get.parse({
+                  ...actionArgs,
+                  // Map 'id' to 'itemId' if present
+                  itemId: actionArgs.id || actionArgs.itemId
+                });
+                return await getRecordByIdHandler(validatedArgs);
+              } catch (error) {
+                return createErrorResponse(`Error in records.get: ${error}`);
+              }
             case "references":
               return getRecordReferencesHandler(actionArgs as ActionArgsMap['references']);
             case "record_url":

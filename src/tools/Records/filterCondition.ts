@@ -47,10 +47,11 @@ export const filterCondition = z.union([
     neq: filterableValue 
   }).describe("Not equal to the specified value"),
   
-  // String matching
+  // String matching with 'matches' for precise string matching
+  // Note: This is supported but should be used carefully based on DatoCMS API limitations
   z.object({ 
     matches: z.string() 
-  }).describe("Matches the specified string (case-insensitive)"),
+  }).describe("Matches the specified string exactly (DatoCMS API support may vary)"),
   
   // Array inclusion operators
   z.object({ 
@@ -86,10 +87,23 @@ export const filterCondition = z.union([
 
 /**
  * Create a record of filter conditions for multiple fields
+ * 
+ * This schema allows both direct filter conditions and nested objects with filter conditions.
+ * Example:
+ * {
+ *   name: { eq: "John" },     // direct filter condition
+ *   name: "John",             // simplified syntax (equivalent to { eq: "John" })
+ *   age: { gt: 18 }
+ * }
  */
 export const filterConditions = z.record(
-  z.record(filterCondition)
-).describe("Filter records by field values. Object where keys are field API names and values are filter conditions.");
+  z.union([
+    // Allow direct use of values as shorthand for eq
+    filterableValue,
+    // Allow normal filter condition objects 
+    filterCondition
+  ])
+).describe("Filter records by field values. Object where keys are field API names and values are filter conditions. You can use simple values like 'name': 'John' as shorthand for 'name': { eq: 'John' }.");
 
 /**
  * Create a fully typed version of a filter condition for specific field types

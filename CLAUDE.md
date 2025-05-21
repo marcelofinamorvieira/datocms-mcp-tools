@@ -159,3 +159,43 @@ To configure Claude Desktop to work with this server:
 1. Open Claude Desktop settings
 2. Add tool with command: `/path/to/datocms-mcp-tools/start-server.sh`
 3. Set auto-start and enable the tool
+
+## Debugging Guidelines
+
+When debugging issues in this codebase, follow these important guidelines:
+
+1. **NEVER use console.log statements** - These will not be visible to users of Claude Code, and there's no way to access server-side logs during an interactive session
+
+2. **Use response objects for debugging** - Include debug information directly in the response object that will be sent back to the client:
+   ```typescript
+   return createResponse(JSON.stringify({
+     message: "Operation result message",
+     debug: {
+       // Include relevant debug information here
+       params: requestParams,
+       filter: appliedFilters
+     },
+     data: actualData
+   }, null, 2));
+   ```
+
+3. **Create explicit validation checks** - When input validation fails, be specific about which parameters are incorrect and what the expected format is
+
+4. **Use tool responses for debugging** - Remember that tool responses are the only way to communicate information back to the user, so make them informative and complete
+
+5. **Error handling with context** - Always include context in error messages to help identify where and why the error occurred:
+   ```typescript
+   return createErrorResponse(`Error in ${domain}.${operation}: ${detailedErrorInfo}`);
+   ```
+
+6. **Remove debugging after issue resolution** - Once issues are fixed and validated, remember to remove any debug information from production code to keep responses clean and efficient
+
+7. **Document debugging additions** - When adding debugging code, use comments to mark it clearly so it can be easily identified and removed later:
+   ```typescript
+   // DEBUG: Added to troubleshoot field filtering issues - remove after fixing
+   return createResponse(JSON.stringify({
+     message: "Operation result",
+     debug: { /* debug info */ },  // DEBUG: Remove this before production
+     data: actualData
+   }, null, 2));
+   ```
