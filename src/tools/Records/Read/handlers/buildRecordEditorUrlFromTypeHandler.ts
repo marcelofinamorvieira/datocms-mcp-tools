@@ -12,7 +12,7 @@ import type { recordsSchemas } from "../../schemas.js";
  * Handler to build the editor URL for a specific DatoCMS record using project URL and item type
  * Extracted from the BuildDatoCMSRecordUrl tool
  */
-export const buildRecordEditorUrlFromTypeHandler = async (args: z.infer<typeof recordsSchemas.editor_url_from_type>) => {
+export const buildRecordEditorUrlFromTypeHandler = async (args: z.infer<typeof recordsSchemas.record_url>) => {
   const { projectUrl, itemTypeId, itemId, environment } = args;
   
   try {
