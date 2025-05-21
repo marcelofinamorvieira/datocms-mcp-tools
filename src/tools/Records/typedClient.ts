@@ -83,7 +83,7 @@ export class TypedRecordsClient {
    * @returns Array of records
    */
   async listRecords(params?: Partial<RecordQueryParams>): Promise<Item[]> {
-    return this.client.items.all(params as any);
+    return this.client.items.list(params as any);
   }
   
   /**
@@ -156,7 +156,7 @@ export class TypedRecordsClient {
    * @returns Array of versions
    */
   async listRecordVersions(itemId: string): Promise<ItemVersion[]> {
-    return this.client.itemVersions.all({ item_id: itemId });
+    return this.client.itemVersions.list(itemId);
   }
   
   /**
