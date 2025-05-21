@@ -203,7 +203,11 @@ export const schemaSchemas = {
       message: "API key must start with a lowercase letter and contain only lowercase letters, numbers, and underscores"
     }).describe("The machine-readable identifier for the field. Must start with lowercase letter and contain only lowercase letters, numbers, and underscores."),
     field_type: fieldTypeSchema
-      .describe("The type of field to create. Each type requires specific validators and appearance configurations."),
+      .describe(
+        "The type of field to create. Each type requires specific validators and appearance configurations. " +
+          "If you're requesting a generic text field and haven't explicitly asked for a markdown or wysiwyg editor, " +
+          "prefer 'structured_text' over 'text' so you can use record links and modular blocks."
+      ),
     validators: z.lazy(() => z.record(z.unknown())
       .describe("Validators for the field. CRITICAL VALIDATORS BY TYPE:\n- For string_radio_group/string_select: MUST include { \"enum\": { \"values\": [\"option_a\", \"option_b\"] } } with values matching your options\n- For link fields: MUST include { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For links fields: MUST include { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For slug fields: Use { \"required\": {}, \"unique\": {} }\n- For rich_text fields: MUST include { \"rich_text_blocks\": { \"item_types\": [\"block_model_id1\", \"block_model_id2\"] } }")),
     appearance: z.lazy(() => z.object({
@@ -372,7 +376,9 @@ export const schemaSchemas = {
     api_key: z.string().min(1).regex(apiKeyPattern, {
       message: "API key must start with a lowercase letter and contain only lowercase letters, numbers, and underscores"
     }).optional().describe("The updated API key to identify the field."),
-    field_type: fieldTypeSchema.optional().describe("The updated type of the field."),
+    field_type: fieldTypeSchema.optional().describe(
+      "The updated type of the field. If switching from a basic text field and no specific editor is required, consider using 'structured_text' instead of 'text' to enable record links and modular blocks."
+    ),
     validators: z.record(z.unknown()).optional()
       .describe("Updated validators for the field. Required validators vary by field_type - for example, rich_text fields REQUIRE the rich_text_blocks validator."),
     appearance: z.object({
