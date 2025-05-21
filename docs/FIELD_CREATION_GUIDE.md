@@ -86,7 +86,7 @@ The MCP server internally transforms your request into the DatoCMS API v3 format
 
 6. **Single Line String Fields**: Include `heading: false` in the appearance parameters.
 
-7. **Rich Text Fields**: Always include a `rich_text_blocks` validator, even if the item type array is empty.
+7. **Rich Text Fields**: Always include a `rich_text_blocks` validator **with the block item type IDs allowed in the field**. The `item_types` array can include one or more IDs. Example: `{ "rich_text_blocks": { "item_types": ["block_model_id1", "block_model_id2"] } }`.
 
 8. **Structured Text Fields**: Must include both `structured_text_blocks` and `structured_text_links` validators.
 
@@ -326,7 +326,7 @@ is for structured text fields).
     "addons": []
   },
   "validators": {
-    "rich_text_blocks": { "item_types": [] }
+    "rich_text_blocks": { "item_types": ["block_model_id1", "block_model_id2"] }
   }
 }
 ```

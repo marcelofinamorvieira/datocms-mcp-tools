@@ -355,7 +355,9 @@ await createField(model, {
 **Field Type:** `rich_text`
 
 **Required Validators:**
- - `rich_text_blocks`
+- `rich_text_blocks`
+
+The `item_types` array can include one or more block model IDs.
 
 **Presentation Options:**
 ```javascript
@@ -378,7 +380,7 @@ await createField(model, {
     addons: []
   },
   validators: {
-    rich_text_blocks: { item_types: [] }
+    rich_text_blocks: { item_types: ["block_model_id1", "block_model_id2"] }
   }
 });
 ```

@@ -17,7 +17,7 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
     if (field_type === 'rich_text' && (!validators || !validators.rich_text_blocks)) {
       return createErrorResponse(
         "Missing required validator 'rich_text_blocks' for rich_text field. " +
-        "Add { \"rich_text_blocks\": { \"item_types\": [] } } to validators."
+        "Add { \"rich_text_blocks\": { \"item_types\": [\"block_model_id1\", \"block_model_id2\"] } } to validators."
       );
     }
 
@@ -233,7 +233,7 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
       if (errorMessage.includes("rich_text_blocks")) {
         return createErrorResponse(
           "Rich text fields require the 'rich_text_blocks' validator. " +
-          "Example: { \"rich_text_blocks\": { \"item_types\": [] } }"
+          "Example: { \"rich_text_blocks\": { \"item_types\": [\"block_model_id1\", \"block_model_id2\"] } }"
         );
       }
 

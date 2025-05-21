@@ -13,7 +13,7 @@ export const richTextTemplate = {
     addons: []
   },
   validators: {
-    rich_text_blocks: { item_types: [] }
+    rich_text_blocks: { item_types: ["block_model_id1", "block_model_id2"] }
   }
 };
 

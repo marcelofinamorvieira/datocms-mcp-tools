@@ -198,8 +198,8 @@ export const singleBlockBlocksValidatorSchema = z.object({
 export const richTextBlocksValidatorSchema = z.object({
   rich_text_blocks: z.object({
     item_types: z.array(z.string())
-      .describe("Array of allowed block item type IDs. Can be empty array: []")
-  }).describe("REQUIRED validator for rich_text fields. Example: { \"item_types\": [] }")
+      .describe("Array of allowed block item type IDs (one or more).")
+  }).describe("REQUIRED validator for rich_text fields. Example: { \"item_types\": [\"block_model_id1\", \"block_model_id2\"] }")
 });
 
 /**
@@ -439,7 +439,7 @@ function getExampleValidator(fieldType: string): string {
     case 'text':
       return '{ "required": {}, "length": { "max": 1000 } }';
     case 'rich_text':
-      return '{ "rich_text_blocks": { "item_types": [] } }';
+      return '{ "rich_text_blocks": { "item_types": ["block_model_id1", "block_model_id2"] } }';
     case 'link':
       return '{ "required": {}, "item_item_type": { "item_types": ["blog_post"] } }';
     case 'file':
