@@ -206,7 +206,8 @@ export const schemaSchemas = {
       .describe(
         "The type of field to create. Each type requires specific validators and appearance configurations. " +
           "If you're requesting a generic text field and haven't explicitly asked for a markdown or wysiwyg editor, " +
-          "prefer 'structured_text' over 'text' so you can use record links and modular blocks."
+          "prefer 'structured_text' over 'text' so you can use record links and modular blocks. " +
+          "When adding many fields to a model, consider a modular design using link fields, block models, and structured text with blocks."
       ),
     validators: z.lazy(() => z.record(z.unknown())
       .describe("Validators for the field. CRITICAL VALIDATORS BY TYPE:\n- For string_radio_group/string_select: MUST include { \"enum\": { \"values\": [\"option_a\", \"option_b\"] } } with values matching your options\n- For link fields: MUST include { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For links fields: MUST include { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For slug fields: Use { \"required\": {}, \"unique\": {} }\n- For rich_text fields: MUST include { \"rich_text_blocks\": { \"item_types\": [\"block_model_id1\", \"block_model_id2\"] } }")),
@@ -377,7 +378,8 @@ export const schemaSchemas = {
       message: "API key must start with a lowercase letter and contain only lowercase letters, numbers, and underscores"
     }).optional().describe("The updated API key to identify the field."),
     field_type: fieldTypeSchema.optional().describe(
-      "The updated type of the field. If switching from a basic text field and no specific editor is required, consider using 'structured_text' instead of 'text' to enable record links and modular blocks."
+      "The updated type of the field. If switching from a basic text field and no specific editor is required, consider using 'structured_text' instead of 'text' to enable record links and modular blocks. " +
+      "When updating many fields on a model, lean towards a modular design with link fields, block models, and structured text with blocks."
     ),
     validators: z.record(z.unknown()).optional()
       .describe("Updated validators for the field. Required validators vary by field_type - for example, rich_text fields REQUIRE the rich_text_blocks validator."),
