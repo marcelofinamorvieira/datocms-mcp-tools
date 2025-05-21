@@ -13,7 +13,6 @@ import fetch from "node-fetch";
 // Import all tool registration functions
 // Several tools are consolidated into router tools
 import { registerRecordsRouter } from "./tools/Records/RecordsRouterTool.js";
-import { registerEnhancedRecordsRouter } from "./tools/Records/EnhancedRecordsRouterTool.js";
 import { registerGetParametersTool } from "./tools/DocumentationTool.js";
 import {
   registerProjectRouter,
@@ -51,7 +50,6 @@ const createServer = (): McpServer => {
   // Register DatoCMS tools with clear order (parameters first, then execution)
   registerGetParametersTool(server);      // Parameters tool MUST be registered FIRST
   registerRecordsRouter(server);          // Execute tool for records
-  registerEnhancedRecordsRouter(server);  // Enhanced records router with improved error handling
   registerProjectRouter(server);          // Project actions
   registerUploadsRouter(server);          // All uploads actions (router)
   registerEnvironmentRouter(server);      // Environment and maintenance mode actions
