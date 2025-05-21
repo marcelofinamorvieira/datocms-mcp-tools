@@ -93,7 +93,7 @@ When creating fields in DatoCMS, follow these critical requirements:
 2. For location fields, use `"editor": "map"` (not "lat_lon_editor")
 3. String fields with radio or select appearance require matching enum validator values
 4. JSON fields with checkbox group must use the "options" parameter
-5. Rich text fields require a `rich_text_blocks` validator
+5. Rich text fields require a `rich_text_blocks` validator specifying the allowed block item type IDs. The `item_types` array can contain one or more block model IDs
 6. Structured text fields require both `structured_text_blocks` and `structured_text_links` validators
 7. Slug fields need a `slug_title_field` validator referencing the title field
 8. Single block fields use the `single_block_blocks` validator

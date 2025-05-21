@@ -806,7 +806,7 @@ const fieldTypeDocs = {
       validators: {
         rich_text_blocks: {
           description: "REQUIRED - allowed block models",
-          example: { item_types: ["block_model_id"] }
+          example: { item_types: ["block_model_id1", "block_model_id2"] }
         }
       },
       appearances: {
@@ -832,7 +832,7 @@ const fieldTypeDocs = {
           addons: []
         },
         validators: {
-          rich_text_blocks: { item_types: [] }
+          rich_text_blocks: { item_types: ["block_model_id1", "block_model_id2"] }
         }
       }
     },
@@ -841,7 +841,7 @@ const fieldTypeDocs = {
       validators: {
         structured_text_blocks: {
           description: "REQUIRED - allowed block models",
-          example: { item_types: ["block_model_id"] }
+          example: { item_types: ["block_model_id1", "block_model_id2"] }
         },
         structured_text_links: {
           description: "REQUIRED - allowed linked item types",
