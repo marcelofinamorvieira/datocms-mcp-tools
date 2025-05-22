@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run validate",
     "start": "node dist/index.js",
     "start:http": "TRANSPORT_TYPE=http node dist/index.js",
     "dev": "tsc -w",
