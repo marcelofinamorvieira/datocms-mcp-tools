@@ -95,19 +95,20 @@ export const enhancedQueryRecordsHandler = createListHandler({
       filter = { 
         ids: Array.isArray(ids) ? ids : [ids]
       };
-    } else if (modelId || modelName) {
-      // Model-based query with or without field filtering
-      filter = { 
-        type: modelId || modelName 
-      };
+    } else if (modelId || modelName || (fields && Object.keys(fields).length > 0)) {
+      // Model-based query OR field-only filtering query
+      filter = {};
+      
+      // Add model type if specified
+      if (modelId || modelName) {
+        filter.type = modelId || modelName;
+      }
       
       // Add field filtering if provided
       if (fields && Object.keys(fields).length > 0) {
         Object.entries(fields).forEach(([fieldName, fieldValue]) => {
-          if (filter) {
-            // Add field filter with simple structure
-            filter[fieldName] = { eq: fieldValue };
-          }
+          // Add field filter with simple structure
+          filter![fieldName] = { eq: fieldValue };
         });
       }
 

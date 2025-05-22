@@ -53,10 +53,11 @@ export const recordsSchemas = {
     ids: z.string().optional()
       .describe("Comma-separated list of DatoCMS record IDs to fetch (with no spaces), e.g.: 'abc123,def456'. Records can be from different models."),
     modelId: z.string().optional()
-      .describe("Model ID to restrict results to"),
+      .describe("Model ID to restrict results to. REQUIRED when using 'fields' parameter for field filtering."),
     modelName: z.string().optional()
-      .describe("Model name to restrict results to"),
-    fields: filterConditions.optional(),
+      .describe("Model name to restrict results to. REQUIRED when using 'fields' parameter for field filtering."),
+    fields: filterConditions.optional()
+      .describe("Field filters to apply within a specific model. REQUIRES 'modelId' or 'modelName' to be specified. Example: {\"modelName\": \"author\", \"fields\": {\"name\": \"Emily\"}} finds authors named Emily. Supports operators: {\"name\": {\"eq\": \"value\"}} or simple equality: {\"name\": \"value\"}. Note: Filtering is applied after fetching records from the specified model."),
     locale: z.string().optional()
       .describe("Optional locale to use when filtering by localized fields. If not specified, environment's main locale will be used."),
     order_by: orderBySchema.optional(),
@@ -67,6 +68,15 @@ export const recordsSchemas = {
     page: paginationSchema.optional(),
     nested: z.boolean().optional().default(true)
       .describe("For Modular Content, Structured Text and Single Block fields. If set to true, returns full payload for nested blocks instead of just their IDs. Default is true."),
+  }).refine((data) => {
+    // Validate that field filtering requires model specification
+    if (data.fields && Object.keys(data.fields).length > 0 && !data.modelId && !data.modelName && !data.textSearch) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Field filtering requires either 'modelId' or 'modelName' to be specified. DatoCMS does not support cross-model field filtering.",
+    path: ["fields"]
   }),
 
   get: createBaseSchema().extend({ 
