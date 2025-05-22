@@ -14,6 +14,15 @@ import {
   extractDetailedErrorInfo
 } from "./errorHandlers.js";
 import { HandlerResponse, createResponse, Response } from "./responseHandlers.js";
+import { 
+  createStandardErrorResponse, 
+  createStandardMcpResponse 
+} from "./standardResponse.js";
+import { 
+  isDebugEnabled,
+  createDebugData,
+  DebugContext 
+} from "./debugUtils.js";
 
 /**
  * Error context type for more detailed error information
@@ -21,6 +30,8 @@ import { HandlerResponse, createResponse, Response } from "./responseHandlers.js
 export type ErrorContext = {
   /** Handler context name for better error messages */
   handlerName?: string;
+  /** Operation being performed (e.g., 'create', 'update', 'delete', 'list') */
+  operation?: string;
   /** Resource type (e.g., 'record', 'item_type', etc.) */
   resourceType?: string;
   /** Resource identifier if available */
@@ -121,8 +132,40 @@ export function withErrorHandling<Args, Result>(
     try {
       return await handlerFn(args);
     } catch (error: unknown) {
+      // Check if debug mode is enabled and we have debug context from middleware
+      if (isDebugEnabled() && (args as any)?._debugContext) {
+        const debugContext = (args as any)._debugContext as DebugContext;
+        
+        // Create debug data with error information
+        const debugData = createDebugData(debugContext, {
+          error: {
+            type: error?.constructor?.name || 'Error',
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          },
+          metadata: {
+            errorContext: context
+          }
+        });
+        
+        // Determine error type and code
+        let errorCode = 'UNKNOWN_ERROR';
+        if (isAuthorizationError(error)) errorCode = 'UNAUTHORIZED';
+        else if (isNotFoundError(error)) errorCode = 'NOT_FOUND';
+        else if (isValidationError(error)) errorCode = 'VALIDATION_ERROR';
+        else if (isVersionConflictError(error)) errorCode = 'VERSION_CONFLICT';
+        
+        // Use standard error response with debug data
+        return createStandardMcpResponse(
+          createStandardErrorResponse(error, { 
+            error_code: errorCode,
+            debug: debugData 
+          })
+        );
+      }
+      
+      // Fall back to original error handling for backward compatibility
       const errorResult = handleErrorWithContext(error, context);
-      // Convert to MCP response format
       return createResponse(errorResult);
     }
   };

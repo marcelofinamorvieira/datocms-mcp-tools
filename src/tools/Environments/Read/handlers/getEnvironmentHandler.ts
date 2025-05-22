@@ -2,52 +2,35 @@
  * @file getEnvironmentHandler.ts
  * @description Handler for retrieving DatoCMS environment information
  * @module tools/Environments/Read
+ * 
+ * This handler uses the enhanced factory pattern which provides:
+ * - Automatic debug tracking when DEBUG=true
+ * - Performance monitoring
+ * - Standardized error handling
+ * - Schema validation
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { environmentSchemas } from "../../schemas.js";
+import { createRetrieveHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { environmentSchemas } from "../../schemas.js";
 
 /**
  * Handler for retrieving a specific DatoCMS environment by ID
  * 
- * @param args - The request arguments
- * @param args.apiToken - DatoCMS API token
- * @param args.environmentId - ID of the environment to retrieve
- * @returns Environment data or error response
+ * Debug features:
+ * - Tracks API call duration to DatoCMS
+ * - Provides execution trace for troubleshooting
+ * - Sanitizes sensitive data (API tokens) in debug output
  */
-export const getEnvironmentHandler = async (args: z.infer<typeof environmentSchemas.retrieve>) => {
-  const { apiToken, environmentId } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken);
+export const getEnvironmentHandler = createRetrieveHandler({
+  domain: 'environments',
+  schemaName: 'retrieve',
+  schema: environmentSchemas.retrieve,
+  entityName: 'Environment',
+  idParam: 'environmentId',
+  clientAction: async (client, args) => {
+    // Fetch environment information
+    const environment = await client.environments.find(args.environmentId as string);
     
-    try {
-      // Fetch environment information
-      const environment = await client.environments.find(environmentId as string);
-      
-      if (!environment) {
-        return createErrorResponse(`Error: Failed to fetch environment with ID '${environmentId}'.`);
-      }
-      
-      return createResponse(JSON.stringify(environment, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Environment with ID '${environmentId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error retrieving environment: ${extractDetailedErrorInfo(error)}`);
+    return environment;
   }
-};
+});

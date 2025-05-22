@@ -11,6 +11,12 @@
 
 import { createResponse, Response } from "./responseHandlers.js";
 import { extractDetailedErrorInfo, isDatoCMSApiError } from "./errorHandlers.js";
+import { 
+  DebugData, 
+  isDebugEnabled, 
+  sanitizeSensitiveData,
+  formatErrorForDebug 
+} from "./debugUtils.js";
 
 /**
  * Standard pagination information
@@ -65,6 +71,11 @@ export interface ResponseMetadata {
   error_details?: Record<string, unknown>;
   
   /**
+   * Debug information (only included when DEBUG=true)
+   */
+  debug?: DebugData;
+  
+  /**
    * Domain-specific metadata
    */
   [key: string]: unknown;
@@ -105,13 +116,14 @@ export interface StandardResponse<T = unknown> {
  * 
  * @param data - The response data
  * @param message - Optional success message
- * @param meta - Optional additional metadata
+ * @param meta - Optional additional metadata (including debug data)
  * @returns A standardized success response
  * 
  * @example
  * return createStandardSuccessResponse(
  *   { id: '123', name: 'Example' },
- *   'Resource created successfully'
+ *   'Resource created successfully',
+ *   { debug: debugData }
  * );
  */
 export function createStandardSuccessResponse<T>(
@@ -119,11 +131,18 @@ export function createStandardSuccessResponse<T>(
   message?: string,
   meta?: Partial<ResponseMetadata>
 ): StandardResponse<T> {
+  const finalMeta = { ...meta };
+  
+  // Only include debug data if debug mode is enabled
+  if (finalMeta.debug && !isDebugEnabled()) {
+    delete finalMeta.debug;
+  }
+  
   return {
     success: true,
     data,
     ...(message && { message }),
-    ...(meta && { meta })
+    ...(Object.keys(finalMeta).length > 0 && { meta: finalMeta })
   };
 }
 
@@ -131,13 +150,13 @@ export function createStandardSuccessResponse<T>(
  * Creates a standard error response
  * 
  * @param error - Error message or Error object
- * @param meta - Optional additional metadata
+ * @param meta - Optional additional metadata (including debug data)
  * @returns A standardized error response
  * 
  * @example
  * return createStandardErrorResponse(
  *   'Resource not found',
- *   { error_code: 'NOT_FOUND' }
+ *   { error_code: 'NOT_FOUND', debug: debugData }
  * );
  */
 export function createStandardErrorResponse(
@@ -157,6 +176,18 @@ export function createStandardErrorResponse(
     ...(apiErrorDetails && { error_details: apiErrorDetails })
   };
   
+  // Add debug error information if debug mode is enabled
+  if (isDebugEnabled() && mergedMeta.debug && typeof error !== 'string') {
+    if (!mergedMeta.debug.error) {
+      mergedMeta.debug.error = formatErrorForDebug(error);
+    }
+  }
+  
+  // Remove debug data if not in debug mode
+  if (mergedMeta.debug && !isDebugEnabled()) {
+    delete mergedMeta.debug;
+  }
+  
   return {
     success: false,
     error: errorMessage,
@@ -170,14 +201,15 @@ export function createStandardErrorResponse(
  * @param items - The paginated items
  * @param pagination - Pagination information
  * @param message - Optional success message
- * @param meta - Optional additional metadata
+ * @param meta - Optional additional metadata (including debug data)
  * @returns A standardized paginated response
  * 
  * @example
  * return createStandardPaginatedResponse(
  *   records,
  *   { limit: 10, offset: 0, total: 42, has_more: true },
- *   'Found 42 record(s) matching your query'
+ *   'Found 42 record(s) matching your query',
+ *   { debug: debugData }
  * );
  */
 export function createStandardPaginatedResponse<T>(
@@ -186,14 +218,21 @@ export function createStandardPaginatedResponse<T>(
   message?: string,
   meta?: Omit<ResponseMetadata, 'pagination'>
 ): StandardResponse<T[]> {
+  const finalMeta: ResponseMetadata = {
+    pagination,
+    ...meta
+  };
+  
+  // Remove debug data if not in debug mode
+  if (finalMeta.debug && !isDebugEnabled()) {
+    delete finalMeta.debug;
+  }
+  
   return {
     success: true,
     data: items,
     ...(message && { message }),
-    meta: {
-      pagination,
-      ...meta
-    }
+    meta: finalMeta
   };
 }
 
@@ -202,13 +241,14 @@ export function createStandardPaginatedResponse<T>(
  * 
  * @param message - Error message
  * @param validationErrors - Array of validation errors
- * @param meta - Optional additional metadata
+ * @param meta - Optional additional metadata (including debug data)
  * @returns A standardized validation error response
  * 
  * @example
  * return createStandardValidationErrorResponse(
  *   'Validation failed',
- *   [{ path: 'name', message: 'Name is required' }]
+ *   [{ path: 'name', message: 'Name is required' }],
+ *   { debug: debugData }
  * );
  */
 export function createStandardValidationErrorResponse(
@@ -216,14 +256,21 @@ export function createStandardValidationErrorResponse(
   validationErrors: Array<{ path: string; message: string }>,
   meta?: Omit<ResponseMetadata, 'validation_errors'>
 ): StandardResponse<null> {
+  const finalMeta: ResponseMetadata = {
+    validation_errors: validationErrors,
+    error_code: 'VALIDATION_ERROR',
+    ...meta
+  };
+  
+  // Remove debug data if not in debug mode
+  if (finalMeta.debug && !isDebugEnabled()) {
+    delete finalMeta.debug;
+  }
+  
   return {
     success: false,
     error: message,
-    meta: {
-      validation_errors: validationErrors,
-      error_code: 'VALIDATION_ERROR',
-      ...meta
-    }
+    meta: finalMeta
   };
 }
 

@@ -40,15 +40,13 @@ npm run validate     # Validate directory structure
 
 ## 🛠️ Common Task Patterns
 
-### Creating a New Handler
+### Creating a New Handler (With Debug Support)
 ```typescript
-// 1. Import required utilities
-import { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createRetrieveHandler } from "../../../../utils/handlerFactories.js";
+// 1. Import enhanced factory for automatic debug tracking
+import { createRetrieveHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { domainSchemas } from "../schemas.js";
 
-// 2. Use the appropriate factory
+// 2. Use the enhanced factory - debug is automatic!
 export const getResourceHandler = createRetrieveHandler({
   domain: "resources",
   schemaName: "get",
@@ -56,10 +54,12 @@ export const getResourceHandler = createRetrieveHandler({
   entityName: "Resource",
   idParam: "resourceId",
   clientAction: async (client, args) => {
+    // No need for manual debug tracking - it's automatic!
     return await client.resources.find(args.resourceId);
   }
 });
 ```
+
 
 ### Adding a New Domain
 1. Create directory structure:
@@ -113,22 +113,28 @@ export const domainSchemas = {
 
 ## 🎯 Handler Factory Quick Reference
 
-| Factory | Purpose | Key Parameters |
-|---------|---------|----------------|
-| `createCreateHandler` | Create new entities | `clientAction`, `successMessage` |
-| `createRetrieveHandler` | Get single entity | `idParam`, `clientAction` |
-| `createListHandler` | List with pagination | `listGetter`, `countGetter` |
-| `createUpdateHandler` | Update entity | `idParam`, `clientAction` |
-| `createDeleteHandler` | Delete entity | `idParam`, `clientAction` |
+### Enhanced Factories (enhancedHandlerFactory.ts)
+| Factory | Purpose | Key Parameters | Debug Features |
+|---------|---------|----------------|----------------|
+| `createCreateHandler` | Create new entities | `domain`, `schemaName`, `schema`, `entityName`, `clientAction` | ✅ Auto debug tracking |
+| `createRetrieveHandler` | Get single entity | `domain`, `schemaName`, `schema`, `entityName`, `idParam`, `clientAction` | ✅ Auto debug tracking |
+| `createListHandler` | List with pagination | `domain`, `schemaName`, `schema`, `entityName`, `listGetter`, `countGetter` | ✅ Auto debug tracking |
+| `createUpdateHandler` | Update entity | `domain`, `schemaName`, `schema`, `entityName`, `idParam`, `clientAction` | ✅ Auto debug tracking |
+| `createDeleteHandler` | Delete entity | `domain`, `schemaName`, `schema`, `entityName`, `idParam`, `clientAction` | ✅ Auto debug tracking |
+
+**Note**: Use enhanced factories for new handlers to get automatic debug support!
 
 ## 🔍 Navigation Shortcuts
 
 ### Core Utilities
 - **Client Manager**: `src/utils/unifiedClientManager.ts`
 - **Error Handlers**: `src/utils/errorHandlers.ts`
-- **Handler Factories**: `src/utils/handlerFactories.ts`
+- **Handler Factories**: `src/utils/enhancedHandlerFactory.ts`
 - **Response Handlers**: `src/utils/responseHandlers.ts`
+- **Standard Response**: `src/utils/standardResponse.ts`
 - **Shared Schemas**: `src/utils/sharedSchemas.ts`
+- **Debug Utils**: `src/utils/debugUtils.ts`
+- **Debug Middleware**: `src/utils/debugMiddleware.ts`
 
 ### Domain Routers
 - **Records**: `src/tools/Records/RecordsRouterTool.ts`
@@ -171,19 +177,225 @@ const errorInfo = extractDetailedErrorInfo(error);
 3. **Error Messages**: Never expose sensitive data
 4. **Environment Access**: Respect environment-based permissions
 
-## 🐛 Debugging Without console.log
+## 🐛 Debugging in MCP Environment
+
+Since console.log output isn't visible in the MCP environment, the project uses a comprehensive debug system that returns debug information in responses.
+
+### Debug System Architecture
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Handler Call   │────▶│ Debug Middleware │────▶│ Enhanced Factory│
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                                │                          │
+                                ▼                          ▼
+                        ┌──────────────────┐     ┌─────────────────┐
+                        │  Debug Context   │     │ Debug Response  │
+                        └──────────────────┘     └─────────────────┘
+```
+
+### Debug System Components
+
+1. **Debug Utilities** (`src/utils/debugUtils.ts`):
+   - `createDebugContext()` - Creates execution context
+   - `createDebugData()` - Formats debug info for responses
+   - `sanitizeSensitiveData()` - Redacts API tokens
+   - `createTimer()` - Performance measurement
+   - `addTrace()` - Adds execution trace entries
+
+2. **Debug Middleware** (`src/utils/debugMiddleware.ts`):
+   - `withDebugTracking()` - Wraps handlers with debug tracking
+   - Automatic performance monitoring
+   - Response enhancement with debug data
+
+3. **Enhanced Factory Integration**:
+   - All handlers using enhanced factories get automatic debug
+   - No manual instrumentation needed
+
+### Enabling Debug Mode
+
+```bash
+# .env file
+DEBUG=true                 # Full debug mode
+TRACK_PERFORMANCE=true     # Performance only
+LOG_LEVEL=debug           # Log verbosity
+```
+
+### Debug Response Structure
+
+When `DEBUG=true`, all responses include:
+
+```json
+{
+  "success": true,
+  "data": { /* your data */ },
+  "meta": {
+    "debug": {
+      "context": {
+        "operation": "create",              // CRUD operation type
+        "handler": "createRecordHandler",   // Handler name
+        "domain": "records",                // Domain/module
+        "timestamp": 1234567890,            // Start timestamp
+        "parameters": {                     // Sanitized params
+          "api_token": "f9a6...63db",      // Automatically redacted
+          "itemType": "blog_post"
+        },
+        "performance": {
+          "startTime": 1234567890,
+          "endTime": 1234567900,
+          "duration": 10,                   // Total time in ms
+          "apiCallDuration": 7,             // DatoCMS API time
+          "stages": {
+            "validation": 2,                // Schema validation time
+            "handler": 8                    // Handler execution time
+          }
+        },
+        "trace": [                          // Execution steps
+          "[+0ms] Starting createRecordHandler",
+          "[+2ms] Validating input with create schema",
+          "[+2ms] Validation completed in 2ms",
+          "[+2ms] Initializing DatoCMS client",
+          "[+3ms] Creating Record",
+          "[+10ms] Handler completed in 8ms"
+        ]
+      },
+      "response": {
+        "dataSize": 1024,                   // Response size in bytes
+        "dataType": "object"                // Data type returned
+      },
+      "api": {
+        "endpoint": "/items",               // DatoCMS endpoint
+        "method": "POST",                   // HTTP method
+        "duration": 7                       // API call duration
+      },
+      "error": {                            // Only on errors
+        "type": "ValidationError",
+        "message": "Invalid field value",
+        "stack": "...",                     // Full stack in debug mode
+        "details": { /* API error */ }
+      }
+    }
+  }
+}
+```
+
+### Using Debug in New Handlers
+
+#### Option 1: Enhanced Factory (Recommended)
+```typescript
+import { createCreateHandler } from "../../../../utils/enhancedHandlerFactory.js";
+
+export const myHandler = createCreateHandler({
+  domain: 'myDomain',
+  schemaName: 'create',
+  schema: mySchema,
+  entityName: 'MyEntity',
+  clientAction: async (client, args) => {
+    // Your implementation - debug is automatic
+    return result;
+  }
+});
+```
+
+#### Option 2: Manual Debug Context (Advanced)
+```typescript
+import { createDebugContext, addTrace, trackApiCall } from "./debugUtils.js";
+
+export const myHandler = async (args) => {
+  const context = createDebugContext({
+    operation: 'custom',
+    handler: 'myHandler',
+    domain: 'myDomain',
+    parameters: args
+  });
+
+  addTrace(context, 'Starting custom operation');
+  
+  const timer = createTimer();
+  const result = await someApiCall();
+  
+  trackApiCall(context, {
+    endpoint: '/custom',
+    method: 'GET',
+    duration: timer.stop()
+  });
+  
+  // Create debug data for response
+  const debugData = createDebugData(context);
+};
+```
+
+### Debug Best Practices
+
+1. **Development Only**: Never use `DEBUG=true` in production
+2. **Sensitive Data**: Trust the sanitizer, but verify
+3. **Performance Impact**: Debug adds ~5-10ms overhead
+4. **Trace Granularity**: Add traces for key operations only
+5. **Error Context**: Include relevant IDs and parameters
+
+### Testing Debug Output
+
+```bash
+# Run debug test script
+npm run test:debug
+
+# Output shows:
+# - Handler execution with invalid token
+# - Debug data in response
+# - Performance metrics
+# - Sanitized parameters
+```
+
+### Troubleshooting Debug Issues
+
+1. **No debug data in response**:
+   - Check `DEBUG=true` in `.env`
+   - Verify handler uses enhanced factory
+   - Ensure response uses standard format
+
+2. **Missing performance data**:
+   - Check `TRACK_PERFORMANCE=true`
+   - Verify timer usage in handler
+
+3. **Sensitive data visible**:
+   - Check sanitization patterns in `debugUtils.ts`
+   - Add new patterns if needed
+
+### Debug Utilities Reference
 
 ```typescript
-// Include debug info in responses
-return createStandardSuccessResponse({
-  message: "Operation completed",
-  data: result,
-  debug: process.env.DEBUG ? {
-    params: args,
-    query: query,
-    timing: Date.now() - startTime
-  } : undefined
+// Create debug context
+const context = createDebugContext({
+  operation: 'create',
+  handler: 'myHandler',
+  domain: 'records'
 });
+
+// Add execution trace
+addTrace(context, 'Processing step X');
+
+// Track API calls
+trackApiCall(context, {
+  endpoint: '/items/123',
+  method: 'GET',
+  duration: 45
+});
+
+// Create timer
+const timer = createTimer();
+// ... do work ...
+const duration = timer.stop();
+
+// Format bytes
+formatBytes(1024); // "1 KB"
+
+// Get data size
+getDataSize(myObject); // bytes
+
+// Create debug logger
+const logger = createDebugLogger(context);
+logger.info('Operation started');
+logger.error('Operation failed', error);
 ```
 
 ## 🧪 Testing Patterns

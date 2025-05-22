@@ -1,64 +1,48 @@
 /**
  * @file getProjectInfoHandler.ts
  * @description Handler for retrieving DatoCMS project information
+ * 
+ * This handler uses the enhanced factory pattern which provides:
+ * - Automatic debug tracking when DEBUG=true
+ * - Performance monitoring
+ * - Standardized error handling
+ * - Schema validation
  */
 
-import type { z } from "zod";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { projectSchemas } from "../../schemas.js";
+import { projectSchemas } from "../../schemas.js";
 import { createProjectClient } from "../../projectClient.js";
-import { isDatoCMSAuthorizationError, Site } from "../../projectTypes.js";
-
-/**
- * Response type for the getProjectInfo handler
- */
-export interface GetProjectInfoResponse {
-  success: boolean;
-  data?: Site;
-  error?: string;
-}
 
 /**
  * Handler for retrieving DatoCMS project information
  * 
- * @param args - The arguments containing apiToken and optionally environment
- * @returns A response containing the project information or an error message
+ * Debug features:
+ * - Tracks API call duration to DatoCMS
+ * - Provides execution trace for troubleshooting
+ * - Sanitizes sensitive data (API tokens) in debug output
  */
-export const getProjectInfoHandler = async (
-  args: z.infer<typeof projectSchemas.get_info>
-): Promise<GetProjectInfoResponse> => {
+export const getProjectInfoHandler = createCustomHandler({
+  domain: 'project',
+  schemaName: 'get_info',
+  schema: projectSchemas.get_info,
+  errorContext: {
+    operation: 'retrieve',
+    resourceType: 'Site',
+    handlerName: 'getProjectInfoHandler'
+  }
+}, async (args) => {
   const { apiToken, environment } = args;
   
-  try {
-    // Initialize DatoCMS typed client
-    const projectClient = createProjectClient(apiToken, environment);
-    
-    try {
-      // Retrieve the project information using the typed client
-      const site = await projectClient.findSite();
-      
-      // Return the project data
-      return {
-        success: true,
-        data: site
-      };
-      
-    } catch (apiError: unknown) {
-      if (isDatoCMSAuthorizationError(apiError) || isAuthorizationError(apiError)) {
-        return {
-          success: false,
-          error: "Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API."
-        };
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: `Error retrieving DatoCMS site information: ${extractDetailedErrorInfo(error)}`
-    };
-  }
-};
+  // Initialize DatoCMS typed client
+  const projectClient = createProjectClient(apiToken, environment);
+  
+  // Retrieve the project information using the typed client
+  const site = await projectClient.findSite();
+  
+  // Return success response with the site data
+  return createResponse(JSON.stringify({
+    success: true,
+    data: site
+  }, null, 2));
+});

@@ -48,8 +48,8 @@ temp/
 # Test related files
 test-report.xml
 
-# Claude integration files
-CLAUDE.md
+# Claude integration files - kept in repo for documentation
+# CLAUDE.md
 
 # Local configuration files
 settings.local.json

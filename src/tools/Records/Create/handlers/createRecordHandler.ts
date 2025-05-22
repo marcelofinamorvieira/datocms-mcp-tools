@@ -1,57 +1,71 @@
 /**
  * @file createRecordHandler.ts
  * @description Handler for creating a new DatoCMS record
+ * 
+ * This handler uses the enhanced factory pattern which provides:
+ * - Automatic debug tracking when DEBUG=true
+ * - Performance monitoring
+ * - Standardized error handling
+ * - Schema validation
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { withErrorHandling } from "../../../../utils/errorHandlerWrapper.js";
-import type { recordsSchemas } from "../../schemas.js";
+import { createCreateHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { recordsSchemas } from "../../schemas.js";
 
 /**
- * Handler function for creating a new DatoCMS record
+ * Handler for creating a new DatoCMS record
+ * 
+ * Debug features:
+ * - Tracks API call duration to DatoCMS
+ * - Logs field data size and structure
+ * - Provides execution trace for troubleshooting
+ * - Sanitizes sensitive data (API tokens) in debug output
  */
-export const createRecordHandlerImplementation = async (args: z.infer<typeof recordsSchemas.create>) => {
-  const { 
-    apiToken, 
-    itemType, 
-    data, 
-    returnOnlyConfirmation = false, 
-    environment 
-  } = args;
+export const createRecordHandler = createCreateHandler({
+  domain: 'records',
+  schemaName: 'create',
+  schema: recordsSchemas.create,
+  entityName: 'Record',
   
-  // Initialize DatoCMS client using the unified client manager
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  successMessage: (result: any) => {
+    // Use the item type from the result for a more informative message
+    const itemType = result.item_type?.id || 'unknown';
+    return `Successfully created record with ID '${result.id}' of type '${itemType}'`;
+  },
   
-  // Create the item
-  const createdItem = await client.items.create({
-    item_type: { 
-      id: itemType, 
-      type: "item_type" 
-    },
-    ...data
-  });
-  
-  // If no item returned, throw an error
-  if (!createdItem) {
-    throw new Error(`Failed to create a new record of type '${itemType}'.`);
+  clientAction: async (client, args) => {
+    const { 
+      itemType, 
+      data, 
+      returnOnlyConfirmation = false, 
+      meta
+    } = args;
+    
+    // Create the item
+    const createdItem = await client.items.create({
+      item_type: { 
+        id: itemType, 
+        type: "item_type" 
+      },
+      ...data,
+      ...(meta && { meta })
+    });
+    
+    // If no item returned, throw an error
+    if (!createdItem) {
+      throw new Error(`Failed to create a new record of type '${itemType}'.`);
+    }
+    
+    // Return only confirmation data if requested (to save on tokens and response size)
+    if (returnOnlyConfirmation) {
+      return {
+        id: createdItem.id,
+        item_type: createdItem.item_type,
+        meta: { status: createdItem.meta?.status || 'created' }
+      };
+    }
+    
+    // Otherwise return the full record data
+    return createdItem;
   }
-
-  // Return only confirmation message if requested (to save on tokens)
-  if (returnOnlyConfirmation) {
-    return createResponse(`Successfully created record with ID '${createdItem.id}' of type '${itemType}'.`);
-  }
-
-  // Otherwise return the full record data
-  return createResponse(JSON.stringify(createdItem, null, 2));
-};
-
-// Wrap with consistent error handling
-export const createRecordHandler = withErrorHandling(
-  createRecordHandlerImplementation,
-  {
-    handlerName: "createRecord",
-    resourceType: "record"
-  }
-);
+});

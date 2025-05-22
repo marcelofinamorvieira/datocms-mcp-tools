@@ -21,6 +21,7 @@
 - [Field Creation Guide](#field-creation-guide)
 - [Known Limitations](#known-limitations)
 - [Development](#development)
+- [Debug Mode](#-debug-mode)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -127,6 +128,7 @@ npm run start
 | **Handlers** | Execute specific operations | `src/tools/*/handlers/` |
 | **Schemas** | Validate input parameters | `src/tools/*/schemas.ts` |
 | **Utilities** | Shared functionality | `src/utils/` |
+| **Debug System** | Execution tracking & monitoring | `src/utils/debug*.ts` |
 
 ### Router Tools Reference
 
@@ -196,13 +198,19 @@ npm run start
 
 3. **Restart Claude Desktop**
 
-### Environment Variables (Optional)
+### Environment Variables
+
+Create a `.env` file in the project root:
 
 ```bash
 # .env file
-DEBUG=true           # Enable debug responses
-NODE_ENV=production  # Set environment
+DEBUG=false                # Enable debug mode (set to true for development)
+TRACK_PERFORMANCE=false    # Enable performance tracking
+LOG_LEVEL=info            # Log level (error, warn, info, debug)
+NODE_ENV=production       # Environment (development, production)
 ```
+
+**⚠️ Warning**: Never enable `DEBUG=true` in production as it may expose sensitive information.
 
 ## 💬 Usage
 
@@ -278,6 +286,29 @@ All responses follow this structure:
   meta?: {
     total_count?: number;
     page_count?: number;
+    debug?: {              // Only included when DEBUG=true
+      context: {
+        operation: string;
+        handler: string;
+        domain: string;
+        timestamp: number;
+        parameters: any;   // Sanitized
+        performance: {
+          duration: number;
+          stages: Record<string, number>;
+        };
+        trace: string[];
+      };
+      response?: {
+        dataSize: number;
+        dataType: string;
+      };
+      error?: {
+        type: string;
+        message: string;
+        stack?: string;    // Only in debug mode
+      };
+    };
   };
 }
 ```
@@ -326,11 +357,11 @@ npm run dev
 # In another terminal, start the server
 npm run start
 
-# Run tests
-npm test
-
 # Validate structure
 npm run validate
+
+# Test debug functionality
+npm run test:debug
 ```
 
 ### Adding New Features
@@ -380,17 +411,91 @@ See [Contributing Guide](docs/CONTRIBUTING.md) for detailed instructions.
 - Ensure all appearances include `addons: []`
 - Check validator compatibility
 
-### Debug Mode
+## 🔍 Debug Mode
 
-Enable debug responses:
+The DatoCMS MCP Server includes a comprehensive debug system that provides detailed execution tracking without using console.log (which isn't visible in the MCP environment).
+
+### Enabling Debug Mode
+
+1. **Set environment variables in `.env`:**
+   ```bash
+   DEBUG=true                 # Enable full debug mode
+   TRACK_PERFORMANCE=true     # Enable performance tracking only
+   LOG_LEVEL=debug           # Set log level
+   ```
+
+2. **What you get with debug mode:**
+   - **Execution traces**: Step-by-step operation tracking
+   - **Performance metrics**: Timing for validation, API calls, and handlers
+   - **Sanitized parameters**: API tokens are automatically redacted
+   - **Error context**: Stack traces and detailed error information
+   - **Response metadata**: Size and type information
+
+3. **Example debug response:**
+   ```json
+   {
+     "success": true,
+     "data": { /* your data */ },
+     "meta": {
+       "debug": {
+         "context": {
+           "operation": "create",
+           "handler": "createRecordHandler",
+           "domain": "records",
+           "performance": {
+             "duration": 150,
+             "stages": {
+               "validation": 10,
+               "handler": 140
+             }
+           },
+           "trace": [
+             "[+0ms] Starting createRecordHandler",
+             "[+10ms] Validation completed in 10ms",
+             "[+15ms] Creating Record",
+             "[+150ms] Handler completed in 140ms"
+           ]
+         }
+       }
+     }
+   }
+   ```
+
+4. **Testing debug mode:**
+   ```bash
+   npm run test:debug
+   ```
+
+### Security Considerations
+
+- **Never enable in production**: Debug mode may expose sensitive information
+- **Automatic sanitization**: API tokens and passwords are automatically redacted
+- **Performance overhead**: Debug mode adds tracking overhead
+
+### For Developers
+
+When developing new handlers, use the enhanced factory pattern to get automatic debug support:
+
 ```typescript
-// In your handler
-return createStandardSuccessResponse({
-  message: "Success",
-  data: result,
-  debug: { params, query, timing }
+import { createCreateHandler } from "./utils/enhancedHandlerFactory.js";
+
+export const myHandler = createCreateHandler({
+  domain: 'myDomain',
+  schemaName: 'create',
+  schema: mySchema,
+  entityName: 'MyEntity',
+  clientAction: async (client, args) => {
+    // Your implementation
+    return result;
+  }
 });
 ```
+
+All handlers using the enhanced factory automatically get:
+- Performance tracking
+- Execution traces  
+- Error context enrichment
+- Parameter sanitization
 
 ## 🤝 Contributing
 

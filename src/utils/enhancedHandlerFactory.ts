@@ -10,6 +10,7 @@ import { UnifiedClientManager, ClientType } from "./unifiedClientManager.js";
 import { withErrorHandling, ErrorContext } from "./errorHandlerWrapper.js";
 import { withSchemaValidation, Handler } from "./schemaValidationWrapper.js";
 import { SchemaRegistry } from "./schemaRegistry.js";
+import { withDebugTracking } from "./debugMiddleware.js";
 
 /**
  * Type for a generic DatoCMS client
@@ -41,6 +42,8 @@ export interface BaseHandlerOptions<T> {
  * Options for create operation handler
  */
 export interface CreateHandlerOptions<T, R> extends BaseHandlerOptions<T> {
+  /** Entity name for debugging and messages */
+  entityName?: string;
   /** Message to display on successful creation */
   successMessage: string | ((result: R) => string);
   /** Custom client action function */
@@ -162,6 +165,14 @@ function createBaseHandler<T, R>(
   
   // Apply middleware to the base handler
   return composeMiddleware(baseHandler, [
+    // Apply debug tracking middleware (outermost, runs first and last)
+    (handler) => withDebugTracking({
+      domain,
+      operation: errorContext?.operation || 'unknown',
+      handlerName: errorContext?.handlerName || `${domain}.${schemaName}`,
+      schemaName,
+      entityType: errorContext?.resourceType
+    })(handler),
     // Apply error handling middleware
     (handler) => withErrorHandling(handler, errorContext),
     // Apply schema validation middleware
@@ -178,7 +189,9 @@ export function createCreateHandler<T, R>(options: CreateHandlerOptions<T, R>): 
   // Create an enhanced error context
   const enhancedErrorContext: ErrorContext = {
     ...errorContext,
-    handlerName: `${options.domain}.create.${options.schemaName}`
+    handlerName: `${options.domain}.create.${options.schemaName}`,
+    operation: 'create',
+    resourceType: options.entityName || 'resource'
   };
   
   // Create the response transformer function
@@ -207,6 +220,7 @@ export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R
   const enhancedErrorContext: ErrorContext = {
     ...options.errorContext,
     handlerName: `${options.domain}.retrieve.${options.schemaName}`,
+    operation: 'retrieve',
     resourceType: entityName
   };
   
@@ -260,6 +274,7 @@ export function createUpdateHandler<T, R>(options: UpdateHandlerOptions<T, R>): 
   const enhancedErrorContext: ErrorContext = {
     ...options.errorContext,
     handlerName: `${options.domain}.update.${options.schemaName}`,
+    operation: 'update',
     resourceType: entityName
   };
   
@@ -299,6 +314,7 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>): Handle
   const enhancedErrorContext: ErrorContext = {
     ...options.errorContext,
     handlerName: `${options.domain}.delete.${options.schemaName}`,
+    operation: 'delete',
     resourceType: entityName
   };
   
@@ -338,6 +354,7 @@ export function createListHandler<T, R>(options: ListHandlerOptions<T, R>): Hand
   const enhancedErrorContext: ErrorContext = {
     ...options.errorContext,
     handlerName: `${options.domain}.list.${options.schemaName}`,
+    operation: 'list',
     resourceType: `${entityName} list`
   };
   
@@ -371,6 +388,14 @@ export function createCustomHandler<T, R>(
   
   // Apply middleware to the handler
   return composeMiddleware(handler, [
+    // Apply debug tracking middleware
+    (h) => withDebugTracking({
+      domain,
+      operation: errorContext?.operation || 'custom',
+      handlerName: errorContext?.handlerName || `${domain}.custom.${schemaName}`,
+      schemaName,
+      entityType: errorContext?.resourceType
+    })(h),
     // Apply error handling middleware
     (h) => withErrorHandling(h, errorContext),
     // Apply schema validation middleware

@@ -285,11 +285,12 @@ The script will check:
  * handler functions with middleware composition. It combines error handling,
  * schema validation, and client management in a unified pattern.
  * 
- * These factories improve upon the basic handlerFactories.ts by adding:
+ * These factories provide:
  * - Composable middleware pattern
  * - Built-in error handling with context
  * - Automatic schema validation
  * - Standardized response formatting
+ * - Automatic debug tracking when DEBUG=true
  */
 ```
 

@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "start:http": "TRANSPORT_TYPE=http node dist/index.js",
     "dev": "tsc -w",
-    "validate": "node dist/scripts/validate-structure.js"
+    "validate": "node dist/scripts/validate-structure.js",
+    "test:debug": "node dist/scripts/test-debug.js"
   },
   "keywords": [
     "mcp",
@@ -21,6 +22,7 @@
   "dependencies": {
     "@datocms/cma-client-node": "^4.0.1",
     "@modelcontextprotocol/sdk": "^1.11.0",
+    "dotenv": "^16.5.0",
     "node-fetch": "^3.3.2",
     "typescript": "^5.8.3",
     "zod": "^3.24.3"
