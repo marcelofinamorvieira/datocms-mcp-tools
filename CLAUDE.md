@@ -14,6 +14,7 @@ This project is a Model Context Protocol (MCP) server that enables Claude AI mod
 - Start the MCP server: `npm run start` or `./start-server.sh`
 - Start the server with HTTP transport: `npm run start:http`
 - Watch mode for development: `npm run dev`
+- Validate directory structure: `npm run validate`
 
 ### Development Workflow
 
@@ -151,6 +152,29 @@ const recordsClient = UnifiedClientManager.getRecordsClient(apiToken, environmen
 // Get a collaborators client
 const collaboratorsClient = UnifiedClientManager.getCollaboratorsClient(apiToken, environment);
 ```
+
+## Known Limitations
+
+Be aware of these current limitations when working with the codebase:
+
+- **Record operations**: Creation and update may fail for complex field types such as structured text or block fields
+- **Role operations**: Creation and update fail for complex parameter sets
+
+## Field Creation Requirements
+
+When creating fields in DatoCMS, follow these critical requirements:
+
+1. All field appearances must include an `addons` array (even if empty)
+2. For location fields, use `"editor": "map"` (not "lat_lon_editor") 
+3. String fields with radio or select appearance require matching enum validator values
+4. JSON fields with checkbox group must use the "options" parameter
+5. Rich text fields require a `rich_text_blocks` validator specifying allowed block item type IDs
+6. Structured text fields require both `structured_text_blocks` and `structured_text_links` validators
+7. Slug fields need a `slug_title_field` validator referencing the title field
+8. Single block fields use the `single_block_blocks` validator
+9. The `required` validator is **not** supported on `gallery`, `links`, or `rich_text` fields
+
+See `docs/FIELD_CREATION_GUIDE.md` for detailed examples.
 
 ## Configuration with Claude Desktop
 
