@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import {
   isAuthorizationError,
   createErrorResponse
@@ -12,7 +12,7 @@ export const queryUploadCollectionsHandler = async (
 ) => {
   const { apiToken, ids, environment } = args;
   try {
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     const opts = ids
       ? { filter: { ids: Array.isArray(ids) ? ids.join(",") : ids } }
       : {};

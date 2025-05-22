@@ -5,7 +5,7 @@
  * entities.
  */
 
-import { getClient } from "../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../utils/unifiedClientManager.js";
 import {
   Site,
   SiteUpdateParams,
@@ -28,7 +28,7 @@ export class TypedProjectClient implements ProjectClient {
   private client: any;
   
   constructor(apiToken: string, environment?: string) {
-    this.client = getClient(apiToken, environment);
+    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment);
   }
   
   // Site operations

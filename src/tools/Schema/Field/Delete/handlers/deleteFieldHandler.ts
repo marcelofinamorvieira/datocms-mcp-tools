@@ -1,4 +1,4 @@
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
@@ -14,7 +14,7 @@ export const deleteFieldHandler = async (args: DeleteFieldParams) => {
     const { apiToken, fieldId, environment } = args;
 
     // Build the DatoCMS client
-    const client = getClient(apiToken as string, environment as string);
+    const client = UnifiedClientManager.getDefaultClient(apiToken as string, environment as string);
 
     // First, get the field to return its info later
     const field = await client.fields.find(fieldId as string);

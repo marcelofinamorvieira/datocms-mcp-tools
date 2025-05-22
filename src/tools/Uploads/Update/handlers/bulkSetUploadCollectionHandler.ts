@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -14,7 +14,7 @@ export const bulkSetUploadCollectionHandler = async (
   const { apiToken, uploadIds, collectionId, environment } = args;
 
   try {
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     await client.uploads.bulkSetUploadCollection({
       uploads: uploadIds.map(id => ({ type: "upload", id })),

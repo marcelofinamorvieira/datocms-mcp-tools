@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { createErrorResponse, isAuthorizationError, isNotFoundError , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
@@ -17,7 +17,7 @@ export const listRecordVersionsHandler = async (args: z.infer<typeof recordsSche
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       // Prepare pagination parameters

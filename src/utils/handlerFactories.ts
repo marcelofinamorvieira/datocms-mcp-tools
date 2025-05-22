@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "./clientManager.js";
+import { UnifiedClientManager } from "./unifiedClientManager.js";
 import { createResponse } from "./responseHandlers.js";
 import { 
   isAuthorizationError, 
@@ -16,7 +16,7 @@ import {
 /**
  * Type for a generic DatoCMS client
  */
-type DatoCMSClient = ReturnType<typeof getClient>;
+type DatoCMSClient = ReturnType<typeof UnifiedClientManager.getDefaultClient>;
 
 /**
  * Type for a function that creates a client response object
@@ -90,7 +90,7 @@ export function createCreateHandler<T, R>(options: CreateHandlerOptions<T, R>) {
       const environment = (args as any).environment;
       
       // Initialize DatoCMS client
-      const client = getClient(apiToken, environment);
+      const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
       
       try {
         // Execute the client action
@@ -136,7 +136,7 @@ export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R
       const entityId = args[idParam];
       
       // Initialize DatoCMS client
-      const client = getClient(apiToken, environment);
+      const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
       
       try {
         // Execute the client action
@@ -182,7 +182,7 @@ export function createUpdateHandler<T, R>(options: RetrieveHandlerOptions<T, R>)
       const entityId = args[idParam];
       
       // Initialize DatoCMS client
-      const client = getClient(apiToken, environment);
+      const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
       
       try {
         // Execute the client action
@@ -227,7 +227,7 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>) {
       const entityId = args[idParam];
       
       // Initialize DatoCMS client
-      const client = getClient(apiToken, environment);
+      const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
       
       try {
         // Execute the client action
@@ -270,7 +270,7 @@ export function createListHandler<T, R>(options: ListHandlerOptions<T, R>) {
       const environment = (args as any).environment;
       
       // Initialize DatoCMS client
-      const client = getClient(apiToken, environment);
+      const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
       
       try {
         // Execute the client action

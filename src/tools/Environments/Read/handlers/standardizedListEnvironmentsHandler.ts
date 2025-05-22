@@ -5,7 +5,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { 
   createStandardPaginatedResponse, 
   createStandardErrorResponse,
@@ -30,7 +30,7 @@ export const standardizedListEnvironmentsHandler = async (args: z.infer<typeof e
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken);
+    const client = UnifiedClientManager.getDefaultClient(apiToken);
     
     try {
       // Fetch environments

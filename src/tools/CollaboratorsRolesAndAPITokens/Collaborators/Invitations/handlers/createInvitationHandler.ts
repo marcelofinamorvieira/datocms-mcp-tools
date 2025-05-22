@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { collaboratorSchemas } from "../../../schemas.js";
@@ -17,7 +17,7 @@ export const createInvitationHandler = async (args: z.infer<typeof collaboratorS
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       // Create the invitation - handle different role formats

@@ -5,7 +5,7 @@
  * entities (ItemTypes, Fields, and Fieldsets).
  */
 
-import { getClient } from "../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../utils/unifiedClientManager.js";
 import {
   ItemType,
   Field,
@@ -55,7 +55,7 @@ export class TypedSchemaClient implements SchemaClient {
   private client: any;
   
   constructor(apiToken: string, environment?: string) {
-    this.client = getClient(apiToken, environment);
+    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment);
   }
   
   // ItemType operations

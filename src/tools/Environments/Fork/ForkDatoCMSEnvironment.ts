@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getClient } from "../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -29,7 +29,7 @@ export const registerForkDatoCMSEnvironment = (server: McpServer) => {
     async ({ apiToken, environmentId, newId, fast = false, force = false }) => {
       try {
         // Initialize DatoCMS client
-        const client = getClient(apiToken, environmentId);
+        const client = UnifiedClientManager.getDefaultClient(apiToken, environmentId);
         
         try {
           // Fork the environment with immediate_return set to false
