@@ -3,41 +3,19 @@
  * @description Handler for listing all DatoCMS environments
  */
 
-import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { environmentSchemas } from "../../schemas.js";
+import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { environmentSchemas } from "../../schemas.js";
 
 /**
  * Handler for listing all DatoCMS environments
  */
-export const listEnvironmentsHandler = async (args: z.infer<typeof environmentSchemas.list>) => {
-  const { apiToken } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken);
-    
-    try {
-      // List all environments
-      const environments = await client.environments.list();
-      
-      if (!environments || environments.length === 0) {
-        return createResponse(JSON.stringify([], null, 2));
-      }
-      
-      return createResponse(JSON.stringify(environments, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error listing environments: ${extractDetailedErrorInfo(error)}`);
+export const listEnvironmentsHandler = createListHandler({
+  domain: "environments",
+  schemaName: "list",
+  schema: environmentSchemas.list,
+  entityName: "Environment",
+  clientAction: async (client, _args) => {
+    const environments = await client.environments.list();
+    return environments;
   }
-};
+});

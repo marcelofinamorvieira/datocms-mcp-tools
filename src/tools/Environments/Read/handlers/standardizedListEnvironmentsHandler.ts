@@ -4,16 +4,16 @@
  * @module tools/Environments/Read
  */
 
-import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
-import { 
-  createStandardPaginatedResponse, 
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
+import {
+  createStandardPaginatedResponse,
   createStandardErrorResponse,
   createStandardMcpResponse,
   PaginationInfo
 } from "../../../../utils/standardResponse.js";
 import { isAuthorizationError, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { environmentSchemas } from "../../schemas.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { environmentSchemas } from "../../schemas.js";
 
 /**
  * Standardized handler for listing DatoCMS environments
@@ -25,34 +25,34 @@ import type { environmentSchemas } from "../../schemas.js";
  * @param args.apiToken - DatoCMS API token
  * @returns Environments list with pagination info or error response
  */
-export const standardizedListEnvironmentsHandler = async (args: z.infer<typeof environmentSchemas.list>) => {
-  const { apiToken } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken);
-    
+export const standardizedListEnvironmentsHandler = createCustomHandler(
+  {
+    domain: "environments",
+    schemaName: "list",
+    schema: environmentSchemas.list,
+    errorContext: { handlerName: "environments.standardList" }
+  },
+  async (args) => {
+    const { apiToken } = args;
+
     try {
-      // Fetch environments
+      const client = UnifiedClientManager.getDefaultClient(apiToken);
       const environments = await client.environments.list();
-      
-      // Create pagination information
+
       const paginationInfo: PaginationInfo = {
         limit: environments.length,
         offset: 0,
         total: environments.length,
         has_more: false
       };
-      
-      // Create standardized response
+
       const response = createStandardPaginatedResponse(
-        environments as any[], // Use type assertion to avoid complex type issues
+        environments as any[],
         paginationInfo,
         `Found ${environments.length} environment(s).`
       );
-      
+
       return createStandardMcpResponse(response);
-      
     } catch (apiError: unknown) {
       if (isAuthorizationError(apiError)) {
         const response = createStandardErrorResponse(
@@ -61,16 +61,9 @@ export const standardizedListEnvironmentsHandler = async (args: z.infer<typeof e
         );
         return createStandardMcpResponse(response);
       }
-      
-      // Create standard error response for other API errors
+
       const response = createStandardErrorResponse(apiError);
       return createStandardMcpResponse(response);
     }
-  } catch (error: unknown) {
-    // Create standard error response for unexpected errors
-    const response = createStandardErrorResponse(
-      `Error listing environments: ${extractDetailedErrorInfo(error)}`
-    );
-    return createStandardMcpResponse(response);
   }
-};
+);

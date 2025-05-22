@@ -3,45 +3,20 @@
  * @description Handler for promoting a DatoCMS environment to primary status
  */
 
-import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { environmentSchemas } from "../../schemas.js";
+import { createUpdateHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { environmentSchemas } from "../../schemas.js";
 
 /**
  * Handler for promoting a DatoCMS environment to primary status
  */
-export const promoteEnvironmentHandler = async (args: z.infer<typeof environmentSchemas.promote>) => {
-  const { apiToken, environmentId } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = getClient(apiToken);
-    
-    try {
-      // Promote the environment to primary
-      const environment = await client.environments.promote(environmentId);
-      
-      if (!environment) {
-        return createErrorResponse(`Error: Failed to promote environment with ID '${environmentId}' to primary.`);
-      }
-      
-      return createResponse(JSON.stringify(environment, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Environment with ID '${environmentId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error promoting environment: ${extractDetailedErrorInfo(error)}`);
-  }
-};
+export const promoteEnvironmentHandler = createUpdateHandler({
+  domain: "environments",
+  schemaName: "promote",
+  schema: environmentSchemas.promote,
+  entityName: "Environment",
+  idParam: "environmentId",
+  clientAction: async (client, args) => {
+    return await client.environments.promote(args.environmentId);
+  },
+  successMessage: () => "Environment was promoted to primary."
+});
