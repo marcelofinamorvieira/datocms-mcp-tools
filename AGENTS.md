@@ -30,6 +30,13 @@ src/tools/<Domain>/
 
 Utilities shared across domains reside in `src/utils/`.
 
+## DatoCMS API Reference
+
+- The primary reference for all functionality is the [DatoCMS Content Management API documentation](https://www.datocms.com/docs/content-management-api).
+- Consult these docs whenever adding or updating a handler to confirm available endpoints, parameters, and error codes.
+- API calls are made through the `@datocms/cma-client-node` library. Examine its type definitions to understand request and response shapes.
+- The `UnifiedClientManager` in `src/utils/` wraps these typed clients and caches them for reuse.
+
 ## Key Patterns
 
 - **Router Tools** route incoming MCP requests to the appropriate handlers.
@@ -47,6 +54,8 @@ Utilities shared across domains reside in `src/utils/`.
 4. Never use `console.log` for debugging. Include debug info in the response object if needed and remove it after resolving issues. See `CLAUDE.md` for detailed debugging guidelines.
 5. When creating or updating fields, read `docs/FIELD_CREATION_GUIDE.md` for strict requirements (e.g., always include `appearance.addons`, use `editor: "map"` for location fields, etc.).
 6. Keep code consistent with the directory and naming conventions defined in `DIRECTORY_STRUCTURE_STANDARDS.md`.
+7. Consult the official DatoCMS Content Management API docs whenever implementing or updating an endpoint.
+8. Use the typed clients from `@datocms/cma-client-node` and refer to their definitions for parameter and response shapes.
 
 ## Contribution Workflow
 
