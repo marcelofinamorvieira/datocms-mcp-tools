@@ -39,6 +39,11 @@ The records router includes a `record_url` action for building the editor URL of
 
 ### Router Handler Reference
 
+All handlers require an `apiToken` parameter and also accept an optional
+`environment` parameter to specify which DatoCMS environment to operate on.
+For brevity, these base parameters are omitted from the tables below unless no
+other parameters are present for a given handler.
+
 #### RecordsRouterTool
 
 | Handler | Parameters | Returns |
