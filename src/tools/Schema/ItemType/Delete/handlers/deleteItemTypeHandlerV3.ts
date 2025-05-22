@@ -5,7 +5,7 @@
 
 import type { z } from "zod";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 
 import { domainSchemas } from "../../../../../utils/schemaRegistry.js";
@@ -19,7 +19,7 @@ export const deleteItemTypeHandler = async (args: z.infer<typeof domainSchemas.s
     const { apiToken, itemTypeId, environment } = args;
     
     // Initialize DatoCMS client
-    const client = getClient(apiToken as string, environment as string);
+    const client = UnifiedClientManager.getDefaultClient(apiToken as string, environment as string);
     
     try {
       // Delete the item type

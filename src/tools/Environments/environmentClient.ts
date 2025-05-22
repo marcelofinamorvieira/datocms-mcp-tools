@@ -4,7 +4,7 @@
  * Provides a consistent interface for environment operations
  */
 
-import { getClient } from '../../utils/clientManager.js';
+import { UnifiedClientManager } from '../../utils/unifiedClientManager.js';
 import type {
   Environment,
   ApiEnvironment,
@@ -26,7 +26,7 @@ export class EnvironmentClient {
    * @param environment - Optional environment to target
    */
   constructor(apiToken: string, environment?: string) {
-    this.client = getClient(apiToken, environment);
+    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment);
   }
 
   /**

@@ -6,7 +6,7 @@
 import type { z } from "zod";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import type { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -24,7 +24,7 @@ export const updateRecordHandler = async (args: z.infer<typeof recordsSchemas.up
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       // Prepare update parameters

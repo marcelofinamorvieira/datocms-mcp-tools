@@ -5,7 +5,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
@@ -18,7 +18,7 @@ export const scheduleUnpublicationHandler = async (args: z.infer<typeof recordsS
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       // Create the scheduled unpublication

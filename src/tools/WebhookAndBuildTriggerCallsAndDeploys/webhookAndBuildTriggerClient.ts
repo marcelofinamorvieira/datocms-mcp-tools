@@ -4,7 +4,7 @@
  * Provides a consistent interface for webhook and build trigger operations
  */
 
-import { getClient } from '../../utils/clientManager.js';
+import { UnifiedClientManager } from '../../utils/unifiedClientManager.js';
 import type {
   BuildTrigger,
   ApiBuildTrigger,
@@ -40,7 +40,7 @@ export class TypedWebhookAndBuildTriggerClient implements WebhookAndBuildTrigger
    * @param environment - Optional environment to target
    */
   constructor(apiToken: string, environment?: string) {
-    this.client = getClient(apiToken, environment);
+    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment);
   }
 
   /**

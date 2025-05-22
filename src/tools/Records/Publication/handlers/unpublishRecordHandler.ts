@@ -5,7 +5,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { recordsSchemas } from "../../schemas.js";
@@ -20,7 +20,7 @@ export const unpublishRecordHandler = async (args: z.infer<typeof recordsSchemas
 
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       // Unpublish entire record (all locales) - content_in_locales is not in the schema

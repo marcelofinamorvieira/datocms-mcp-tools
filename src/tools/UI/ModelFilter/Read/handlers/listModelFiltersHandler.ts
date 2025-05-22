@@ -1,4 +1,4 @@
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { modelFilterSchemas } from "../../schemas.js";
@@ -14,7 +14,7 @@ export const listModelFiltersHandler = async (args: ListModelFiltersArgs) => {
   
   try {
     // Initialize the DatoCMS client with auth token and environment
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     // Fetch all model filters
     const modelFilters = await client.itemTypeFilters.list();

@@ -133,6 +133,12 @@ When extending this codebase:
 3. Implement handlers in domain-specific directories
 4. Register new tools in `src/index.ts`
 
+## Directory Structure Validation
+
+Run `npm run validate` to verify that all domain folders follow the
+expected pattern. The script checks operation directory names and ensures
+each operation and its `handlers` folder contain the required `index.ts`.
+
 ## License
 
 MIT
