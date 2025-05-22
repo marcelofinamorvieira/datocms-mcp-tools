@@ -264,17 +264,6 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
             total: 0,
             has_more: false
           },
-          // DEBUG: Added to troubleshoot field filtering issues - remove after fixing
-          debug: {
-            requestedFilters: fields || {},
-            processedFilter: debugFilter || {},
-            transformedFilter: clientParams.filter || {},
-            queryParams: {
-              version: queryParams.version,
-              page: queryParams.page,
-              order_by: queryParams.order_by || null
-            }
-          }, // DEBUG: Remove this before production
           records: []
         }, null, 2));
       }
@@ -300,17 +289,6 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
         return createResponse(JSON.stringify({
           message: `Found ${allItemIds.length} record(s) matching your query.`,
           pagination: paginationInfo,
-          // DEBUG: Added to troubleshoot field filtering issues - remove after fixing
-          debug: {
-            requestedFilters: fields || {},
-            processedFilter: debugFilter || {},
-            transformedFilter: clientParams.filter || {},
-            queryParams: {
-              version: queryParams.version,
-              page: queryParams.page,
-              order_by: queryParams.order_by || null
-            }
-          }, // DEBUG: Remove this before production
           recordIds: allItemIds
         }, null, 2));
       }
@@ -324,17 +302,6 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
       return createResponse(JSON.stringify({
         message: `Found ${allItems.length} record(s) matching your query.`,
         pagination: paginationInfo,
-        // DEBUG: Added to troubleshoot field filtering issues - remove after fixing
-        debug: {
-          requestedFilters: fields || {},
-          processedFilter: debugFilter || {},
-          transformedFilter: clientParams.filter || {},
-          queryParams: {
-            version: queryParams.version,
-            page: queryParams.page,
-            order_by: queryParams.order_by || null
-          }
-        }, // DEBUG: Remove this before production
         records: allItems
       }, null, 2));
       
