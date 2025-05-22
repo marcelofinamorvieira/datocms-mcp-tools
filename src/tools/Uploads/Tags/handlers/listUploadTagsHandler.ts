@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import {
   isAuthorizationError,
   createErrorResponse
@@ -12,7 +12,7 @@ export const listUploadTagsHandler = async (
 ) => {
   const { apiToken, filter, environment } = args;
   try {
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     const opts: any = {};
     if (filter) opts.filter = { query: filter };
     const tags = await client.uploadTags.list(opts);

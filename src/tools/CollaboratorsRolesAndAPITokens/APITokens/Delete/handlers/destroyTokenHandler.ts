@@ -1,4 +1,4 @@
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { z } from "zod";
 import { apiTokenSchemas } from "../../../schemas.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
@@ -14,7 +14,7 @@ export const destroyTokenHandler = async (params: Params) => {
 
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     try {
       // Delete the token

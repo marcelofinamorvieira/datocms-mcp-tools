@@ -1,4 +1,4 @@
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { z } from "zod";
@@ -14,7 +14,7 @@ export const updateFieldHandler = async (args: UpdateFieldParams) => {
     const { apiToken, fieldId, environment, field_type, appearance, validators, fieldset_id, ...restFieldData } = args;
 
     // Build the DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     // First, check if the field exists and get the current field data
     const existingField = await client.fields.find(fieldId);

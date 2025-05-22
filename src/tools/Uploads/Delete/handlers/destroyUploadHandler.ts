@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -19,7 +19,7 @@ export const destroyUploadHandler = async (
   } = args;
 
   try {
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     const deleted = await client.uploads.destroy(uploadId);
     if (returnOnlyConfirmation) {

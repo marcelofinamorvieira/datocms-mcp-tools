@@ -1,4 +1,4 @@
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookSchemas } from "../../../schemas.js";
@@ -17,7 +17,7 @@ export async function listWebhooksHandler(
 ) {
   try {
     // Initialize the client with the API token and environment
-    const client = getClient(params.apiToken, params.environment);
+    const client = UnifiedClientManager.getDefaultClient(params.apiToken, params.environment);
 
     // Fetch all webhooks
     const webhooks = await client.webhooks.list();

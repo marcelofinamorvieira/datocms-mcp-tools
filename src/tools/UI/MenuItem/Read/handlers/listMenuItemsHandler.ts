@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { menuItemSchemas } from "../../schemas.js";
@@ -19,7 +19,7 @@ export const listMenuItemsHandler = async (args: z.infer<typeof menuItemSchemas.
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     const typedClient = createTypedUIClient(client);
     
     try {

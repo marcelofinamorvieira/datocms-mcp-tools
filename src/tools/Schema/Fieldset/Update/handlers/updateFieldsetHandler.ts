@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import type { schemaSchemas } from "../../../schemas.js";
@@ -26,7 +26,7 @@ export const updateFieldsetHandler = async (args: z.infer<typeof schemaSchemas.u
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       // Prepare fieldset data for update (only include fields that are provided)

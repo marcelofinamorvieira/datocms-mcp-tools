@@ -4,7 +4,7 @@
  */
 
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 import type { environmentSchemas } from "../../schemas.js";
@@ -17,7 +17,7 @@ export const promoteEnvironmentHandler = async (args: z.infer<typeof environment
   
   try {
     // Initialize DatoCMS client
-    const client = getClient(apiToken);
+    const client = UnifiedClientManager.getDefaultClient(apiToken);
     
     try {
       // Promote the environment to primary

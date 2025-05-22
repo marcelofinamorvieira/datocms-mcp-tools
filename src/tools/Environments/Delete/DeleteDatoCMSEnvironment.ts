@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getClient } from "../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -34,7 +34,7 @@ export const registerDeleteDatoCMSEnvironment = (server: McpServer) => {
       try {
         // Initialize DatoCMS client - don't pass environmentId when deleting the environment
         // This was causing issues because we're trying to initialize client with the environment we're deleting
-        const client = getClient(apiToken);
+        const client = UnifiedClientManager.getDefaultClient(apiToken);
         
         try {
           // Delete the environment

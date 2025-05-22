@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -14,7 +14,7 @@ export const updateUploadHandler = async (
   const { apiToken, uploadId, environment, ...updateData } = args;
 
   try {
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     const updated = await client.uploads.update(uploadId, updateData as any);
 

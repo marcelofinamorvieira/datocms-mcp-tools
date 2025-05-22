@@ -1,5 +1,5 @@
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import type { StandardResponse } from "../../../../utils/standardResponse.js";
 import { fieldTemplates, getAvailableFieldTypes, getAvailableAppearances, getFieldTemplate } from "../fieldTemplates/index.js";
 
@@ -937,7 +937,7 @@ export const getFieldTypeInfoHandler = async (args: {
   const environment = args.environment || "main";
   try {
     // Get the client
-    const client = await getClient(args.apiToken, environment);
+    const client = await UnifiedClientManager.getDefaultClient(args.apiToken, environment);
     
     // If a specific field template is requested
     if (args.fieldType && args.appearance) {

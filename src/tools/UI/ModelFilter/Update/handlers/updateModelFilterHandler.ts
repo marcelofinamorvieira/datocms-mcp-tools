@@ -1,4 +1,4 @@
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { modelFilterSchemas } from "../../schemas.js";
@@ -23,7 +23,7 @@ export const updateModelFilterHandler = async (args: UpdateModelFilterArgs) => {
   
   try {
     // Initialize the DatoCMS client with auth token and environment
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     // Prepare the payload for updating the model filter
     const payload: Record<string, any> = {};

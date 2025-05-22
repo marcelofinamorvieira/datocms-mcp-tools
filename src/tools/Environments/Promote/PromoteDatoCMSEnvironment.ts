@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getClient } from "../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import { createResponse } from "../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -26,7 +26,7 @@ export const registerPromoteDatoCMSEnvironment = (server: McpServer) => {
     async ({ apiToken, environmentId }) => {
       try {
         // Initialize DatoCMS client
-        const client = getClient(apiToken);
+        const client = UnifiedClientManager.getDefaultClient(apiToken);
         
         try {
           // Promote the environment to primary

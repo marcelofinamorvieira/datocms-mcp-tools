@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getClient } from "../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import {
   isAuthorizationError,
   isNotFoundError,
@@ -13,7 +13,7 @@ export const getUploadCollectionHandler = async (
 ) => {
   const { apiToken, uploadCollectionId, environment } = args;
   try {
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     const collection = await client.uploadCollections.find(uploadCollectionId);
     return createResponse(JSON.stringify(collection, null, 2));
   } catch (e) {

@@ -1,6 +1,6 @@
 import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { getClient } from "../../../../../utils/clientManager.js";
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { z } from "zod";
 import { schemaSchemas } from "../../../schemas.js";
 
@@ -186,7 +186,7 @@ export const createFieldHandler = async (args: CreateFieldParams) => {
     }
 
     // Build the DatoCMS client
-    const client = getClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     // Prepare field data for the API. The DatoCMS client expects just the
     // attribute object and will automatically wrap it in the JSON:API format.
