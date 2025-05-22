@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:http": "TRANSPORT_TYPE=http node dist/index.js",
-    "dev": "tsc -w"
+    "dev": "tsc -w",
+    "validate": "node dist/scripts/validate-structure.js"
   },
   "keywords": [
     "mcp",
