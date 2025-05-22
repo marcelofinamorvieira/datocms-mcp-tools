@@ -1,144 +1,415 @@
 # DatoCMS MCP Server
 
-A Model Context Protocol (MCP) server that enables Claude AI models to interact with DatoCMS through a standardized interface.
+<div align="center">
+  <img src="https://www.datocms.com/images/brand/positive-full-logo.svg" alt="DatoCMS" width="300" />
+  
+  <h3>Model Context Protocol server for seamless DatoCMS integration with Claude AI</h3>
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Node Version](https://img.shields.io/badge/node-%3E%3D16-brightgreen)](https://nodejs.org)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+</div>
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [API Reference](#api-reference)
+- [Field Creation Guide](#field-creation-guide)
+- [Known Limitations](#known-limitations)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Overview
 
-This project provides tools for Claude to manage all aspects of DatoCMS including:
+The DatoCMS MCP Server enables Claude AI to interact with DatoCMS through the Model Context Protocol (MCP), providing a standardized interface for content management operations. This allows you to use natural language to manage your DatoCMS content, schema, media, and more.
 
-- Content records (create, read, update, delete, publish)
-- Media uploads and collections
-- Schema definition (models, fields, fieldsets)
-- Project settings and configuration
-- User management and permissions
-- Environments and deployment
-- Webhooks and build triggers
+### What is MCP?
 
-## Architecture
+Model Context Protocol (MCP) is an open protocol that enables secure, controlled interactions between AI models and external systems. It provides:
 
-The server follows a modular router-based architecture:
+- 🔒 **Secure API Integration** - Your API tokens stay local
+- 🎯 **Structured Tool Access** - Well-defined operations with validation
+- 📊 **Transparent Operations** - See exactly what actions are performed
+- 🔄 **Two-Step Confirmation** - Preview parameters before execution
 
-- **Router Tools**: Domain-specific routers handle operations for each resource type
-- **Handler Pattern**: Each operation has dedicated handler functions
-- **Schema Validation**: Zod schemas validate all parameters
-- **Two-Step Execution**: Parameters discovery followed by action execution
+## 🚀 Quick Start
 
-### Main Router Tools
+```bash
+# Clone and install
+git clone https://github.com/marcelofinamorvieira/datocms-mcp-server.git
+cd datocms-mcp-server
+npm install
+npm run build
 
-| Router Tool | Description |
-|-------------|-------------|
-| `RecordsRouterTool` | Record CRUD, publication, versioning |
-| `SchemaRouterTool` | Schema components management |
-| `UploadsRouterTool` | Media asset management |
-| `EnvironmentRouterTool` | Environment management |
-| `CollaboratorsRolesAndAPITokensRouterTool` | User, role, token management |
-| `WebhookAndBuildTriggerCallsAndDeploysRouterTool` | Webhook and build management |
-| `UIRouterTool` | UI customization tools |
+# Start the server
+npm run start
 
-The records router includes a `record_url` action for building the editor URL of a specific record.
+# Configure Claude Desktop (see Configuration section)
+```
 
-## Current Limitations
+## ✨ Features
 
-Record creation and update can fail when working with complex field types such as structured text or block fields. Role creation and update also fail for complex parameter sets.
+### Content Management
+- 📝 **Records** - Create, read, update, delete, publish/unpublish records
+- 🏷️ **Versioning** - Access and restore previous versions
+- 🌍 **Localization** - Full support for multi-locale content
+- 🔗 **References** - Find where records are referenced
 
-| Operation | Limitation |
-|-----------|------------|
-| Record creation | May fail for complex fields such as structured text or block fields |
-| Record update | May fail for complex fields such as structured text or block fields |
-| Role creation | Fails for complex parameter sets |
-| Role update | Fails for complex parameter sets |
+### Schema Management
+- 🏗️ **Models** - Create and manage content models
+- 🎨 **Fields** - Add fields with proper validation and appearance
+- 📦 **Fieldsets** - Group related fields together
+- 🔧 **Field Helpers** - Get field type information and examples
 
-## Getting Started
+### Media Management
+- 📤 **Uploads** - Upload and manage media assets
+- 📁 **Collections** - Organize uploads into collections
+- 🏷️ **Tagging** - Tag and categorize uploads
+- 🔍 **Smart Tags** - Auto-generated tags for images
+
+### Project Configuration
+- ⚙️ **Settings** - Manage project settings
+- 🌐 **Environments** - Create, fork, and promote environments
+- 🔧 **Maintenance Mode** - Toggle maintenance mode
+- 📊 **Project Info** - Access project metadata
+
+### Team Management
+- 👥 **Collaborators** - Invite and manage team members
+- 🔐 **Roles** - Define custom roles and permissions
+- 🔑 **API Tokens** - Create and manage API access tokens
+- 📧 **Invitations** - Send and manage invitations
+
+### Automation
+- 🔗 **Webhooks** - Configure webhook endpoints
+- 🏗️ **Build Triggers** - Set up deployment triggers
+- 📡 **Webhook Calls** - Monitor and resend webhook calls
+- 🚀 **Deploy Events** - Track deployment history
+
+### UI Customization
+- 📋 **Menu Items** - Customize navigation menu
+- 🔌 **Plugins** - Install and configure plugins
+- 🎯 **Filters** - Create custom content filters
+- 🎨 **Schema Menu** - Organize schema navigation
+
+## 🏗️ Architecture
+
+### System Overview
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Claude AI     │────▶│   MCP Server     │────▶│  DatoCMS API    │
+│                 │     │                  │     │                 │
+│  Natural Lang   │     │  ┌────────────┐ │     │  Content Mgmt   │
+│   Requests      │     │  │Router Tools│ │     │    Platform     │
+└─────────────────┘     │  └─────┬──────┘ │     └─────────────────┘
+                        │        │         │
+                        │  ┌─────▼──────┐  │
+                        │  │  Handlers  │  │
+                        │  └─────┬──────┘  │
+                        │        │         │
+                        │  ┌─────▼──────┐  │
+                        │  │Zod Schemas │  │
+                        │  └────────────┘  │
+                        └──────────────────┘
+```
+
+### Core Components
+
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| **Router Tools** | Route operations to handlers | `src/tools/*/RouterTool.ts` |
+| **Handlers** | Execute specific operations | `src/tools/*/handlers/` |
+| **Schemas** | Validate input parameters | `src/tools/*/schemas.ts` |
+| **Utilities** | Shared functionality | `src/utils/` |
+
+### Router Tools Reference
+
+| Router | Domain | Key Operations |
+|--------|--------|----------------|
+| `RecordsRouterTool` | Content records | CRUD, publish, versions, references |
+| `SchemaRouterTool` | Schema management | Models, fields, fieldsets |
+| `UploadsRouterTool` | Media assets | Upload, organize, tag |
+| `EnvironmentRouterTool` | Environments | Create, fork, promote |
+| `ProjectRouterTool` | Project config | Settings, info |
+| `CollaboratorsRolesAndAPITokensRouterTool` | Team | Users, roles, tokens |
+| `WebhookAndBuildTriggerCallsAndDeploysRouterTool` | Automation | Webhooks, builds |
+| `UIRouterTool` | UI customization | Menus, plugins, filters |
+
+## 📦 Installation
 
 ### Prerequisites
 
-- Node.js (v16+)
-- npm or yarn
-- DatoCMS account and API token
-- Claude AI with MCP capabilities
+- **Node.js** v16 or higher
+- **npm** or **yarn**
+- **DatoCMS account** with API access
+- **Claude Desktop** or Claude AI with MCP support
 
-### Installation
+### Step-by-Step Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/marcelofinamorvieira/datocms-mcp-server.git
+   cd datocms-mcp-server
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Build the project**
+   ```bash
+   npm run build
+   ```
+
+4. **Verify installation**
+   ```bash
+   npm run validate  # Validates directory structure
+   ```
+
+## ⚙️ Configuration
+
+### Claude Desktop Configuration
+
+1. **Open Claude Desktop settings**
+   - Mac: `Claude` → `Settings` → `Developer`
+   - Windows: `File` → `Settings` → `Developer`
+
+2. **Add the MCP server**
+   ```json
+   {
+     "mcpServers": {
+       "datocms": {
+         "command": "/absolute/path/to/datocms-mcp-server/start-server.sh",
+         "autoStart": true,
+         "alwaysAllow": true
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop**
+
+### Environment Variables (Optional)
 
 ```bash
-git clone https://github.com/datocms/datocms-mcp-tools.git
-cd datocms-mcp-tools
-npm install
-npm run build
+# .env file
+DEBUG=true           # Enable debug responses
+NODE_ENV=production  # Set environment
 ```
 
-### Running the Server
+## 💬 Usage
+
+### Two-Step Execution Pattern
+
+The MCP server uses a two-step pattern for safety:
+
+1. **Parameter Discovery** - Check what parameters are needed
+2. **Action Execution** - Execute with the correct parameters
+
+### Basic Examples
+
+#### Query Records
+```
+User: "Show me how to query blog posts"
+Claude: I'll show you the parameters needed for querying records...
+
+User: "Query all blog posts using this token: [YOUR_TOKEN]"
+Claude: I'll query the blog posts for you...
+```
+
+#### Create a Model
+```
+User: "Create a new model called 'Product' with title and price fields"
+Claude: I'll help you create a Product model. First, let me check the required parameters...
+```
+
+#### Upload Media
+```
+User: "Upload this image URL as a media asset: https://example.com/image.jpg"
+Claude: I'll upload that image to your DatoCMS media library...
+```
+
+### Advanced Examples
+
+#### Complex Field Creation
+```
+User: "Add a structured text field to the blog model that allows headings, lists, and links to other articles"
+Claude: I'll add a structured text field with those specifications...
+```
+
+#### Environment Management
+```
+User: "Fork the main environment to create a staging environment"
+Claude: I'll fork your main environment to create a staging environment...
+```
+
+#### Bulk Operations
+```
+User: "Publish all draft blog posts from the last week"
+Claude: I'll find and publish all draft blog posts from the last week...
+```
+
+## 📚 API Reference
+
+### Common Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `api_token` | string | DatoCMS API token | ✅ |
+| `environment` | string | Target environment (default: "main") | ❌ |
+| `locale` | string | Content locale | ❌ |
+
+### Response Format
+
+All responses follow this structure:
+```typescript
+{
+  success: boolean;
+  data?: any;
+  error?: string;
+  message?: string;
+  meta?: {
+    total_count?: number;
+    page_count?: number;
+  };
+}
+```
+
+## 📝 Field Creation Guide
+
+### Critical Requirements
+
+1. **Appearances must include `addons`**
+   ```javascript
+   appearance: {
+     editor: "single_line",
+     addons: []  // Required even if empty
+   }
+   ```
+
+2. **Field-Specific Rules**
+   - **Location**: Use `"editor": "map"` (not `"lat_lon_editor"`)
+   - **String with radio/select**: Enum validator must match options
+   - **Rich text**: Requires `rich_text_blocks` validator
+   - **Structured text**: Needs both `structured_text_blocks` and `structured_text_links`
+   - **Slug**: Requires `slug_title_field` validator
+
+3. **Unsupported Validators**
+   - The `required` validator doesn't work on: `gallery`, `links`, `rich_text`
+
+For detailed examples, see [Field Creation Guide](docs/FIELD_CREATION_GUIDE.md).
+
+## ⚠️ Known Limitations
+
+| Feature | Limitation | Workaround |
+|---------|------------|------------|
+| **Record Creation** | May fail with complex fields (structured text, blocks) | Create with simple fields first, then update |
+| **Record Updates** | Complex field updates may fail | Update fields individually |
+| **Role Management** | Complex parameter sets fail | Use minimal parameters, update incrementally |
+| **Field Creation** | Some validator combinations unsupported | Check field creation guide |
+
+## 🛠️ Development
+
+### Development Workflow
 
 ```bash
-# Using the shell script
-./start-server.sh
-
-# Using npm
-npm run start
-
-# Development mode with auto-restart
+# Start TypeScript compiler in watch mode
 npm run dev
 
-# HTTP transport mode
-npm run start:http
+# In another terminal, start the server
+npm run start
+
+# Run tests
+npm test
+
+# Validate structure
+npm run validate
 ```
 
-## Usage with Claude
+### Adding New Features
 
-### Basic Workflow
-
-1. **Get Parameters**:
+1. **Create domain structure**
    ```
-   User: What parameters do I need to query records?
-   Claude: [uses datocms_parameters to show required parameters]
+   src/tools/YourDomain/
+   ├── Create/
+   │   ├── handlers/
+   │   └── index.ts
+   ├── Read/
+   ├── Update/
+   ├── Delete/
+   ├── YourDomainRouterTool.ts
+   ├── schemas.ts
+   └── index.ts
    ```
 
-2. **Execute Action**:
-   ```
-   User: Query blog posts with this token: [API_TOKEN]
-   Claude: [executes query and returns results]
-   ```
+2. **Define schemas** using Zod
+3. **Implement handlers** using factory functions
+4. **Create router tool**
+5. **Register in** `src/index.ts`
 
-### Field Creation Guidelines
+See [Contributing Guide](docs/CONTRIBUTING.md) for detailed instructions.
 
-When creating fields in DatoCMS, follow these critical requirements:
+## 🔧 Troubleshooting
 
-1. All field appearances must include an `addons` array (even if empty)
-2. For location fields, use `"editor": "map"` (not "lat_lon_editor")
-3. String fields with radio or select appearance require matching enum validator values
-4. JSON fields with checkbox group must use the "options" parameter
-5. Rich text fields require a `rich_text_blocks` validator specifying the allowed block item type IDs. The `item_types` array can contain one or more block model IDs
-6. Structured text fields require both `structured_text_blocks` and `structured_text_links` validators
-7. Slug fields need a `slug_title_field` validator referencing the title field
-8. Single block fields use the `single_block_blocks` validator
-9. The `required` validator is **not** supported on `gallery`, `links`, or `rich_text` fields
+### Common Issues
 
-See `docs/FIELD_CREATION_GUIDE.md` for detailed examples and requirements.
+#### Server won't start
+- Check Node.js version (must be v16+)
+- Verify all dependencies installed: `npm install`
+- Ensure build completed: `npm run build`
 
-### Configuration
+#### Claude can't connect
+- Verify absolute path in Claude settings
+- Check server is running: `ps aux | grep datocms-mcp`
+- Restart Claude Desktop after configuration
 
-Configure Claude Desktop to work with the server:
+#### API errors
+- Validate API token has necessary permissions
+- Check environment name is correct
+- Verify rate limits haven't been exceeded
 
-1. Open Claude Desktop settings
-2. Add tool with command: `/path/to/datocms-mcp-tools/start-server.sh`
-3. Set auto-start and enable the tool
+#### Field creation fails
+- Review [Field Creation Guide](docs/FIELD_CREATION_GUIDE.md)
+- Ensure all appearances include `addons: []`
+- Check validator compatibility
 
-For advanced configuration options and integrations, see the [detailed documentation](https://docs.datocms.com/claude-integration).
+### Debug Mode
 
-## Development
+Enable debug responses:
+```typescript
+// In your handler
+return createStandardSuccessResponse({
+  message: "Success",
+  data: result,
+  debug: { params, query, timing }
+});
+```
 
-When extending this codebase:
+## 🤝 Contributing
 
-1. Follow the router/handler pattern for new tools
-2. Define parameter schemas using Zod
-3. Implement handlers in domain-specific directories
-4. Register new tools in `src/index.ts`
+We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for:
 
-## Directory Structure Validation
+- Code style guidelines
+- Development setup
+- Testing requirements
+- Pull request process
 
-Run `npm run validate` to verify that all domain folders follow the
-expected pattern. The script checks operation directory names and ensures
-each operation and its `handlers` folder contain the required `index.ts`.
+## 📄 License
 
-## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-MIT
+## 🔗 Links
+
+- [DatoCMS Documentation](https://www.datocms.com/docs)
+- [MCP Protocol Specification](https://modelcontextprotocol.io)
+- [Issue Tracker](https://github.com/marcelofinamorvieira/datocms-mcp-server/issues)
+- [DatoCMS Community](https://community.datocms.com)

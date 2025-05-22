@@ -1,225 +1,347 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. It contains critical information for understanding the codebase architecture, common patterns, and best practices for efficient development.
 
-## Project Overview
+## 🚀 Quick Start Guide
 
-This project is a Model Context Protocol (MCP) server that enables Claude AI models to interact with DatoCMS. It provides tools for querying and managing DatoCMS content, collaborators, environments, projects, records, roles, API tokens, schema (item types, fieldsets, etc.), and uploads through a standardized interface.
-
-## Commands
-
-### Build and Run
-
-- Build the TypeScript project: `npm run build`
-- Start the MCP server: `npm run start` or `./start-server.sh`
-- Start the server with HTTP transport: `npm run start:http`
-- Watch mode for development: `npm run dev`
-- Validate directory structure: `npm run validate`
-
-### Development Workflow
-
-1. Run the TypeScript compiler in watch mode: `npm run dev`
-2. In a separate terminal, start the server: `npm run start` or `./start-server.sh`
-3. Make changes to the codebase and the server will automatically reload
-
-## Project Structure
-
-The codebase follows a modular architecture organized by domain:
-
-- `src/index.ts` - Entry point that initializes the MCP server
-- `src/tools/` - Contains all MCP tools organized by domain
-  - `Records/` - Tools for record CRUD operations, publication, and versioning
-  - `Schema/` - Tools for schema operations (item types, fieldsets, fields)
-  - `Project/` - Project configuration tools
-  - `Uploads/` - Media asset management tools
-  - `Environments/` - Environment management tools
-  - `CollaboratorsRolesAndAPITokens/` - Collaborator, role, and API token management
-  - `WebhookAndBuildTriggerCallsAndDeploys/` - Webhook and delivery management
-  - `UI/` - UI customization tools (menu items, plugins, filters)
-
-## Architecture
-
-### Core Components
-
-1. **MCP Server** - Uses `@modelcontextprotocol/sdk` to handle communication between Claude and DatoCMS
-2. **Router Tools** - Organize related tools into domain-specific routers:
-   - `RecordsRouterTool` - Handles record operations
-   - `ProjectRouterTool` - Manages project settings
-   - `UploadsRouterTool` - Controls media assets
-   - `EnvironmentRouterTool` - Manages environments
-   - `SchemaRouterTool` - Handles schema operations
-   - `CollaboratorsRolesAndAPITokensRouterTool` - Manages users, roles, and API tokens
-   - `WebhookAndBuildTriggerCallsAndDeploysRouterTool` - Manages webhooks and build triggers
-   - `UIRouterTool` - Manages UI customization components
-
-### Key Design Patterns
-
-1. **Router Pattern** - Domain-specific router tools group related functionality
-   - Example: `src/tools/Records/RecordsRouterTool.ts` routes record operations to appropriate handlers
-
-2. **Handler Pattern** - Implementations are separated into handler functions
-   - Example: `src/tools/Records/Read/handlers/` contains specific record read operation handlers
-
-3. **Schema Validation** - Uses Zod for input validation
-   - Schemas defined in domain-specific schema files (e.g., `schemas.ts`)
-
-4. **Two-Step Execution Flow**:
-   - First call the `datocms_parameters` tool to get information about required parameters
-   - Then use the `datocms_execute` tool with the proper parameters
-
-5. **Handler Factory Pattern** - Factory functions create handlers with consistent error handling and response formatting
-   - `createRetrieveHandler` - For getting single entities
-   - `createListHandler` - For listing multiple entities
-   - `createCreateHandler` - For creating new entities
-   - `createUpdateHandler` - For updating existing entities
-   - `createDeleteHandler` - For deleting entities
-
-6. **Middleware Composition** - Functionality is layered through middleware:
-   - Schema validation middleware
-   - Error handling middleware
-   - Client management middleware
-
-7. **Standardized Response Format** - All handlers return responses in a consistent format:
-   ```typescript
-   interface StandardResponse<T> {
-     success: boolean;
-     data?: T;
-     error?: string;
-     message?: string;
-     meta?: ResponseMetadata;
-   }
-   ```
-
-### Communication Flow
-
-1. Claude sends a tool request to the MCP server
-2. The server routes the request to the appropriate domain router
-3. The router delegates to specific handlers
-4. Handlers interact with the DatoCMS API via `@datocms/cma-client-node`
-5. Results are returned to Claude through the MCP protocol
-
-## Development Guidelines
-
-When modifying or extending this codebase:
-
-1. Follow the existing router/handler pattern for organizing new tools
-2. Create appropriate Zod schemas for parameter validation in domain-specific schema files
-3. Implement error handling using the utility functions in `src/utils/errorHandlers.ts`
-4. Register new tools in `src/index.ts` within the `createServer` function
-5. Use handler factory functions for common operations:
-   ```typescript
-   export const getResourceHandler = createRetrieveHandler({
-     domain: "resources",
-     schemaName: "get",
-     schema: resourceSchemas.get,
-     entityName: "Resource",
-     idParam: "resourceId",
-     clientAction: async (client, args) => {
-       return await client.resources.find(args.resourceId);
-     }
-   });
-   ```
-6. Follow the standardized directory structure:
-   ```
-   src/
-   ├── tools/
-   │   ├── <Domain>/                                 # Domain name in PascalCase (e.g., Records)
-   │   │   ├── <Operation>/                          # Operation name in PascalCase (e.g., Create, Read)
-   │   │   │   ├── handlers/                         # All handlers for this operation
-   │   │   │   │   ├── <action><Entity>Handler.ts    # Handler files: verb + entity
-   │   │   │   │   └── index.ts                      # Exports all handlers
-   │   │   │   └── index.ts                          # Operation exports
-   │   │   ├── <Domain>RouterTool.ts                 # Router for this domain
-   │   │   ├── schemas.ts                            # All schemas for this domain
-   │   │   └── index.ts                              # Domain exports
-   ```
-
-## API Client
-
-The project uses `@datocms/cma-client-node` to interact with the DatoCMS Content Management API. Refer to the [DatoCMS CMA documentation](https://www.datocms.com/docs/content-management-api) for API details.
-
-## Client Management
-
-The project uses a unified client manager to handle client initialization and reuse:
-
-```typescript
-// Get a default client
-const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-
-// Get a typed records client
-const recordsClient = UnifiedClientManager.getRecordsClient(apiToken, environment);
-
-// Get a collaborators client
-const collaboratorsClient = UnifiedClientManager.getCollaboratorsClient(apiToken, environment);
+### Essential Commands
+```bash
+npm run build        # Build TypeScript
+npm run start        # Start MCP server
+npm run dev          # Watch mode for development
+npm run validate     # Validate directory structure
 ```
 
-## Known Limitations
+### Architecture Overview
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Claude (MCP)   │────▶│  Router Tools    │────▶│    Handlers     │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                                │                          │
+                                ▼                          ▼
+                        ┌──────────────────┐     ┌─────────────────┐
+                        │  Zod Schemas     │     │  DatoCMS API    │
+                        └──────────────────┘     └─────────────────┘
+```
 
-Be aware of these current limitations when working with the codebase:
+## 📚 Essential References
 
-- **Record operations**: Creation and update may fail for complex field types such as structured text or block fields
-- **Role operations**: Creation and update fail for complex parameter sets
+### DatoCMS Documentation
+- **CMA API Docs**: `node_modules/@datocms/cma-client-node` - The official client library
+- **API Reference**: https://www.datocms.com/docs/content-management-api
+- **Field Types**: See `FieldTypeDocs.md` for comprehensive field type documentation
+- **Field Creation Guide**: `docs/FIELD_CREATION_GUIDE.md` for detailed examples
 
-## Field Creation Requirements
+### Project Documentation
+- **Architecture**: `docs/ARCHITECTURE.md`
+- **Patterns**: `docs/PATTERNS.md`
+- **Contributing**: `docs/CONTRIBUTING.md`
+- **Response Standards**: `RESPONSE_FORMAT_STANDARDS.md`
 
-When creating fields in DatoCMS, follow these critical requirements:
+## 🛠️ Common Task Patterns
 
-1. All field appearances must include an `addons` array (even if empty)
-2. For location fields, use `"editor": "map"` (not "lat_lon_editor") 
-3. String fields with radio or select appearance require matching enum validator values
-4. JSON fields with checkbox group must use the "options" parameter
-5. Rich text fields require a `rich_text_blocks` validator specifying allowed block item type IDs
-6. Structured text fields require both `structured_text_blocks` and `structured_text_links` validators
-7. Slug fields need a `slug_title_field` validator referencing the title field
-8. Single block fields use the `single_block_blocks` validator
-9. The `required` validator is **not** supported on `gallery`, `links`, or `rich_text` fields
+### Creating a New Handler
+```typescript
+// 1. Import required utilities
+import { z } from "zod";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
+import { createRetrieveHandler } from "../../../../utils/handlerFactories.js";
+import { domainSchemas } from "../schemas.js";
 
-See `docs/FIELD_CREATION_GUIDE.md` for detailed examples.
+// 2. Use the appropriate factory
+export const getResourceHandler = createRetrieveHandler({
+  domain: "resources",
+  schemaName: "get",
+  schema: domainSchemas.get,
+  entityName: "Resource",
+  idParam: "resourceId",
+  clientAction: async (client, args) => {
+    return await client.resources.find(args.resourceId);
+  }
+});
+```
 
-## Configuration with Claude Desktop
-
-To configure Claude Desktop to work with this server:
-
-1. Open Claude Desktop settings
-2. Add tool with command: `/path/to/datocms-mcp-tools/start-server.sh`
-3. Set auto-start and enable the tool
-
-## Debugging Guidelines
-
-When debugging issues in this codebase, follow these important guidelines:
-
-1. **NEVER use console.log statements** - These will not be visible to users of Claude Code, and there's no way to access server-side logs during an interactive session
-
-2. **Use response objects for debugging** - Include debug information directly in the response object that will be sent back to the client:
-   ```typescript
-   return createResponse(JSON.stringify({
-     message: "Operation result message",
-     debug: {
-       // Include relevant debug information here
-       params: requestParams,
-       filter: appliedFilters
-     },
-     data: actualData
-   }, null, 2));
+### Adding a New Domain
+1. Create directory structure:
+   ```
+   src/tools/NewDomain/
+   ├── Create/
+   │   ├── handlers/
+   │   └── index.ts
+   ├── Read/
+   │   ├── handlers/
+   │   └── index.ts
+   ├── Update/
+   │   ├── handlers/
+   │   └── index.ts
+   ├── Delete/
+   │   ├── handlers/
+   │   └── index.ts
+   ├── NewDomainRouterTool.ts
+   ├── schemas.ts
+   └── index.ts
    ```
 
-3. **Create explicit validation checks** - When input validation fails, be specific about which parameters are incorrect and what the expected format is
+2. Define schemas in `schemas.ts`
+3. Create handlers using factories
+4. Build router tool
+5. Register in `src/index.ts`
 
-4. **Use tool responses for debugging** - Remember that tool responses are the only way to communicate information back to the user, so make them informative and complete
+### Schema Definition Pattern
+```typescript
+// schemas.ts
+import { z } from "zod";
+import { apiTokenSchema, environmentSchema } from "../../utils/sharedSchemas.js";
 
-5. **Error handling with context** - Always include context in error messages to help identify where and why the error occurred:
-   ```typescript
-   return createErrorResponse(`Error in ${domain}.${operation}: ${detailedErrorInfo}`);
-   ```
+export const domainSchemas = {
+  create: z.object({
+    api_token: apiTokenSchema,
+    environment: environmentSchema.optional(),
+    name: z.string().min(1),
+    // ... other fields
+  }),
+  
+  get: z.object({
+    api_token: apiTokenSchema,
+    environment: environmentSchema.optional(),
+    resourceId: z.string().uuid()
+  }),
+  
+  // ... other operations
+};
+```
 
-6. **Remove debugging after issue resolution** - Once issues are fixed and validated, remember to remove any debug information from production code to keep responses clean and efficient
+## 🎯 Handler Factory Quick Reference
 
-7. **Document debugging additions** - When adding debugging code, use comments to mark it clearly so it can be easily identified and removed later:
-   ```typescript
-   // DEBUG: Added to troubleshoot field filtering issues - remove after fixing
-   return createResponse(JSON.stringify({
-     message: "Operation result",
-     debug: { /* debug info */ },  // DEBUG: Remove this before production
-     data: actualData
-   }, null, 2));
-   ```
+| Factory | Purpose | Key Parameters |
+|---------|---------|----------------|
+| `createCreateHandler` | Create new entities | `clientAction`, `successMessage` |
+| `createRetrieveHandler` | Get single entity | `idParam`, `clientAction` |
+| `createListHandler` | List with pagination | `listGetter`, `countGetter` |
+| `createUpdateHandler` | Update entity | `idParam`, `clientAction` |
+| `createDeleteHandler` | Delete entity | `idParam`, `clientAction` |
+
+## 🔍 Navigation Shortcuts
+
+### Core Utilities
+- **Client Manager**: `src/utils/unifiedClientManager.ts`
+- **Error Handlers**: `src/utils/errorHandlers.ts`
+- **Handler Factories**: `src/utils/handlerFactories.ts`
+- **Response Handlers**: `src/utils/responseHandlers.ts`
+- **Shared Schemas**: `src/utils/sharedSchemas.ts`
+
+### Domain Routers
+- **Records**: `src/tools/Records/RecordsRouterTool.ts`
+- **Schema**: `src/tools/Schema/SchemaRouterTool.ts`
+- **Uploads**: `src/tools/Uploads/UploadsRouterTool.ts`
+- **Environments**: `src/tools/Environments/EnvironmentRouterTool.ts`
+- **Project**: `src/tools/Project/ProjectRouterTool.ts`
+
+## ⚡ Performance Best Practices
+
+### Client Caching
+```typescript
+// ✅ DO: Reuse clients via UnifiedClientManager
+const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+
+// ❌ DON'T: Create new clients directly
+const client = new CmaClient({ apiToken });
+```
+
+### Pagination
+- Default limit: 100 items
+- Maximum limit: 500 items
+- Always return total count for paginated responses
+
+### Error Handling
+```typescript
+// Use specific error checkers
+if (isAuthorizationError(error)) {
+  return createStandardErrorResponse("Unauthorized", 401);
+}
+
+// Extract detailed error info
+const errorInfo = extractDetailedErrorInfo(error);
+```
+
+## 🔒 Security Guidelines
+
+1. **API Token Validation**: Always validate on every request
+2. **Input Sanitization**: Zod schemas handle this automatically
+3. **Error Messages**: Never expose sensitive data
+4. **Environment Access**: Respect environment-based permissions
+
+## 🐛 Debugging Without console.log
+
+```typescript
+// Include debug info in responses
+return createStandardSuccessResponse({
+  message: "Operation completed",
+  data: result,
+  debug: process.env.DEBUG ? {
+    params: args,
+    query: query,
+    timing: Date.now() - startTime
+  } : undefined
+});
+```
+
+## 🧪 Testing Patterns
+
+```typescript
+// Example from testEnhancedHandler.ts
+import { testCreateHandler } from "./utils/testEnhancedHandler.js";
+
+const mockSchema = z.object({
+  name: z.string(),
+  api_token: z.string()
+});
+
+const handler = testCreateHandler({
+  domain: "test",
+  schemaName: "create",
+  schema: mockSchema,
+  entityName: "TestEntity",
+  clientAction: async (client, args) => {
+    return { id: "123", ...args };
+  }
+});
+```
+
+## ⚠️ Known Limitations & Workarounds
+
+### Record Operations
+- **Issue**: Complex field types (structured text, blocks) may fail
+- **Workaround**: Use simplified field structures or handle incrementally
+
+### Role Operations
+- **Issue**: Complex parameter sets cause failures
+- **Workaround**: Create roles with minimal parameters first, then update
+
+### Field Creation Gotchas
+1. Always include `addons: []` in appearances
+2. Location fields: use `"editor": "map"`
+3. String fields with radio/select: match enum validators
+4. Rich text: requires `rich_text_blocks` validator
+5. Structured text: needs both `structured_text_blocks` and `structured_text_links`
+6. No `required` validator on: gallery, links, rich_text fields
+
+## 📝 Code Style Conventions
+
+### Import Order
+1. External packages (`zod`, `@datocms/cma-client-node`)
+2. Utility imports (relative paths with `.js` extension)
+3. Local types and schemas
+4. Handler imports
+
+### Naming Conventions
+- Handlers: `<action><Entity>Handler` (e.g., `createFieldHandler`)
+- Schemas: `<domain>Schemas` (e.g., `recordSchemas`)
+- Router tools: `<Domain>RouterTool` (e.g., `RecordsRouterTool`)
+
+### File Extensions
+- Always use `.js` extension in imports (TypeScript requirement)
+- Example: `import { something } from "./file.js"`
+
+## 🚨 Critical Rules
+
+1. **NEVER use console.log** - Use response objects for debugging
+2. **ALWAYS validate inputs** - Use Zod schemas
+3. **HANDLE all errors** - No unhandled promises
+4. **FOLLOW directory structure** - Consistency is key
+5. **TEST complex operations** - Especially field creation
+6. **DOCUMENT edge cases** - In code comments
+
+## 📊 Common DatoCMS API Patterns
+
+### Filtering Records
+```typescript
+const records = await client.items.list({
+  filter: {
+    type: itemTypeId,
+    fields: {
+      title: { matches: { pattern: "test" } }
+    }
+  }
+});
+```
+
+### Including Related Data
+```typescript
+const record = await client.items.find(recordId, {
+  nested: true,  // Include nested blocks
+  version: "current"  // or "published"
+});
+```
+
+### Batch Operations
+```typescript
+const results = await client.items.bulkPublish({
+  items: recordIds.map(id => ({ id, type: "item" }))
+});
+```
+
+## 🔄 Environment Management
+
+```typescript
+// Always check environment parameter
+const targetEnvironment = args.environment || "main";
+
+// Fork an environment
+const fork = await client.environments.fork(sourceEnv, {
+  id: newEnvId,
+  fast: true  // Skip content copy
+});
+```
+
+## 📤 Upload Handling
+
+```typescript
+// Create upload from URL
+const upload = await client.uploads.createFromUrl({
+  url: imageUrl,
+  default_field_metadata: {
+    en: {
+      alt: "Description",
+      title: "Title"
+    }
+  }
+});
+```
+
+## 🔗 Webhook Patterns
+
+```typescript
+// Create webhook with headers
+const webhook = await client.webhooks.create({
+  name: "Deploy Hook",
+  url: "https://api.example.com/webhook",
+  custom_payload: JSON.stringify({ key: "value" }),
+  headers: {
+    "Authorization": "Bearer token"
+  },
+  events: [
+    { entity_type: "item", event_types: ["publish", "unpublish"] }
+  ]
+});
+```
+
+## 💡 Pro Tips
+
+1. **Use TypeScript strict mode** - Catches many issues early
+2. **Leverage schema inference** - `z.infer<typeof schema>`
+3. **Check response meta** - Contains pagination info
+4. **Use field templates** - See `fieldTemplates/` directory
+5. **Test with different locales** - DatoCMS is locale-aware
+6. **Monitor rate limits** - Check response headers
+7. **Use transactions** - For atomic operations when available
+
+## 🆘 When Stuck
+
+1. Check the `@datocms/cma-client-node` package in node_modules
+2. Review similar handlers in the codebase
+3. Look for patterns in `src/utils/`
+4. Check error details with `extractDetailedErrorInfo()`
+5. Add temporary debug info to responses
+6. Validate against DatoCMS API docs
+7. Test with minimal parameters first
