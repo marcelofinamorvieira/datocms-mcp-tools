@@ -41,9 +41,6 @@ export const retrieveTokenHandler = async (params: Params): Promise<GetAPITokenR
         };
       }
 
-      // Log the error for debugging
-      console.warn(`Error in retrieveTokenHandler: ${apiError}`);
-
       // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }

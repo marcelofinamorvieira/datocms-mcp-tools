@@ -34,11 +34,6 @@ export const listTokensHandler = async (params: Params): Promise<ListAPITokensRe
           error: "Error: Invalid or unauthorized DatoCMS API token."
         };
       }
-
-      // Log the error for debugging
-      console.warn(`Error in listTokensHandler API call: ${apiError}`);
-
-      // Re-throw other API errors to be caught by the outer catch
       throw apiError;
     }
   } catch (error) {

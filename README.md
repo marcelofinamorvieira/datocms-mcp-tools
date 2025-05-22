@@ -1,8 +1,6 @@
 # DatoCMS MCP Server
 
-<div align="center">
-  <img src="https://www.datocms.com/brand/main-lockup.svg" alt="DatoCMS" width="300" />
-  
+<div align="center">  
   <h3>Model Context Protocol server for seamless DatoCMS integration with Claude AI</h3>
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -106,7 +104,7 @@ npm run start
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   Claude AI     │────▶│   MCP Server     │────▶│  DatoCMS API    │
-│                 │     │                  │     │                 │
+│                 │◀────│                  │◀────│                 │
 │  Natural Lang   │     │  ┌────────────┐  │     │  Content Mgmt   │
 │   Requests      │     │  │Router Tools│  │     │    Platform     │
 └─────────────────┘     │  └─────┬──────┘  │     └─────────────────┘
