@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseToolSchema } from "../../../utils/sharedSchemas.js";
 
 /**
  * Schemas for all uploads filter-related actions.
@@ -6,43 +7,33 @@ import { z } from "zod";
  */
 export const uploadsFilterSchemas = {
   // Read operations
-  list: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+  list: baseToolSchema.extend({
     page: z.object({
       offset: z.number().int().optional().default(0).describe("The (zero-based) offset of the first entity returned in the collection (defaults to 0)."),
       limit: z.number().int().optional().default(100).describe("The maximum number of entities to return (defaults to 100, maximum is 500).")
-    }).optional().describe("Parameters to control offset-based pagination."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    }).optional().describe("Parameters to control offset-based pagination.")
   }),
 
-  retrieve: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    uploadsFilterId: z.string().describe("The ID of the specific uploads filter to retrieve."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  retrieve: baseToolSchema.extend({ 
+    uploadsFilterId: z.string().describe("The ID of the specific uploads filter to retrieve.")
   }),
 
   // Create operations
-  create: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
+  create: baseToolSchema.extend({ 
     name: z.string().describe("The name of the uploads filter."),
-    payload: z.record(z.any()).describe("The filter payload. The payload structure depends on the filter type."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    payload: z.record(z.any()).describe("The filter payload. The payload structure depends on the filter type.")
   }),
 
   // Update operations
-  update: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
+  update: baseToolSchema.extend({ 
     uploadsFilterId: z.string().describe("The ID of the uploads filter to update."),
     name: z.string().optional().describe("The name of the uploads filter."),
-    payload: z.record(z.any()).optional().describe("The filter payload. The payload structure depends on the filter type."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    payload: z.record(z.any()).optional().describe("The filter payload. The payload structure depends on the filter type.")
   }),
 
   // Delete operations
-  delete: z.object({ 
-    apiToken: z.string().describe("DatoCMS API token for authentication."),
-    uploadsFilterId: z.string().describe("The ID of the uploads filter to delete."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  delete: baseToolSchema.extend({ 
+    uploadsFilterId: z.string().describe("The ID of the uploads filter to delete.")
   })
 };
 

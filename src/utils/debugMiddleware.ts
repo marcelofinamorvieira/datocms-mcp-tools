@@ -72,8 +72,11 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
   
   return function<T, R>(handler: Handler<T, R>): Handler<T, R> {
     return async function debugTrackedHandler(args: T): Promise<R> {
+      // Extract the debug flag from the request parameters
+      const requestDebug = (args as any)?.debug;
+      
       // If debug is not enabled, just pass through
-      if (!isDebugEnabled() && !isPerformanceTrackingEnabled()) {
+      if (!isDebugEnabled(requestDebug) && !isPerformanceTrackingEnabled(requestDebug)) {
         return handler(args);
       }
       
@@ -82,7 +85,8 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
         operation,
         handler: handlerName,
         domain,
-        parameters: includeRequestData ? (args as Record<string, any>) : undefined
+        parameters: includeRequestData ? (args as Record<string, any>) : undefined,
+        requestDebug
       });
       
       const logger = createDebugLogger(context);
@@ -122,7 +126,7 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
         });
         
         // Add debug data to the response if it's a Response object
-        if (isDebugEnabled() && result && typeof result === 'object' && 'content' in result) {
+        if (isDebugEnabled(requestDebug) && result && typeof result === 'object' && 'content' in result) {
           try {
             const response = result as Response;
             // Extract text from first content block
@@ -136,7 +140,7 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
                   dataSize: responseSize,
                   dataType: dataType
                 }
-              });
+              }, requestDebug);
               
               // Add debug data to response metadata
               if (!responseData.meta) {
@@ -184,12 +188,16 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
 export function withDebugContextInjection(options: DebugMiddlewareOptions) {
   return function<T, R>(handler: Handler<T, R>): Handler<T, R> {
     return async function debugContextInjectedHandler(args: T): Promise<R> {
+      // Extract the debug flag from the request parameters
+      const requestDebug = (args as any)?.debug;
+      
       // Create debug context
       const context = createDebugContext({
         operation: options.operation,
         handler: options.handlerName,
         domain: options.domain,
-        parameters: options.includeRequestData ? (args as Record<string, any>) : undefined
+        parameters: options.includeRequestData ? (args as Record<string, any>) : undefined,
+        requestDebug
       });
       
       // If the handler accepts a second parameter, pass the context
@@ -215,9 +223,10 @@ export function withDebugContextInjection(options: DebugMiddlewareOptions) {
 export function enhanceResponseWithDebug(
   response: Response,
   context: DebugContext,
-  additionalData?: any
+  additionalData?: any,
+  requestDebug?: boolean
 ): Response {
-  if (!isDebugEnabled()) {
+  if (!isDebugEnabled(requestDebug)) {
     return response;
   }
   
@@ -230,7 +239,7 @@ export function enhanceResponseWithDebug(
     const responseData = JSON.parse(firstBlock.text);
     
     // Create debug data
-    const debugData = createDebugData(context, additionalData);
+    const debugData = createDebugData(context, additionalData, requestDebug);
     
     // Add debug data to response metadata
     if (!responseData.meta) {
@@ -262,7 +271,10 @@ export function enhanceResponseWithDebug(
 export function withPerformanceTracking(handlerName: string) {
   return function<T, R>(handler: Handler<T, R>): Handler<T, R> {
     return async function performanceTrackedHandler(args: T): Promise<R> {
-      if (!isPerformanceTrackingEnabled()) {
+      // Extract the debug flag from the request parameters
+      const requestDebug = (args as any)?.debug;
+      
+      if (!isPerformanceTrackingEnabled(requestDebug)) {
         return handler(args);
       }
       

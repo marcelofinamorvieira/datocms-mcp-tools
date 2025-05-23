@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseToolSchema } from "../../utils/sharedSchemas.js";
 
 /**
  * Schemas for all collaborator-related actions.
@@ -6,8 +7,7 @@ import { z } from "zod";
  */
 export const collaboratorSchemas = {
   // Invitation operations
-  invitation_create: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+  invitation_create: baseToolSchema.extend({
     email: z.string().email().describe("Email address for the invitation recipient"),
     role: z.union([
       z.enum(["admin", "editor", "developer", "seo", "contributor"]),
@@ -16,68 +16,47 @@ export const collaboratorSchemas = {
         id: z.string().describe("Role ID"),
         type: z.literal("role").describe("Resource type")
       })
-    ]).describe("Role to assign to the invited user"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    ]).describe("Role to assign to the invited user")
   }),
 
-  invitation_list: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  invitation_list: baseToolSchema,
+
+  invitation_retrieve: baseToolSchema.extend({
+    invitationId: z.string().describe("ID of the invitation to retrieve")
   }),
 
-  invitation_retrieve: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    invitationId: z.string().describe("ID of the invitation to retrieve"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  invitation_destroy: baseToolSchema.extend({
+    invitationId: z.string().describe("ID of the invitation to delete")
   }),
 
-  invitation_destroy: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    invitationId: z.string().describe("ID of the invitation to delete"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-  }),
-
-  invitation_resend: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    invitationId: z.string().describe("ID of the invitation to resend"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  invitation_resend: baseToolSchema.extend({
+    invitationId: z.string().describe("ID of the invitation to resend")
   }),
 
   // User operations
-  user_list: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  user_list: baseToolSchema,
+
+  user_retrieve: baseToolSchema.extend({
+    userId: z.string().describe("ID of the user to retrieve")
   }),
 
-  user_retrieve: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    userId: z.string().describe("ID of the user to retrieve"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-  }),
-
-  user_update: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+  user_update: baseToolSchema.extend({
     userId: z.string().describe("ID of the user to update"),
     email: z.string().email().optional().describe("Email of the user"),
     first_name: z.string().optional().describe("First name of the user"),
     last_name: z.string().optional().describe("Last name of the user"),
-    role_id: z.string().optional().describe("Role ID to assign to the user"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    role_id: z.string().optional().describe("Role ID to assign to the user")
   }),
 
-  user_destroy: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    userId: z.string().describe("ID of the user to destroy"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  user_destroy: baseToolSchema.extend({
+    userId: z.string().describe("ID of the user to destroy")
   }),
 
-  user_invite: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+  user_invite: baseToolSchema.extend({
     email: z.string().email().describe("Email of the user to invite"),
     role_id: z.string().describe("Role ID to assign to the user"),
     first_name: z.string().optional().describe("First name of the user"),
-    last_name: z.string().optional().describe("Last name of the user"),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+    last_name: z.string().optional().describe("Last name of the user")
   })
 };
 
@@ -95,8 +74,7 @@ export const roleActionEnum = z.enum([
 ]);
 
 // Schema for creating a role
-export const createRoleSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+export const createRoleSchema = baseToolSchema.extend({
   name: z.string().describe("Name of the role"),
   can_edit_schema: z.boolean().optional().describe("Whether the role can edit schema"),
   can_edit_others_content: z.boolean().optional().describe("Whether the role can edit content created by other users"),
@@ -104,26 +82,19 @@ export const createRoleSchema = z.object({
   can_edit_favicon: z.boolean().optional().describe("Whether the role can edit the favicon"),
   can_access_environments: z.boolean().optional().describe("Whether the role can access environments"),
   can_perform_site_search: z.boolean().optional().describe("Whether the role can perform site search"),
-  can_edit_site_entity: z.boolean().optional().describe("Whether the role can edit site entity"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with."),
+  can_edit_site_entity: z.boolean().optional().describe("Whether the role can edit site entity")
 });
 
 // Schema for listing roles
-export const listRolesSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with."),
-});
+export const listRolesSchema = baseToolSchema;
 
 // Schema for retrieving a role
-export const retrieveRoleSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  roleId: z.string().describe("ID of the role to retrieve"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with."),
+export const retrieveRoleSchema = baseToolSchema.extend({
+  roleId: z.string().describe("ID of the role to retrieve")
 });
 
 // Schema for updating a role
-export const updateRoleSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+export const updateRoleSchema = baseToolSchema.extend({
   roleId: z.string().describe("ID of the role to update"),
   name: z.string().optional().describe("Name of the role"),
   can_edit_schema: z.boolean().optional().describe("Whether the role can edit schema"),
@@ -132,22 +103,17 @@ export const updateRoleSchema = z.object({
   can_edit_favicon: z.boolean().optional().describe("Whether the role can edit the favicon"),
   can_access_environments: z.boolean().optional().describe("Whether the role can access environments"),
   can_perform_site_search: z.boolean().optional().describe("Whether the role can perform site search"),
-  can_edit_site_entity: z.boolean().optional().describe("Whether the role can edit site entity"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with."),
+  can_edit_site_entity: z.boolean().optional().describe("Whether the role can edit site entity")
 });
 
 // Schema for destroying a role
-export const destroyRoleSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  roleId: z.string().describe("ID of the role to destroy"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with."),
+export const destroyRoleSchema = baseToolSchema.extend({
+  roleId: z.string().describe("ID of the role to destroy")
 });
 
 // Schema for duplicating a role
-export const duplicateRoleSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  roleId: z.string().describe("ID of the role to duplicate"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with."),
+export const duplicateRoleSchema = baseToolSchema.extend({
+  roleId: z.string().describe("ID of the role to duplicate")
 });
 
 // Export schemas by action for easy access
@@ -171,8 +137,7 @@ export const apiTokenActionEnum = z.enum([
 ]);
 
 // Schema for creating an API token
-export const createTokenSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+export const createTokenSchema = baseToolSchema.extend({
   name: z.string().describe("Name of the API token"),
   role: z.union([
     z.enum(["admin", "editor", "developer", "seo", "contributor"]),
@@ -184,26 +149,19 @@ export const createTokenSchema = z.object({
   ]).describe("Role to assign to the API token"),
   can_access_cda: z.boolean().describe("Whether the token can access the Content Delivery API published content"),
   can_access_cda_preview: z.boolean().describe("Whether the token can access the Content Delivery API draft content"),
-  can_access_cma: z.boolean().describe("Whether the token can access the Content Management API"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  can_access_cma: z.boolean().describe("Whether the token can access the Content Management API")
 });
 
 // Schema for listing API tokens
-export const listTokensSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-});
+export const listTokensSchema = baseToolSchema;
 
 // Schema for retrieving an API token
-export const retrieveTokenSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  tokenId: z.string().describe("ID of the API token to retrieve"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+export const retrieveTokenSchema = baseToolSchema.extend({
+  tokenId: z.string().describe("ID of the API token to retrieve")
 });
 
 // Schema for updating an API token
-export const updateTokenSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
+export const updateTokenSchema = baseToolSchema.extend({
   tokenId: z.string().describe("ID of the API token to update"),
   name: z.string().describe("Name of the API token"),
   role: z.union([
@@ -217,22 +175,17 @@ export const updateTokenSchema = z.object({
   ]).describe("Role to assign to the API token (can be null)"),
   can_access_cda: z.boolean().describe("Whether the token can access the Content Delivery API published content"),
   can_access_cda_preview: z.boolean().describe("Whether the token can access the Content Delivery API draft content"),
-  can_access_cma: z.boolean().describe("Whether the token can access the Content Management API"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  can_access_cma: z.boolean().describe("Whether the token can access the Content Management API")
 });
 
 // Schema for destroying an API token
-export const destroyTokenSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  tokenId: z.string().describe("ID of the API token to destroy"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+export const destroyTokenSchema = baseToolSchema.extend({
+  tokenId: z.string().describe("ID of the API token to destroy")
 });
 
 // Schema for rotating an API token
-export const rotateTokenSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  tokenId: z.string().describe("ID of the API token to rotate"),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+export const rotateTokenSchema = baseToolSchema.extend({
+  tokenId: z.string().describe("ID of the API token to rotate")
 });
 
 // Export schemas by action for easy access

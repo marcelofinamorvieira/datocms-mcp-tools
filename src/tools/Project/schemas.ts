@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseToolSchema } from "../../utils/sharedSchemas.js";
 
 /**
  * Schemas for all project-related actions.
@@ -7,16 +8,11 @@ import { z } from "zod";
  */
 export const projectSchemas = {
   // Project info operations
-  get_info: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-  }),
+  get_info: baseToolSchema,
 
   // Site settings operations
-  update_site_settings: z.object({
-    apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-    settings: z.record(z.any()).describe("Object containing site settings to update. Keys can include 'name', 'locales', 'timezone', etc. Only the fields you want to update need to be included."),
-    environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
+  update_site_settings: baseToolSchema.extend({
+    settings: z.record(z.any()).describe("Object containing site settings to update. Keys can include 'name', 'locales', 'timezone', etc. Only the fields you want to update need to be included.")
   })
 };
 

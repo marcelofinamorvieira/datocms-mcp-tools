@@ -132,8 +132,11 @@ export function withErrorHandling<Args, Result>(
     try {
       return await handlerFn(args);
     } catch (error: unknown) {
+      // Extract debug flag from args
+      const requestDebug = (args as any)?.debug;
+      
       // Check if debug mode is enabled and we have debug context from middleware
-      if (isDebugEnabled() && (args as any)?._debugContext) {
+      if (isDebugEnabled(requestDebug) && (args as any)?._debugContext) {
         const debugContext = (args as any)._debugContext as DebugContext;
         
         // Create debug data with error information
@@ -146,7 +149,7 @@ export function withErrorHandling<Args, Result>(
           metadata: {
             errorContext: context
           }
-        });
+        }, requestDebug);
         
         // Determine error type and code
         let errorCode = 'UNKNOWN_ERROR';
@@ -160,7 +163,7 @@ export function withErrorHandling<Args, Result>(
           createStandardErrorResponse(error, { 
             error_code: errorCode,
             debug: debugData 
-          })
+          }, requestDebug)
         );
       }
       

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseToolSchema } from "../../../utils/sharedSchemas.js";
 
 /**
  * Schemas for all plugin-related actions.
@@ -11,28 +12,22 @@ const permissionSchema = z.string().describe("Permission for the plugin.");
 // Define the parameters schema as a flexible record
 const parametersSchema = z.record(z.any()).describe("Configuration object for the plugin.");
 
-// Define the base schema for plugin operations (common parameters)
-const pluginBaseSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate."),
-  environment: z.string().optional().describe("The name of the DatoCMS environment to interact with. If not provided, the primary environment will be used.")
-});
-
 // Define the plugin schemas for all operations
 export const pluginSchemas = {
   // Read operations
-  list: pluginBaseSchema.extend({
+  list: baseToolSchema.extend({
     page: z.object({
       offset: z.number().int().optional().default(0).describe("The (zero-based) offset of the first entity returned in the collection (defaults to 0)."),
       limit: z.number().int().optional().default(100).describe("The maximum number of entities to return (defaults to 100, maximum is 500).")
     }).optional().describe("Parameters to control offset-based pagination.")
   }),
 
-  retrieve: pluginBaseSchema.extend({
+  retrieve: baseToolSchema.extend({
     pluginId: z.string().describe("The ID of the specific plugin to retrieve.")
   }),
 
   // Create operations
-  create: pluginBaseSchema.extend({
+  create: baseToolSchema.extend({
     name: z.string().describe("The name of the plugin."),
     description: z.string().optional().describe("A description of the plugin."),
     url: z.string().describe("The URL of the plugin's entry point."),
@@ -43,7 +38,7 @@ export const pluginSchemas = {
   }),
 
   // Update operations
-  update: pluginBaseSchema.extend({
+  update: baseToolSchema.extend({
     pluginId: z.string().describe("The ID of the plugin to update."),
     name: z.string().optional().describe("The name of the plugin."),
     description: z.string().optional().describe("A description of the plugin."),
@@ -55,12 +50,12 @@ export const pluginSchemas = {
   }),
 
   // Delete operations
-  delete: pluginBaseSchema.extend({
+  delete: baseToolSchema.extend({
     pluginId: z.string().describe("The ID of the plugin to delete.")
   }),
 
   // Fields operation
-  fields: pluginBaseSchema.extend({
+  fields: baseToolSchema.extend({
     pluginId: z.string().describe("The ID of the plugin to retrieve fields for.")
   })
 };

@@ -138,13 +138,23 @@ export function createIdSchema(entityName: string) {
 }
 
 /**
+ * Base tool schema that includes debug parameter
+ * This should be used as the foundation for all tool schemas
+ */
+export const baseToolSchema = z.object({
+  apiToken: apiTokenSchema,
+  environment: environmentSchema,
+  debug: z.boolean()
+    .optional()
+    .describe("Enable debug output for this request. When true, returns detailed execution traces, performance metrics, and sanitized parameters.")
+});
+
+/**
  * Create a base schema with common elements for most operations
+ * @deprecated Use baseToolSchema directly or extend it instead
  */
 export function createBaseSchema() {
-  return z.object({
-    apiToken: apiTokenSchema,
-    environment: environmentSchema
-  });
+  return baseToolSchema;
 }
 
 /**

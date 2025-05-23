@@ -129,12 +129,13 @@ export interface StandardResponse<T = unknown> {
 export function createStandardSuccessResponse<T>(
   data: T,
   message?: string,
-  meta?: Partial<ResponseMetadata>
+  meta?: Partial<ResponseMetadata>,
+  requestDebug?: boolean
 ): StandardResponse<T> {
   const finalMeta = { ...meta };
   
   // Only include debug data if debug mode is enabled
-  if (finalMeta.debug && !isDebugEnabled()) {
+  if (finalMeta.debug && !isDebugEnabled(requestDebug)) {
     delete finalMeta.debug;
   }
   
@@ -161,7 +162,8 @@ export function createStandardSuccessResponse<T>(
  */
 export function createStandardErrorResponse(
   error: string | Error | unknown,
-  meta?: Partial<ResponseMetadata>
+  meta?: Partial<ResponseMetadata>,
+  requestDebug?: boolean
 ): StandardResponse<null> {
   const errorMessage = typeof error === 'string'
     ? error
@@ -177,14 +179,14 @@ export function createStandardErrorResponse(
   };
   
   // Add debug error information if debug mode is enabled
-  if (isDebugEnabled() && mergedMeta.debug && typeof error !== 'string') {
+  if (isDebugEnabled(requestDebug) && mergedMeta.debug && typeof error !== 'string') {
     if (!mergedMeta.debug.error) {
-      mergedMeta.debug.error = formatErrorForDebug(error);
+      mergedMeta.debug.error = formatErrorForDebug(error, requestDebug);
     }
   }
   
   // Remove debug data if not in debug mode
-  if (mergedMeta.debug && !isDebugEnabled()) {
+  if (mergedMeta.debug && !isDebugEnabled(requestDebug)) {
     delete mergedMeta.debug;
   }
   
@@ -216,7 +218,8 @@ export function createStandardPaginatedResponse<T>(
   items: T[],
   pagination: PaginationInfo,
   message?: string,
-  meta?: Omit<ResponseMetadata, 'pagination'>
+  meta?: Omit<ResponseMetadata, 'pagination'>,
+  requestDebug?: boolean
 ): StandardResponse<T[]> {
   const finalMeta: ResponseMetadata = {
     pagination,
@@ -224,7 +227,7 @@ export function createStandardPaginatedResponse<T>(
   };
   
   // Remove debug data if not in debug mode
-  if (finalMeta.debug && !isDebugEnabled()) {
+  if (finalMeta.debug && !isDebugEnabled(requestDebug)) {
     delete finalMeta.debug;
   }
   
@@ -254,7 +257,8 @@ export function createStandardPaginatedResponse<T>(
 export function createStandardValidationErrorResponse(
   message: string,
   validationErrors: Array<{ path: string; message: string }>,
-  meta?: Omit<ResponseMetadata, 'validation_errors'>
+  meta?: Omit<ResponseMetadata, 'validation_errors'>,
+  requestDebug?: boolean
 ): StandardResponse<null> {
   const finalMeta: ResponseMetadata = {
     validation_errors: validationErrors,
@@ -263,7 +267,7 @@ export function createStandardValidationErrorResponse(
   };
   
   // Remove debug data if not in debug mode
-  if (finalMeta.debug && !isDebugEnabled()) {
+  if (finalMeta.debug && !isDebugEnabled(requestDebug)) {
     delete finalMeta.debug;
   }
   

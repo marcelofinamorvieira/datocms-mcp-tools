@@ -82,12 +82,20 @@ export interface DebugData {
 }
 
 // Check if debug mode is enabled
-export function isDebugEnabled(): boolean {
+export function isDebugEnabled(requestDebug?: boolean): boolean {
+  // Request-level debug takes precedence over environment variable
+  if (requestDebug !== undefined) {
+    return requestDebug;
+  }
   return DEBUG_ENABLED;
 }
 
 // Check if performance tracking is enabled
-export function isPerformanceTrackingEnabled(): boolean {
+export function isPerformanceTrackingEnabled(requestDebug?: boolean): boolean {
+  // If debug is enabled via request, also enable performance tracking
+  if (requestDebug === true) {
+    return true;
+  }
   return TRACK_PERFORMANCE || DEBUG_ENABLED;
 }
 
@@ -140,13 +148,14 @@ export function createDebugContext(params: {
   domain: string;
   requestId?: string;
   parameters?: Record<string, any>;
+  requestDebug?: boolean;
 }): DebugContext {
   return {
     ...params,
     timestamp: Date.now(),
     parameters: params.parameters ? sanitizeSensitiveData(params.parameters) : undefined,
     trace: [],
-    performance: isPerformanceTrackingEnabled() ? {
+    performance: isPerformanceTrackingEnabled(params.requestDebug) ? {
       startTime: Date.now()
     } : undefined
   };
@@ -182,9 +191,10 @@ export function updatePerformance(
 // Create debug data from context
 export function createDebugData(
   context: DebugContext,
-  additionalData?: Partial<DebugData>
+  additionalData?: Partial<DebugData>,
+  requestDebug?: boolean
 ): DebugData | undefined {
-  if (!isDebugEnabled()) return undefined;
+  if (!isDebugEnabled(requestDebug)) return undefined;
   
   const debugData: DebugData = {
     context: {
@@ -207,7 +217,7 @@ export function createDebugData(
     debugData.validation = sanitizeSensitiveData(debugData.validation);
   }
   
-  if (debugData.error && debugData.error.stack && !isDebugEnabled()) {
+  if (debugData.error && debugData.error.stack && !isDebugEnabled(requestDebug)) {
     // Only include stack traces in debug mode
     delete debugData.error.stack;
   }
@@ -244,8 +254,8 @@ export function createTimer(): { stop: () => number } {
 }
 
 // Debug-aware error formatter
-export function formatErrorForDebug(error: any): any {
-  if (!isDebugEnabled()) {
+export function formatErrorForDebug(error: any, requestDebug?: boolean): any {
+  if (!isDebugEnabled(requestDebug)) {
     // In production, only return safe error info
     return {
       message: error?.message || 'An error occurred',

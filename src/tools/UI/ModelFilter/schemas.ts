@@ -1,9 +1,5 @@
 import { z } from "zod";
-
-const modelFilterBaseSchema = z.object({
-  apiToken: z.string().describe("DatoCMS API token for authentication."),
-  environment: z.string().optional().describe("The environment to use; if not specified, the primary environment is used."),
-});
+import { baseToolSchema } from "../../../utils/sharedSchemas.js";
 
 const columnSchema = z.object({
   name: z.string().describe("Name of the column."),
@@ -18,15 +14,15 @@ const filterSchema = z.object({
 // Schema for model filter operations
 export const modelFilterSchemas = {
   // List operation
-  list: modelFilterBaseSchema,
+  list: baseToolSchema,
 
   // Retrieve operation
-  retrieve: modelFilterBaseSchema.extend({
+  retrieve: baseToolSchema.extend({
     modelFilterId: z.string().describe("ID of the model filter to retrieve."),
   }),
 
   // Create operation
-  create: modelFilterBaseSchema.extend({
+  create: baseToolSchema.extend({
     name: z.string().describe("Name of the model filter."),
     item_type: z.string().describe("ID of the item type this filter applies to."),
     filter: filterSchema,
@@ -36,7 +32,7 @@ export const modelFilterSchemas = {
   }),
 
   // Update operation
-  update: modelFilterBaseSchema.extend({
+  update: baseToolSchema.extend({
     modelFilterId: z.string().describe("ID of the model filter to update."),
     name: z.string().optional().describe("Name of the model filter."),
     filter: filterSchema,
@@ -46,7 +42,7 @@ export const modelFilterSchemas = {
   }),
 
   // Delete operation
-  delete: modelFilterBaseSchema.extend({
+  delete: baseToolSchema.extend({
     modelFilterId: z.string().describe("ID of the model filter to delete."),
   }),
 };

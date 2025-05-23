@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseToolSchema } from "../../utils/sharedSchemas.js";
 
 /**
  * Zod schemas for every uploads-related action.
@@ -10,10 +11,8 @@ import { z } from "zod";
  * • `.describe()` is filled with human-readable help based on the official
  *   DatoCMS CMA documentation (Uploads, Upload Collections, Tags, Smart Tags).
  * • Helper factories keep the schemas DRY.
+ * • All schemas extend baseToolSchema to support debug parameter.
  */
-
-const apiToken = () =>
-  z.string().min(1).describe("DatoCMS API token for authentication. If you are not certain of one, ask for the user, do not hallucinate.");
 
 const uploadId = z
   .string()
@@ -45,20 +44,11 @@ const page = z
 
 export const uploadsSchemas = {
   /* ─────────────────────────────── READ ──────────────────────────────── */
-  get: z
-    .object({
-      apiToken: apiToken(),
+  get: baseToolSchema.extend({
       uploadId: uploadId,
-      environment: z
-        .string()
-        .optional()
-        .describe("Environment ID (omit for primary)."),
-    })
-    .strict(),
+    }),
 
-  query: z
-    .object({
-      apiToken: apiToken(),
+  query: baseToolSchema.extend({
       ids: z
         .union([
           z
@@ -104,13 +94,9 @@ export const uploadsSchemas = {
         .describe(
           "If true, return only an array of IDs instead of full objects.",
         ),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  references: z
-    .object({
-      apiToken: apiToken(),
+  references: baseToolSchema.extend({
       uploadId: uploadId,
       nested: z
         .boolean()
@@ -131,14 +117,10 @@ export const uploadsSchemas = {
         .optional()
         .default(false)
         .describe("Return only IDs instead of full records."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
   /* ─────────────────────────────── CREATE ─────────────────────────────── */
-  create: z
-    .object({
-      apiToken: apiToken(),
+  create: baseToolSchema.extend({
       url: z
         .string()
         .url()
@@ -184,17 +166,13 @@ export const uploadsSchemas = {
         .nullable()
         .optional()
         .describe("Assign the upload to a collection."),
-      environment: z.string().optional(),
     })
-    .strict()
     .refine((v) => v.url || v.path, {
       message: "Either `url` or `path` must be provided.",
     }),
 
   /* ─────────────────────────────── UPDATE ─────────────────────────────── */
-  update: z
-    .object({
-      apiToken: apiToken(),
+  update: baseToolSchema.extend({
       uploadId: uploadId,
       path: z
         .string()
@@ -219,14 +197,10 @@ export const uploadsSchemas = {
         })
         .nullable()
         .optional(),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
   /* ─────────────────────────────── DELETE ─────────────────────────────── */
-  destroy: z
-    .object({
-      apiToken: apiToken(),
+  destroy: baseToolSchema.extend({
       uploadId: uploadId,
       returnOnlyConfirmation: z
         .boolean()
@@ -235,92 +209,56 @@ export const uploadsSchemas = {
         .describe(
           "If true, returns only a confirmation string, not the deleted object.",
         ),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  bulk_destroy: z
-    .object({
-      apiToken: apiToken(),
+  bulk_destroy: baseToolSchema.extend({
       uploadIds: z
         .array(uploadId)
         .min(1)
         .max(200)
         .describe("IDs to delete (max 200)."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
   /* ─────────────────────────────── BULK OPS ───────────────────────────── */
-  bulk_tag: z
-    .object({
-      apiToken: apiToken(),
+  bulk_tag: baseToolSchema.extend({
       uploadIds: z.array(uploadId).min(1),
       tags: z.array(z.string()).min(1).describe("Tag names to add."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  bulk_set_collection: z
-    .object({
-      apiToken: apiToken(),
+  bulk_set_collection: baseToolSchema.extend({
       uploadIds: z.array(uploadId).min(1),
       collectionId: collectionId
         .nullable()
         .describe("Destination collection ID, or null to remove from any."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
   /* ─────────────────────────────── TAGS ───────────────────────────────── */
-  list_tags: z
-    .object({
-      apiToken: apiToken(),
+  list_tags: baseToolSchema.extend({
       filter: z
         .string()
         .optional()
         .describe("Substring to match tag names (case-insensitive)."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  create_tag: z
-    .object({
-      apiToken: apiToken(),
+  create_tag: baseToolSchema.extend({
       name: z.string().min(1).describe("New manual tag name."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  list_smart_tags: z
-    .object({
-      apiToken: apiToken(),
+  list_smart_tags: baseToolSchema.extend({
       filter: z.object({ query: z.string().optional() }).optional(),
       page: page.optional(),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
   /* ─────────────────────── UPLOAD COLLECTIONS ─────────────────────────── */
-  get_collection: z
-    .object({
-      apiToken: apiToken(),
+  get_collection: baseToolSchema.extend({
       uploadCollectionId: collectionId,
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  query_collections: z
-    .object({
-      apiToken: apiToken(),
+  query_collections: baseToolSchema.extend({
       ids: z.union([collectionId, z.array(collectionId).nonempty()]).optional(),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  create_collection: z
-    .object({
-      apiToken: apiToken(),
+  create_collection: baseToolSchema.extend({
       label: z.string().min(1).describe("Collection label."),
       id: collectionId.optional(),
       position: z.number().int().min(0).optional(),
@@ -331,13 +269,9 @@ export const uploadsSchemas = {
         })
         .optional()
         .describe("Parent collection reference."),
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 
-  update_collection: z
-    .object({
-      apiToken: apiToken(),
+  update_collection: baseToolSchema.extend({
       uploadCollectionId: collectionId,
       label: z.string().optional(),
       position: z.number().int().min(0).optional(),
@@ -354,20 +288,14 @@ export const uploadsSchemas = {
         )
         .optional()
         .describe("Re-order child collections."),
-      environment: z.string().optional(),
     })
-    .strict()
-    .refine((obj) => Object.keys(obj).length > 2, {
+    .refine((obj) => Object.keys(obj).length > 3, {
       message: "At least one updatable field must be provided.",
     }),
 
-  delete_collection: z
-    .object({
-      apiToken: apiToken(),
+  delete_collection: baseToolSchema.extend({
       uploadCollectionId: collectionId,
-      environment: z.string().optional(),
-    })
-    .strict(),
+    }),
 } as const;
 
 /** Union of all action names for uploads router convenience */

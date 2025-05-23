@@ -264,6 +264,18 @@ User: "Publish all draft blog posts from the last week"
 Claude: I'll find and publish all draft blog posts from the last week...
 ```
 
+#### Debug Mode Usage
+```
+User: "List all item types with debug information"
+Claude: I'll list the item types with debug output enabled...
+
+// Claude will use:
+datocms_list_item_types({
+  api_token: "your-token",
+  debug: true  // ← Debug enabled for this request
+})
+```
+
 ## 📚 API Reference
 
 ### Common Parameters
@@ -273,6 +285,7 @@ Claude: I'll find and publish all draft blog posts from the last week...
 | `api_token` | string | DatoCMS API token | ✅ |
 | `environment` | string | Target environment (default: "main") | ❌ |
 | `locale` | string | Content locale | ❌ |
+| `debug` | boolean | Enable debug output for this request | ❌ |
 
 ### Response Format
 
@@ -417,19 +430,28 @@ The DatoCMS MCP Server includes a sophisticated debug system that provides compr
 
 ### 🚀 Quick Start
 
-1. **Enable debug mode in `.env`:**
-   ```bash
-   DEBUG=true                 # Enable comprehensive debug tracking
-   TRACK_PERFORMANCE=true     # Enable detailed performance metrics
-   LOG_LEVEL=debug           # Set verbose logging
-   ```
+The debug system supports two modes:
 
-2. **Test debug functionality:**
-   ```bash
-   npm run test:debug
-   ```
+#### 1. **Per-Request Debug Mode (Recommended)**
+Add the `debug` parameter to any request:
+```javascript
+// Enable debug for a specific request
+{
+  api_token: "your-token",
+  environment: "main",
+  debug: true  // ← Enable debug for this request only
+}
+```
 
-3. **All responses now include debug metadata** when `DEBUG=true`
+#### 2. **Global Debug Mode (Development Only)**
+Enable debug mode in `.env`:
+```bash
+DEBUG=true                 # Enable comprehensive debug tracking
+TRACK_PERFORMANCE=true     # Enable detailed performance metrics
+LOG_LEVEL=debug           # Set verbose logging
+```
+
+**⚠️ Warning**: Global debug mode should NEVER be used in production or with public MCP servers as it affects all users.
 
 ### 📊 Debug Response Structure
 
@@ -481,14 +503,38 @@ When debug mode is enabled, every response includes comprehensive debug informat
 
 ### 🎯 Debug Features
 
-#### 1. **Automatic Execution Tracking**
+#### 1. **Per-Request Debug Control**
+The `debug` parameter provides:
+- **User isolation**: Each user controls their own debug state
+- **No contamination**: Debug state doesn't affect other users
+- **Production safe**: Can be used selectively without global impact
+- **Fine-grained control**: Debug specific operations only
+
+Example usage:
+```javascript
+// Debug a problematic operation
+{
+  api_token: "your-token",
+  itemTypeId: "blog_post",
+  debug: true  // Only this request gets debug info
+}
+
+// Normal operation (no debug overhead)
+{
+  api_token: "your-token",
+  itemTypeId: "author"
+  // No debug parameter = no debug output
+}
+```
+
+#### 2. **Automatic Execution Tracking**
 Every handler automatically tracks:
 - Start/end timestamps
 - Operation type and context
 - Step-by-step execution traces
 - Performance breakdowns by stage
 
-#### 2. **Performance Monitoring**
+#### 3. **Performance Monitoring**
 ```json
 {
   "performance": {
@@ -502,12 +548,12 @@ Every handler automatically tracks:
 }
 ```
 
-#### 3. **Security & Sanitization**
+#### 4. **Security & Sanitization**
 - **API tokens automatically redacted**: `"f9a6b2c8...a7b63db"`
 - **Sensitive data filtered**: Passwords, secrets, and keys
 - **Safe for logging**: No sensitive information exposed
 
-#### 4. **Detailed Execution Traces**
+#### 5. **Detailed Execution Traces**
 ```json
 {
   "trace": [
@@ -522,7 +568,7 @@ Every handler automatically tracks:
 }
 ```
 
-#### 5. **Error Context Enrichment**
+#### 6. **Error Context Enrichment**
 When errors occur, debug mode provides:
 - Full error stack traces
 - DatoCMS API error details
@@ -541,11 +587,12 @@ NODE_ENV=development|production     # Environment mode
 ```
 
 #### Debug Modes
-| Mode | Purpose | Use Case |
-|------|---------|----------|
-| `DEBUG=false` | Production mode | No debug overhead, minimal logging |
-| `TRACK_PERFORMANCE=true` | Performance only | Monitor timing without full debug |
-| `DEBUG=true` | Full debug | Development, troubleshooting, analysis |
+| Mode | Purpose | Use Case | Scope |
+|------|---------|----------|-------|
+| `debug: true` (parameter) | Per-request debug | Debug specific operations | Single request |
+| `DEBUG=false` | Production mode | No debug overhead, minimal logging | Global |
+| `TRACK_PERFORMANCE=true` | Performance only | Monitor timing without full debug | Global |
+| `DEBUG=true` | Full debug | Development, troubleshooting | Global |
 
 ### 🔧 For Developers
 
@@ -625,13 +672,15 @@ Use debug data to analyze performance:
 
 ### 🚨 Security Considerations
 
-1. **Never enable in production**
+1. **Production Recommendations**
    ```bash
    # Production .env should have:
-   DEBUG=false
-   TRACK_PERFORMANCE=false
-   LOG_LEVEL=error
+   DEBUG=false              # Disable global debug
+   TRACK_PERFORMANCE=false  # Disable global performance tracking
+   LOG_LEVEL=error         # Minimal logging
    ```
+   
+   **Note**: Per-request debug (`debug: true` parameter) is safe for production use as it only affects individual requests.
 
 2. **Automatic sanitization patterns**:
    - API tokens: `f9a6b2c8...a7b63db`
@@ -643,6 +692,7 @@ Use debug data to analyze performance:
    - Debug mode adds ~5-10ms per request
    - Memory usage increases for trace storage
    - Network payload size increases
+   - Per-request debug has zero overhead when not used
 
 ### 🧪 Testing Debug Features
 
