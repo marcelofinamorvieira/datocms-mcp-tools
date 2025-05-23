@@ -59,6 +59,11 @@ export interface UIClient {
 export const uiAdapters = {
   // MenuItem adapters
   toMenuItem(apiMenuItem: any): MenuItem {
+    // Add safety checks for undefined objects
+    if (!apiMenuItem || !apiMenuItem.attributes) {
+      throw new Error('Invalid menu item structure: missing attributes');
+    }
+    
     return {
       id: apiMenuItem.id,
       type: apiMenuItem.type,
@@ -70,14 +75,19 @@ export const uiAdapters = {
       item_type_id: apiMenuItem.attributes.item_type_id,
       item_type_filter_id: apiMenuItem.attributes.item_type_filter_id,
       meta: {
-        created_at: apiMenuItem.meta.created_at,
-        updated_at: apiMenuItem.meta.updated_at
+        created_at: apiMenuItem.meta?.created_at,
+        updated_at: apiMenuItem.meta?.updated_at
       }
     };
   },
 
   // SchemaMenuItem adapters
   toSchemaMenuItem(apiSchemaMenuItem: any): SchemaMenuItem {
+    // Add safety checks for undefined objects
+    if (!apiSchemaMenuItem || !apiSchemaMenuItem.attributes) {
+      throw new Error('Invalid schema menu item structure: missing attributes');
+    }
+    
     return {
       id: apiSchemaMenuItem.id,
       type: apiSchemaMenuItem.type,
@@ -85,14 +95,19 @@ export const uiAdapters = {
       position: apiSchemaMenuItem.attributes.position,
       item_type_id: apiSchemaMenuItem.attributes.item_type_id,
       meta: {
-        created_at: apiSchemaMenuItem.meta.created_at,
-        updated_at: apiSchemaMenuItem.meta.updated_at
+        created_at: apiSchemaMenuItem.meta?.created_at,
+        updated_at: apiSchemaMenuItem.meta?.updated_at
       }
     };
   },
 
   // UploadsFilter adapters
   toUploadsFilter(apiUploadsFilter: any): UploadsFilter {
+    // Add safety checks for undefined objects
+    if (!apiUploadsFilter || !apiUploadsFilter.attributes) {
+      throw new Error('Invalid uploads filter structure: missing attributes');
+    }
+    
     return {
       id: apiUploadsFilter.id,
       type: apiUploadsFilter.type,
@@ -100,14 +115,19 @@ export const uiAdapters = {
       filter: apiUploadsFilter.attributes.filter,
       shared: apiUploadsFilter.attributes.shared,
       meta: {
-        created_at: apiUploadsFilter.meta.created_at,
-        updated_at: apiUploadsFilter.meta.updated_at
+        created_at: apiUploadsFilter.meta?.created_at,
+        updated_at: apiUploadsFilter.meta?.updated_at
       }
     };
   },
 
   // ModelFilter adapters
   toModelFilter(apiModelFilter: any): ModelFilter {
+    // Add safety checks for undefined objects
+    if (!apiModelFilter || !apiModelFilter.attributes) {
+      throw new Error('Invalid model filter structure: missing attributes');
+    }
+    
     return {
       id: apiModelFilter.id,
       type: apiModelFilter.type,
@@ -116,14 +136,19 @@ export const uiAdapters = {
       item_type_id: apiModelFilter.attributes.item_type_id,
       shared: apiModelFilter.attributes.shared,
       meta: {
-        created_at: apiModelFilter.meta.created_at,
-        updated_at: apiModelFilter.meta.updated_at
+        created_at: apiModelFilter.meta?.created_at,
+        updated_at: apiModelFilter.meta?.updated_at
       }
     };
   },
 
   // Plugin adapters
   toPlugin(apiPlugin: any): Plugin {
+    // Add safety checks for undefined objects
+    if (!apiPlugin || !apiPlugin.attributes) {
+      throw new Error('Invalid plugin structure: missing attributes');
+    }
+    
     return {
       id: apiPlugin.id,
       type: apiPlugin.type,
@@ -135,8 +160,8 @@ export const uiAdapters = {
       field_extensions: apiPlugin.attributes.field_extensions,
       sidebar_extensions: apiPlugin.attributes.sidebar_extensions,
       meta: {
-        created_at: apiPlugin.meta.created_at,
-        updated_at: apiPlugin.meta.updated_at
+        created_at: apiPlugin.meta?.created_at,
+        updated_at: apiPlugin.meta?.updated_at
       }
     };
   }
@@ -194,7 +219,20 @@ export class TypedUIClient implements UIClient {
     try {
       // Using default parameters as the API requires specific format
       const response = await this.client.menuItems.list();
-      return response.map(uiAdapters.toMenuItem);
+      
+      // Filter out any invalid items and map valid ones
+      const validItems: MenuItem[] = [];
+      for (const item of response) {
+        try {
+          validItems.push(uiAdapters.toMenuItem(item));
+        } catch (conversionError) {
+          // Log the error (will be captured in debug info if DEBUG=true)
+          console.error('Failed to convert menu item:', conversionError, 'Raw item:', item);
+          // Skip this item and continue with others
+        }
+      }
+      
+      return validItems;
     } catch (error: any) {
       this.handleAPIError(error);
     }
