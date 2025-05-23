@@ -41,6 +41,17 @@ export type ErrorContext = {
 };
 
 /**
+ * Helper function to determine error code from error type
+ */
+function getErrorCode(error: unknown): string {
+  if (isAuthorizationError(error)) return 'UNAUTHORIZED';
+  if (isNotFoundError(error)) return 'NOT_FOUND';
+  if (isValidationError(error)) return 'VALIDATION_ERROR';
+  if (isVersionConflictError(error)) return 'VERSION_CONFLICT';
+  return 'UNKNOWN_ERROR';
+}
+
+/**
  * Common error messages to ensure consistency
  */
 export const ERROR_MESSAGES = {
@@ -169,7 +180,13 @@ export function withErrorHandling<Args, Result>(
       
       // Fall back to original error handling for backward compatibility
       const errorResult = handleErrorWithContext(error, context);
-      return createResponse(errorResult);
+      
+      // Create standardized error response even when not in debug mode
+      return createStandardMcpResponse(
+        createStandardErrorResponse(error, { 
+          error_code: getErrorCode(error)
+        }, requestDebug)
+      );
     }
   };
 }

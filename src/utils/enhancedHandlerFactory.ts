@@ -11,6 +11,12 @@ import { withErrorHandling, ErrorContext } from "./errorHandlerWrapper.js";
 import { withSchemaValidation, Handler } from "./schemaValidationWrapper.js";
 import { SchemaRegistry } from "./schemaRegistry.js";
 import { withDebugTracking } from "./debugMiddleware.js";
+import { 
+  createStandardSuccessResponse, 
+  createStandardPaginatedResponse,
+  createStandardMcpResponse,
+  PaginationInfo
+} from "./standardResponse.js";
 
 /**
  * Type for a generic DatoCMS client
@@ -129,7 +135,7 @@ function composeMiddleware<T, R>(
 function createBaseHandler<T, R>(
   options: BaseHandlerOptions<T>,
   clientAction: ClientActionFn<T, R>,
-  responseTransformer: (result: R) => any
+  responseTransformer: (result: R, requestDebug?: boolean) => any
 ): Handler<unknown, Response> {
   const { domain, schemaName, schema, errorContext, clientType = ClientType.DEFAULT } = options;
   
@@ -141,6 +147,7 @@ function createBaseHandler<T, R>(
     // Extract client parameters
     const apiToken = (params as any).apiToken;
     const environment = (params as any).environment;
+    const requestDebug = (params as any).debug;
     
     // Get the appropriate client
     let client: DatoCMSClient;
@@ -158,8 +165,8 @@ function createBaseHandler<T, R>(
     // Execute the client action
     const result = await clientAction(client, params);
     
-    // Transform and return the result
-    const transformedResult = responseTransformer(result);
+    // Transform and return the result - pass the debug flag from params
+    const transformedResult = responseTransformer(result, requestDebug);
     return createResponse(JSON.stringify(transformedResult, null, 2));
   };
   
@@ -195,18 +202,15 @@ export function createCreateHandler<T, R>(options: CreateHandlerOptions<T, R>): 
   };
   
   // Create the response transformer function
-  const responseTransformer = (result: R) => ({
-    success: true,
-    data: result,
-    message: typeof successMessage === 'function' ? successMessage(result) : successMessage
-  });
+  const responseTransformer = (result: R, requestDebug?: boolean) => {
+    const message = typeof successMessage === 'function' ? successMessage(result) : successMessage;
+    return createStandardSuccessResponse(result, message, undefined, requestDebug);
+  };
   
-  // Use a simpler approach - fix the issue in the actual handler instead
   return createBaseHandler(
     { ...options, errorContext: enhancedErrorContext },
     clientAction,
-    // Just use the results directly
-    (results) => results
+    responseTransformer
   );
 }
 
@@ -253,10 +257,24 @@ export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R
     return result;
   };
   
-  // Apply middleware to the base handler
-  return composeMiddleware(baseHandler, [
-    // Apply response creation
-    (handler) => async (args: any) => createResponse(JSON.stringify(await handler(args), null, 2)),
+  // Create a wrapper handler that uses standardized responses
+  const standardizedHandler: Handler<T, Response> = async (params: T): Promise<Response> => {
+    const result = await baseHandler(params);
+    const requestDebug = (params as any).debug;
+    const standardResponse = createStandardSuccessResponse(result, undefined, undefined, requestDebug);
+    return createStandardMcpResponse(standardResponse);
+  };
+
+  // Apply middleware to the standardized handler
+  return composeMiddleware(standardizedHandler, [
+    // Apply debug tracking middleware
+    (handler) => withDebugTracking({
+      domain: options.domain,
+      operation: 'retrieve',
+      handlerName: enhancedErrorContext.handlerName || `${options.domain}.retrieve.${options.schemaName}`,
+      schemaName: options.schemaName,
+      entityType: entityName
+    })(handler),
     // Apply error handling middleware
     (handler) => withErrorHandling(handler, enhancedErrorContext),
     // Apply schema validation middleware
@@ -279,17 +297,13 @@ export function createUpdateHandler<T, R>(options: UpdateHandlerOptions<T, R>): 
   };
   
   // Create the response transformer function
-  const responseTransformer = (result: R) => {
+  const responseTransformer = (result: R, requestDebug?: boolean) => {
     const entityId = (result as any).id || 'unknown';
     const message = successMessage 
       ? (typeof successMessage === 'function' ? successMessage(result) : successMessage)
       : `${entityName} ${entityId} was successfully updated.`;
       
-    return {
-      success: true,
-      data: result,
-      message
-    };
+    return createStandardSuccessResponse(result, message, undefined, requestDebug);
   };
   
   // Create and return the composed handler with dynamic resourceId
@@ -319,16 +333,13 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>): Handle
   };
   
   // Create the response transformer function
-  const responseTransformer = (result: void) => {
+  const responseTransformer = (result: void, requestDebug?: boolean) => {
     const entityId = enhancedErrorContext.resourceId;
     const message = successMessage 
       ? (typeof successMessage === 'function' ? successMessage(entityId) : successMessage)
       : `${entityName} ${entityId} was successfully deleted.`;
       
-    return {
-      success: true,
-      message
-    };
+    return createStandardSuccessResponse(null, message, undefined, requestDebug);
   };
   
   // Create and return the composed handler with dynamic resourceId
@@ -359,15 +370,20 @@ export function createListHandler<T, R>(options: ListHandlerOptions<T, R>): Hand
   };
   
   // Create the response transformer function
-  const responseTransformer = (data: { results: R[], params: T }) => 
-    formatResult ? formatResult(data.results, data.params) : data.results;
+  const responseTransformer = (results: R[], requestDebug?: boolean) => {
+    // For list handlers, we'll return standardized success response with the results
+    return createStandardSuccessResponse(
+      results, 
+      `Found ${results.length} ${entityName}(s)`,
+      undefined,
+      requestDebug
+    );
+  };
   
-  // Use a simpler approach - fix the issue in the actual handler instead
   return createBaseHandler(
     { ...options, errorContext: enhancedErrorContext },
     clientAction,
-    // Just use the results directly
-    (results) => results
+    responseTransformer
   );
 }
 

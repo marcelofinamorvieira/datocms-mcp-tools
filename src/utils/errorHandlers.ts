@@ -3,6 +3,7 @@
  */
 
 import { HandlerResponse, createResponse, Response } from "./responseHandlers.js";
+import { createStandardErrorResponse, createStandardMcpResponse } from "./standardResponse.js";
 
 /**
  * DatoCMS API Error types
@@ -217,14 +218,13 @@ export const extractDetailedErrorInfo = (error: unknown): string => {
 
 /**
  * Utility function to create an error response with the correct MCP content structure
+ * Updated to use standardized response format for consistency
  */
-export const createErrorResponse = (message: string): Response => {
-  return {
-    content: [{
-      type: "text" as const,
-      text: message
-    }]
-  };
+export const createErrorResponse = (message: string, requestDebug?: boolean): Response => {
+  // Use standardized error response to ensure debug info is included when needed
+  return createStandardMcpResponse(
+    createStandardErrorResponse(message, undefined, requestDebug)
+  );
 };
 
 /**

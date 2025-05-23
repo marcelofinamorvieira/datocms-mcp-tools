@@ -2,12 +2,12 @@
   "name": "datocms-mcp-tools",
   "version": "1.0.0",
   "description": "A simple MCP server that provides tools based on the DatoCMS CMA API.",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc && npm run validate",
-    "start": "node dist/index.js",
-    "start:http": "TRANSPORT_TYPE=http node dist/index.js",
+    "start": "node dist/src/index.js",
+    "start:http": "TRANSPORT_TYPE=http node dist/src/index.js",
     "dev": "tsc -w",
     "validate": "node dist/scripts/validate-structure.js",
     "test:debug": "node dist/scripts/test-debug.js"

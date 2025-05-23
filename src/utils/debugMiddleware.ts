@@ -89,6 +89,11 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
         requestDebug
       });
       
+      // Inject debug context into args for error handler to use
+      if (requestDebug && typeof args === 'object' && args !== null) {
+        (args as any)._debugContext = context;
+      }
+      
       const logger = createDebugLogger(context);
       const overallTimer = createTimer();
       
