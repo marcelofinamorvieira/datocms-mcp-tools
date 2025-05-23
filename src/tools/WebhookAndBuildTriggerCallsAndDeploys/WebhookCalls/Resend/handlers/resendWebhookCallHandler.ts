@@ -1,11 +1,6 @@
-import { z } from "zod";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookCallSchemas } from "../../../schemas.js";
-import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
-import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
-
-type ResendWebhookCallParams = z.infer<typeof webhookCallSchemas.resend>;
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Resends a specific webhook call
@@ -13,42 +8,21 @@ type ResendWebhookCallParams = z.infer<typeof webhookCallSchemas.resend>;
  * @param params Parameters for resending a webhook call
  * @returns Response indicating success or failure of the resend operation
  */
-export async function resendWebhookCallHandler(
-  params: ResendWebhookCallParams
-): Promise<McpResponse> {
-  try {
-    const { apiToken, environment, callId } = params;
-    
-    // Initialize the client with the API token and environment
-    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
-
+export const resendWebhookCallHandler = createCustomHandler({
+  domain: "webhooks.webhookCalls",
+  schemaName: "resend",
+  schema: webhookCallSchemas.resend,
+  entityName: "Webhook Call",
+  operation: "resend",
+  clientAction: async (client, args) => {
     // Resend the webhook call with proper typing
-    const webhookCall = await client.resendWebhookCall(callId);
+    const webhookCall = await client.webhookCalls.resend(args.callId);
 
     // Return success response
-    return createResponse(JSON.stringify({
+    return {
       success: true,
-      message: `Webhook call with ID ${callId} has been successfully resent.`,
+      message: `Webhook call with ID ${args.callId} has been successfully resent.`,
       webhook_call: webhookCall
-    }, null, 2));
-  } catch (error) {
-    // Handle authorization errors
-    if (isAuthorizationError(error)) {
-      return createErrorResponse(
-        "The provided API token does not have permission to resend webhook calls."
-      );
-    }
-
-    // Handle not found errors
-    if (isNotFoundError(error)) {
-      return createErrorResponse(
-        `No webhook call found with ID: ${params.callId}`
-      );
-    }
-
-    // Handle other errors
-    return createErrorResponse(
-      `Failed to resend webhook call: ${extractDetailedErrorInfo(error)}`
-    );
+    };
   }
-}
+});

@@ -3,53 +3,27 @@
  * @description Handler for listing fieldsets, with optional filtering by item type
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { schemaSchemas } from "../../../schemas.js";
+import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { schemaSchemas } from "../../../schemas.js";
 
 /**
  * Handler to list fieldsets, with optional filtering by item type
  */
-export const listFieldsetsHandler = async (args: z.infer<typeof schemaSchemas.list_fieldsets>) => {
-  const { apiToken, itemTypeId, page, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const listFieldsetsHandler = createListHandler({
+  domain: "schema.fieldset",
+  schemaName: "list_fieldsets",
+  schema: schemaSchemas.list_fieldsets,
+  entityName: "Fieldset",
+  clientAction: async (client, args) => {
+    // The API requires itemTypeId as the first parameter
+    const queryParams: Record<string, unknown> = {};
     
-    try {
-      // Prepare filter parameters for pagination only
-      // Note: The API requires itemTypeId directly, not as part of queryParams
-      const queryParams: Record<string, unknown> = {};
-      
-      // Add pagination if provided
-      if (page) {
-        queryParams.page = page;
-      }
-      
-      // If no itemTypeId is provided, throw an error as it's required
-      if (!itemTypeId) {
-        return createErrorResponse("Error: itemTypeId is required for listing fieldsets.");
-      }
-      
-      // List fieldsets for the specified item type
-      // The library expects itemTypeId as first parameter
-      const fieldsets = await client.fieldsets.list(itemTypeId);
-      
-      // Return the fieldsets data
-      return createResponse(JSON.stringify(fieldsets, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+    // Add pagination if provided
+    if (args.page) {
+      queryParams.page = args.page;
     }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error listing DatoCMS fieldsets: ${extractDetailedErrorInfo(error)}`);
+    
+    // List fieldsets for the specified item type
+    return await client.fieldsets.list(args.itemTypeId, queryParams);
   }
-};
+});

@@ -1,48 +1,32 @@
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { modelFilterSchemas } from "../../schemas.js";
-import { z } from "zod";
-
-type CreateModelFilterArgs = z.infer<typeof modelFilterSchemas.create>;
+import { createTypedUIClient } from "../../../uiClient.js";
+import { ModelFilterCreateParams } from "../../../uiTypes.js";
 
 /**
  * Handler for creating a new model filter
  */
-export const createModelFilterHandler = async (args: CreateModelFilterArgs) => {
-  const { apiToken, environment, name, item_type, filter, columns, order_by, shared } = args;
-  
-  try {
-    // Initialize the DatoCMS client with auth token and environment
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const createModelFilterHandler = createCreateHandler({
+  domain: "ui.modelFilter",
+  schemaName: "create",
+  schema: modelFilterSchemas.create,
+  entityName: "Model Filter",
+  clientAction: async (client, args) => {
+    const typedClient = createTypedUIClient(client);
 
     // Prepare the payload for creating a model filter
-    const payload: Record<string, any> = {
-      name,
-      item_type: {
-        type: "item_type",
-        id: item_type
-      }
+    const payload: ModelFilterCreateParams = {
+      name: args.name,
+      item_type_id: args.item_type,
+      filter: args.filter,
+      shared: args.shared
     };
 
     // Add optional fields if provided
-    if (filter) payload.filter = filter;
-    if (columns) payload.columns = columns;
-    if (order_by) payload.order_by = order_by;
-    if (shared !== undefined) payload.shared = shared;
+    if (args.columns) payload.columns = args.columns;
+    if (args.order_by) payload.order_by = args.order_by;
 
-    // Create the model filter using the DatoCMS client
-    const createdModelFilter = await client.itemTypeFilters.create(payload as any);
-
-    // Return successful response with the created model filter data
-    return createResponse(createdModelFilter);
-  } catch (error) {
-    // Check for authorization errors
-    if (isAuthorizationError(error)) {
-      return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-    }
-
-    // Pass other errors to the router for handling
-    throw error;
+    // Create the model filter using the typed client
+    return await typedClient.createModelFilter(payload);
   }
-};
+});

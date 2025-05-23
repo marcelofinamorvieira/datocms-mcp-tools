@@ -1,26 +1,12 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import {
-  isAuthorizationError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createCreateHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
 
-export const createUploadTagHandler = async (
-  args: z.infer<typeof uploadsSchemas.create_tag>
-) => {
-  const { apiToken, name, environment } = args;
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    const tag = await client.uploadTags.create({ name });
-    return createResponse(JSON.stringify(tag, null, 2));
-  } catch (e) {
-    if (isAuthorizationError(e)) {
-      return createErrorResponse("Invalid or unauthorized API token.");
-    }
-    return createErrorResponse(
-      `Error creating upload tag: ${e instanceof Error ? e.message : String(e)}`
-    );
+export const createUploadTagHandler = createCreateHandler({
+  domain: "uploads",
+  schemaName: "create_tag",
+  schema: uploadsSchemas.create_tag,
+  entityName: "Upload Tag",
+  clientAction: async (client, args) => {
+    return await client.uploadTags.create({ name: args.name });
   }
-};
+});

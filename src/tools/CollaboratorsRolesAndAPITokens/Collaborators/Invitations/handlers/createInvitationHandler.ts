@@ -3,47 +3,32 @@
  * @description Handler for creating a new DatoCMS site invitation
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { collaboratorSchemas } from "../../../schemas.js";
+import { z } from "zod";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
  * Handler for creating a new DatoCMS site invitation
  */
-export const createInvitationHandler = async (args: z.infer<typeof collaboratorSchemas.invitation_create>) => {
-  const { apiToken, email, role, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const createInvitationHandler = createCreateHandler({
+  domain: "collaborators.invitations",
+  schemaName: "invitation_create",
+  schema: collaboratorSchemas.invitation_create,
+  entityName: "Invitation",
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_create>) => {
+    const { email, role } = args;
     
-    try {
-      // Create the invitation - handle different role formats
-      // If role is a predefined string, convert to proper resource linkage format
-      const roleData = typeof role === 'string'
-        ? { id: role, type: 'role' as const }
-        : role;
+    // Create the invitation - handle different role formats
+    // If role is a predefined string, convert to proper resource linkage format
+    const roleData = typeof role === 'string'
+      ? { id: role, type: 'role' as const }
+      : role;
 
-      // Create the invitation
-      const invitation = await client.siteInvitations.create({
-        email,
-        role: roleData
-      });
-      
-      // Convert to JSON and create response
-      return createResponse(JSON.stringify(invitation, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error creating DatoCMS site invitation: ${extractDetailedErrorInfo(error)}`);
+    // Create the invitation
+    return await client.createInvitation({
+      email,
+      role: roleData
+    });
   }
-};
+});

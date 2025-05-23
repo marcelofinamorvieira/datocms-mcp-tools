@@ -1,19 +1,17 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import {
-  isAuthorizationError,
-  isNotFoundError,
-  createErrorResponse,
-  extractDetailedErrorInfo 
-} from "../../../../utils/errorHandlers.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
-import { createTypedUploadsClient } from "../../uploadsClient.js";
-import { GetUploadReferencesResponse, isUploadsAuthorizationError, isUploadsNotFoundError } from "../../uploadsTypes.js";
+import { createStandardResponse } from "../../../../utils/standardResponse.js";
 
-export const getUploadReferencesHandler = async (
-  args: z.infer<typeof uploadsSchemas.references>
-): Promise<GetUploadReferencesResponse> => {
+export const getUploadReferencesHandler = createCustomHandler({
+  domain: "uploads",
+  schemaName: "references",
+  schema: uploadsSchemas.references,
+  errorContext: {
+    operation: "retrieve",
+    resourceType: "Upload References",
+    handlerName: "getUploadReferencesHandler"
+  }
+}, async (args, context) => {
   const {
     apiToken,
     uploadId,
@@ -23,54 +21,34 @@ export const getUploadReferencesHandler = async (
     environment
   } = args;
 
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    const typedClient = createTypedUploadsClient(client);
+  const client = context.getClient(apiToken, environment);
 
-    // Get references using typed client
-    const references = await typedClient.getUploadReferences(uploadId, {
-      nested,
-      version
-    });
+  // Get references
+  const references = await client.uploads.references(uploadId, {
+    nested,
+    version
+  });
 
-    // Return appropriate response based on result and requested format
-    if (!references.length) {
-      return {
-        success: true,
-        data: [],
-        message: "No records reference this upload."
-      };
-    }
-    
-    if (returnOnlyIds) {
-      return {
-        success: true,
-        data: references.map(r => ({ id: r.id, type: r.type })) as any, // Type casting due to partial result
-        message: `Found ${references.length} references to this upload.`
-      };
-    }
-    
-    return {
+  // Return appropriate response based on result and requested format
+  if (!references.length) {
+    return createStandardResponse({
       success: true,
-      data: references,
-      message: `Found ${references.length} references to this upload.`
-    };
-  } catch (apiError: unknown) {
-    if (isUploadsAuthorizationError(apiError)) {
-      return {
-        success: false,
-        error: "Error: Invalid or unauthorized API token."
-      };
-    }
-    if (isUploadsNotFoundError(apiError)) {
-      return {
-        success: false,
-        error: `Error: Upload '${uploadId}' not found.`
-      };
-    }
-    return {
-      success: false,
-      error: `Error fetching references: ${extractDetailedErrorInfo(apiError)}`
-    };
+      data: [],
+      message: "No records reference this upload."
+    });
   }
-};
+  
+  if (returnOnlyIds) {
+    return createStandardResponse({
+      success: true,
+      data: references.map(r => ({ id: r.id, type: r.type })),
+      message: `Found ${references.length} references to this upload.`
+    });
+  }
+  
+  return createStandardResponse({
+    success: true,
+    data: references,
+    message: `Found ${references.length} references to this upload.`
+  });
+});

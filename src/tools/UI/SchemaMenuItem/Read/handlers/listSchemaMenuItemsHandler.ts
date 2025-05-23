@@ -3,38 +3,32 @@
  * @description Handler for listing DatoCMS schema menu items
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { schemaMenuItemSchemas } from "../../schemas.js";
+import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { schemaMenuItemSchemas } from "../../schemas.js";
+import { createTypedUIClient } from "../../../uiClient.js";
 
 /**
  * Handler function for listing DatoCMS schema menu items
  */
-export const listSchemaMenuItemsHandler = async (args: z.infer<typeof schemaMenuItemSchemas.list>) => {
-  const { apiToken, page = { limit: 100, offset: 0 }, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const listSchemaMenuItemsHandler = createListHandler({
+  domain: "ui.schemaMenuItem",
+  schemaName: "list",
+  schema: schemaMenuItemSchemas.list,
+  entityName: "Schema Menu Item",
+  listGetter: async (client, args) => {
+    const typedClient = createTypedUIClient(client);
     
-    try {
-      // Get the list of schema menu items
-      const schemaMenuItems = await client.schemaMenuItems.list();
-      
-      // Return the list of schema menu items
-      return createResponse(JSON.stringify(schemaMenuItems, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error listing DatoCMS schema menu items: ${extractDetailedErrorInfo(error)}`);
+    // Get the list of schema menu items
+    const schemaMenuItems = await typedClient.listSchemaMenuItems(args.page);
+    
+    return schemaMenuItems;
+  },
+  countGetter: async (client) => {
+    const typedClient = createTypedUIClient(client);
+    
+    // Get all schema menu items to count them (API doesn't provide count endpoint)
+    const allItems = await typedClient.listSchemaMenuItems();
+    
+    return allItems.length;
   }
-};
+});

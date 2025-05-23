@@ -1,44 +1,23 @@
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { z } from "zod";
+import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { apiTokenSchemas } from "../../../schemas.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-
-type Params = z.infer<typeof apiTokenSchemas.rotate_token>;
 
 /**
  * Handler for rotating (regenerating) an API token in DatoCMS
  */
-export const rotateTokenHandler = async (params: Params) => {
-  const { apiToken, tokenId, environment } = params;
-
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-
-    try {
-      // Rotate the token
-      const rotatedToken = await client.accessTokens.regenerateToken(tokenId);
-
-      // Convert to JSON and create response
-      return createResponse(JSON.stringify({
-        success: true,
-        data: rotatedToken,
+export const rotateTokenHandler = createCustomHandler({
+  domain: "collaborators.apiTokens",
+  operation: "rotate",
+  schemaName: "rotate_token",
+  schema: apiTokenSchemas.rotate_token,
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof apiTokenSchemas.rotate_token>) => {
+    const rotatedToken = await client.rotateAPIToken(args.tokenId);
+    return {
+      data: rotatedToken,
+      meta: {
         message: "API token successfully rotated"
-      }, null, 2));
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
       }
-
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: API token with ID '${tokenId}' not found.`);
-      }
-
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error rotating DatoCMS API token: ${extractDetailedErrorInfo(error)}`);
+    };
   }
-};
+});

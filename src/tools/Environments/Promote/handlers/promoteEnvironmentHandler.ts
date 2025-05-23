@@ -3,45 +3,35 @@
  * @description Handler for promoting a DatoCMS environment to primary status
  */
 
-import type { z } from "zod";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { environmentSchemas } from "../../schemas.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { environmentSchemas } from "../../schemas.js";
 
 /**
  * Handler for promoting a DatoCMS environment to primary status
  */
-export const promoteEnvironmentHandler = async (args: z.infer<typeof environmentSchemas.promote>) => {
+export const promoteEnvironmentHandler = createCustomHandler({
+  domain: "environments",
+  schemaName: "promote",
+  schema: environmentSchemas.promote,
+  errorContext: {
+    operation: "promote",
+    resourceType: "Environment",
+    handlerName: "promoteEnvironmentHandler"
+  }
+}, async (args) => {
   const { apiToken, environmentId } = args;
   
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken);
-    
-    try {
-      // Promote the environment to primary
-      const environment = await client.environments.promote(environmentId);
-      
-      if (!environment) {
-        return createErrorResponse(`Error: Failed to promote environment with ID '${environmentId}' to primary.`);
-      }
-      
-      return createResponse(JSON.stringify(environment, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Environment with ID '${environmentId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error promoting environment: ${extractDetailedErrorInfo(error)}`);
+  // Initialize DatoCMS client
+  const client = UnifiedClientManager.getDefaultClient(apiToken);
+  
+  // Promote the environment to primary
+  const environment = await client.environments.promote(environmentId);
+  
+  if (!environment) {
+    throw new Error(`Failed to promote environment with ID '${environmentId}' to primary.`);
   }
-};
+  
+  return createResponse(JSON.stringify(environment, null, 2));
+});

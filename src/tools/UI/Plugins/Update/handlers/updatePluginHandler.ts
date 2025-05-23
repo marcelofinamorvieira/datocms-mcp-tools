@@ -3,68 +3,36 @@
  * @description Handler for updating a DatoCMS plugin
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { pluginSchemas } from "../../schemas.js";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { pluginSchemas } from "../../schemas.js";
+import { createTypedUIClient } from "../../../uiClient.js";
+import { PluginUpdateParams } from "../../../uiTypes.js";
 
 /**
  * Handler function for updating a DatoCMS plugin
  */
-export const updatePluginHandler = async (args: z.infer<typeof pluginSchemas.update>) => {
-  const { 
-    apiToken, 
-    pluginId,
-    name, 
-    description, 
-    url, 
-    parameters, 
-    package_name, 
-    package_version, 
-    permissions,
-    environment 
-  } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const updatePluginHandler = createUpdateHandler({
+  domain: "ui.plugin",
+  schemaName: "update",
+  schema: pluginSchemas.update,
+  entityName: "Plugin",
+  idParam: "pluginId",
+  clientAction: async (client, args) => {
+    const typedClient = createTypedUIClient(client);
     
-    try {
-      // Verify plugin exists by attempting to find it
-      const existingPlugin = await client.plugins.find(pluginId);
-      
-      // Create update payload with only provided fields
-      const payload: Record<string, any> = {};
+    // Create update payload with only provided fields
+    const payload: PluginUpdateParams = {};
 
-      // Add fields that are defined
-      if (name !== undefined) payload.name = name;
-      if (description !== undefined) payload.description = description;
-      if (url !== undefined) payload.url = url;
-      if (parameters !== undefined) payload.parameters = parameters;
-      if (package_name !== undefined) payload.package_name = package_name;
-      if (package_version !== undefined) payload.package_version = package_version;
-      if (permissions !== undefined) payload.permissions = permissions;
-      
-      // Update the plugin
-      const updatedPlugin = await client.plugins.update(pluginId, payload);
-      
-      // Return the updated plugin
-      return createResponse(JSON.stringify(updatedPlugin, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Plugin with ID '${pluginId}' not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error updating DatoCMS plugin: ${extractDetailedErrorInfo(error)}`);
+    // Add fields that are defined
+    if (args.name !== undefined) payload.name = args.name;
+    if (args.description !== undefined) payload.description = args.description;
+    if (args.url !== undefined) payload.url = args.url;
+    if (args.parameters !== undefined) payload.parameters = args.parameters;
+    if (args.package_name !== undefined) payload.package_name = args.package_name;
+    if (args.package_version !== undefined) payload.package_version = args.package_version;
+    if (args.permissions !== undefined) payload.permissions = args.permissions;
+    
+    // Update the plugin
+    return await typedClient.updatePlugin(args.pluginId, payload);
   }
-};
+});

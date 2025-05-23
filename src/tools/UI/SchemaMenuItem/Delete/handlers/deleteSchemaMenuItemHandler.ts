@@ -3,52 +3,36 @@
  * @description Handler for deleting a DatoCMS schema menu item
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { schemaMenuItemSchemas } from "../../schemas.js";
+import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { schemaMenuItemSchemas } from "../../schemas.js";
+import { createTypedUIClient } from "../../../uiClient.js";
+import { extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 
 /**
  * Handler function for deleting a DatoCMS schema menu item
  */
-export const deleteSchemaMenuItemHandler = async (args: z.infer<typeof schemaMenuItemSchemas.delete>) => {
-  const { apiToken, schemaMenuItemId, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const deleteSchemaMenuItemHandler = createDeleteHandler({
+  domain: "ui.schemaMenuItem",
+  schemaName: "delete",
+  schema: schemaMenuItemSchemas.delete,
+  entityName: "Schema Menu Item",
+  idParam: "schemaMenuItemId",
+  clientAction: async (client, args) => {
+    const typedClient = createTypedUIClient(client);
     
     try {
       // Delete the schema menu item
-      await client.schemaMenuItems.destroy(schemaMenuItemId);
+      await typedClient.deleteSchemaMenuItem(args.schemaMenuItemId);
+    } catch (error: unknown) {
+      // Check if the error is related to having child menu items
+      const errorMessage = extractDetailedErrorInfo(error);
       
-      // Return success message
-      return createResponse(JSON.stringify({ 
-        success: true, 
-        message: `Successfully deleted schema menu item with ID: ${schemaMenuItemId}` 
-      }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+      if (errorMessage.includes("has children")) {
+        throw new Error(`Cannot delete schema menu item with ID '${args.schemaMenuItemId}' because it has children.`);
       }
       
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Schema menu item with ID '${schemaMenuItemId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+      // Re-throw the error to be handled by the factory
+      throw error;
     }
-  } catch (error: unknown) {
-    // Check if the error is related to having child menu items
-    const errorMessage = extractDetailedErrorInfo(error);
-    
-    if (errorMessage.includes("has children")) {
-      return createErrorResponse(`Error: Cannot delete schema menu item with ID '${schemaMenuItemId}' because it has children.`);
-    }
-    
-    return createErrorResponse(`${extractDetailedErrorInfo(errorMessage)}`);
   }
-};
+});

@@ -937,7 +937,7 @@ run();
 
 // Initialize the DatoCMS client
 const client = buildClient({
-  apiToken: "f9a6a96f1825925f275ccee763db90",
+  apiToken: "USER-API-TOKEN",
 });
 
 // Generate a random suffix to ensure unique model name and API key

@@ -3,42 +3,26 @@
  * @description Handler for resending a DatoCMS site invitation
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { collaboratorSchemas } from "../../../schemas.js";
+import { z } from "zod";
+import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
  * Handler for resending a DatoCMS site invitation
  */
-export const resendInvitationHandler = async (args: z.infer<typeof collaboratorSchemas.invitation_resend>) => {
-  const { apiToken, invitationId, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    
-    try {
-      // Resend the invitation
-      await client.siteInvitations.resend(invitationId);
-      
-      // Return success response
-      return createResponse(JSON.stringify({ success: true, message: `Invitation with ID ${invitationId} successfully resent.` }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+export const resendInvitationHandler = createCustomHandler({
+  domain: "collaborators.invitations",
+  operation: "resend",
+  schemaName: "invitation_resend",
+  schema: collaboratorSchemas.invitation_resend,
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_resend>) => {
+    await client.resendInvitation(args.invitationId);
+    return {
+      data: { success: true },
+      meta: {
+        message: `Invitation with ID ${args.invitationId} successfully resent.`
       }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Invitation with ID ${invitationId} not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error resending DatoCMS site invitation: ${extractDetailedErrorInfo(error)}`);
+    };
   }
-};
+});

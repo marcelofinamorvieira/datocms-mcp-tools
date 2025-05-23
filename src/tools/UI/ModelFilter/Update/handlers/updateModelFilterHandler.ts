@@ -1,57 +1,31 @@
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { modelFilterSchemas } from "../../schemas.js";
-import { z } from "zod";
-
-type UpdateModelFilterArgs = z.infer<typeof modelFilterSchemas.update>;
+import { createTypedUIClient } from "../../../uiClient.js";
+import { ModelFilterUpdateParams } from "../../../uiTypes.js";
 
 /**
  * Handler for updating a model filter
  */
-export const updateModelFilterHandler = async (args: UpdateModelFilterArgs) => {
-  const { 
-    apiToken, 
-    environment, 
-    modelFilterId,
-    name,
-    filter,
-    columns,
-    order_by,
-    shared
-  } = args;
-  
-  try {
-    // Initialize the DatoCMS client with auth token and environment
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const updateModelFilterHandler = createUpdateHandler({
+  domain: "ui.modelFilter",
+  schemaName: "update",
+  schema: modelFilterSchemas.update,
+  entityName: "Model Filter",
+  idParam: "modelFilterId",
+  clientAction: async (client, args) => {
+    const typedClient = createTypedUIClient(client);
 
     // Prepare the payload for updating the model filter
-    const payload: Record<string, any> = {};
+    const payload: ModelFilterUpdateParams = {};
 
     // Add optional fields if provided
-    if (name !== undefined) payload.name = name;
-    if (filter !== undefined) payload.filter = filter;
-    if (columns !== undefined) payload.columns = columns;
-    if (order_by !== undefined) payload.order_by = order_by;
-    if (shared !== undefined) payload.shared = shared;
+    if (args.name !== undefined) payload.name = args.name;
+    if (args.filter !== undefined) payload.filter = args.filter;
+    if (args.columns !== undefined) payload.columns = args.columns;
+    if (args.order_by !== undefined) payload.order_by = args.order_by;
+    if (args.shared !== undefined) payload.shared = args.shared;
 
-    // Update the model filter using the DatoCMS client
-    const updatedModelFilter = await client.itemTypeFilters.update(modelFilterId, payload);
-
-    // Return successful response with the updated model filter data
-    return createResponse(updatedModelFilter);
-  } catch (error) {
-    // Check for authorization errors
-    if (isAuthorizationError(error)) {
-      return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-    }
-
-    // Check for not found errors
-    if (isNotFoundError(error)) {
-      return createErrorResponse(`Error: Model filter with ID '${modelFilterId}' was not found.`);
-    }
-
-    // Pass other errors to the router for handling
-    throw error;
+    // Update the model filter using the typed client
+    return await typedClient.updateModelFilter(args.modelFilterId, payload);
   }
-};
+});

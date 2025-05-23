@@ -3,42 +3,22 @@
  * @description Handler for deleting a DatoCMS site invitation
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { collaboratorSchemas } from "../../../schemas.js";
+import { z } from "zod";
+import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
  * Handler for deleting a DatoCMS site invitation
  */
-export const destroyInvitationHandler = async (args: z.infer<typeof collaboratorSchemas.invitation_destroy>) => {
-  const { apiToken, invitationId, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    
-    try {
-      // Delete the invitation
-      await client.siteInvitations.destroy(invitationId);
-      
-      // Return success response
-      return createResponse(JSON.stringify({ success: true, message: `Invitation with ID ${invitationId} successfully deleted.` }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Invitation with ID ${invitationId} not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error deleting DatoCMS site invitation: ${extractDetailedErrorInfo(error)}`);
+export const destroyInvitationHandler = createDeleteHandler({
+  domain: "collaborators.invitations",
+  schemaName: "invitation_destroy",
+  schema: collaboratorSchemas.invitation_destroy,
+  entityName: "Invitation",
+  idParam: "invitationId",
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_destroy>) => {
+    await client.destroyInvitation(args.invitationId);
+    return { success: true };
   }
-};
+});

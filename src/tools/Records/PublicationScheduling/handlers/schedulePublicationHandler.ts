@@ -4,53 +4,31 @@
  * Extracted from the CreateScheduledPublicationOnRecord tool
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { recordsSchemas } from "../../schemas.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { recordsSchemas } from "../../schemas.js";
 
 /**
  * Handler function for scheduling a DatoCMS record publication
  */
-export const schedulePublicationHandler = async (args: z.infer<typeof recordsSchemas.schedule_publication>) => {
-  const { apiToken, itemId, publication_scheduled_at: publicationDate, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const schedulePublicationHandler = createCustomHandler({
+  domain: "records",
+  schemaName: "schedule_publication",
+  schema: recordsSchemas.schedule_publication,
+  entityName: "Scheduled Publication",
+  clientAction: async (client, args) => {
+    const { itemId, publication_scheduled_at: publicationDate } = args;
     
     // Create the scheduled publication
-    try {
-      const scheduledPublication = await client.scheduledPublication.create(
-        itemId,
-        {
-          publication_scheduled_at: publicationDate
-        }
-      );
-      
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({
-            message: "Successfully scheduled the item for publication.",
-            scheduledPublication
-          }, null, 2)
-        }]
-      };
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
+    const scheduledPublication = await client.scheduledPublication.create(
+      itemId,
+      {
+        publication_scheduled_at: publicationDate
       }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
+    );
+    
     return {
-      content: [{
-        type: "text" as const,
-        text: `Error creating scheduled publication: ${extractDetailedErrorInfo(error)}`
-      }]
+      message: "Successfully scheduled the item for publication.",
+      scheduledPublication
     };
   }
-};
+});

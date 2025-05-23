@@ -1,29 +1,15 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import {
-  isAuthorizationError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
 
-export const queryUploadCollectionsHandler = async (
-  args: z.infer<typeof uploadsSchemas.query_collections>
-) => {
-  const { apiToken, ids, environment } = args;
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    const opts = ids
-      ? { filter: { ids: Array.isArray(ids) ? ids.join(",") : ids } }
+export const queryUploadCollectionsHandler = createListHandler({
+  domain: "uploads",
+  schemaName: "query_collections",
+  schema: uploadsSchemas.query_collections,
+  entityName: "Upload Collection",
+  listGetter: async (client, args) => {
+    const opts = args.ids
+      ? { filter: { ids: Array.isArray(args.ids) ? args.ids.join(",") : args.ids } }
       : {};
-    const collections = await client.uploadCollections.list(opts);
-    return createResponse(JSON.stringify(collections, null, 2));
-  } catch (e) {
-    if (isAuthorizationError(e)) {
-      return createErrorResponse("Invalid or unauthorized API token.");
-    }
-    return createErrorResponse(
-      `Error querying collections: ${e instanceof Error ? e.message : String(e)}`
-    );
+    return await client.uploadCollections.list(opts);
   }
-};
+});

@@ -3,55 +3,30 @@
  * @description Handler for creating a DatoCMS uploads filter
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { uploadsFilterSchemas } from "../../schemas.js";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { uploadsFilterSchemas } from "../../schemas.js";
+import { createTypedUIClient } from "../../../uiClient.js";
+import { UploadsFilterCreateParams } from "../../../uiTypes.js";
 
 /**
  * Handler function for creating a DatoCMS uploads filter
  */
-export const createUploadsFilterHandler = async (args: z.infer<typeof uploadsFilterSchemas.create>) => {
-  const { 
-    apiToken, 
-    name,
-    payload,
-    environment 
-  } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const createUploadsFilterHandler = createCreateHandler({
+  domain: "ui.uploadsFilter",
+  schemaName: "create",
+  schema: uploadsFilterSchemas.create,
+  entityName: "Uploads Filter",
+  clientAction: async (client, args) => {
+    const typedClient = createTypedUIClient(client);
     
-    try {
-      // Create uploads filter payload
-      const filterPayload = {
-        name,
-        filter: payload,
-        shared: true
-      };
+    // Create uploads filter payload
+    const filterPayload: UploadsFilterCreateParams = {
+      name: args.name,
+      filter: args.payload,
+      shared: true
+    };
 
-      // Create the uploads filter
-      const createdUploadsFilter = await client.uploadFilters.create(filterPayload as any);
-      
-      // If no filter returned, return error
-      if (!createdUploadsFilter) {
-        return createErrorResponse("Error: Failed to create uploads filter.");
-      }
-
-      // Return the created uploads filter
-      return createResponse(JSON.stringify(createdUploadsFilter, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error creating DatoCMS uploads filter: ${extractDetailedErrorInfo(error)}`);
+    // Create the uploads filter
+    return await typedClient.createUploadsFilter(filterPayload);
   }
-};
+});

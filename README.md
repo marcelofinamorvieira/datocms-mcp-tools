@@ -411,91 +411,283 @@ See [Contributing Guide](docs/CONTRIBUTING.md) for detailed instructions.
 - Ensure all appearances include `addons: []`
 - Check validator compatibility
 
-## 🔍 Debug Mode
+## 🔍 Debug System
 
-The DatoCMS MCP Server includes a comprehensive debug system that provides detailed execution tracking without using console.log (which isn't visible in the MCP environment).
+The DatoCMS MCP Server includes a sophisticated debug system that provides comprehensive execution tracking and performance monitoring. Since `console.log` output isn't visible in the MCP environment, all debug information is returned as part of the response structure.
 
-### Enabling Debug Mode
+### 🚀 Quick Start
 
-1. **Set environment variables in `.env`:**
+1. **Enable debug mode in `.env`:**
    ```bash
-   DEBUG=true                 # Enable full debug mode
-   TRACK_PERFORMANCE=true     # Enable performance tracking only
-   LOG_LEVEL=debug           # Set log level
+   DEBUG=true                 # Enable comprehensive debug tracking
+   TRACK_PERFORMANCE=true     # Enable detailed performance metrics
+   LOG_LEVEL=debug           # Set verbose logging
    ```
 
-2. **What you get with debug mode:**
-   - **Execution traces**: Step-by-step operation tracking
-   - **Performance metrics**: Timing for validation, API calls, and handlers
-   - **Sanitized parameters**: API tokens are automatically redacted
-   - **Error context**: Stack traces and detailed error information
-   - **Response metadata**: Size and type information
-
-3. **Example debug response:**
-   ```json
-   {
-     "success": true,
-     "data": { /* your data */ },
-     "meta": {
-       "debug": {
-         "context": {
-           "operation": "create",
-           "handler": "createRecordHandler",
-           "domain": "records",
-           "performance": {
-             "duration": 150,
-             "stages": {
-               "validation": 10,
-               "handler": 140
-             }
-           },
-           "trace": [
-             "[+0ms] Starting createRecordHandler",
-             "[+10ms] Validation completed in 10ms",
-             "[+15ms] Creating Record",
-             "[+150ms] Handler completed in 140ms"
-           ]
-         }
-       }
-     }
-   }
-   ```
-
-4. **Testing debug mode:**
+2. **Test debug functionality:**
    ```bash
    npm run test:debug
    ```
 
-### Security Considerations
+3. **All responses now include debug metadata** when `DEBUG=true`
 
-- **Never enable in production**: Debug mode may expose sensitive information
-- **Automatic sanitization**: API tokens and passwords are automatically redacted
-- **Performance overhead**: Debug mode adds tracking overhead
+### 📊 Debug Response Structure
 
-### For Developers
-
-When developing new handlers, use the enhanced factory pattern to get automatic debug support:
+When debug mode is enabled, every response includes comprehensive debug information:
 
 ```typescript
-import { createCreateHandler } from "./utils/enhancedHandlerFactory.js";
+{
+  success: boolean,
+  data: any,
+  meta: {
+    debug: {
+      context: {
+        operation: string,        // CRUD operation type (create, read, update, delete, custom)
+        handler: string,          // Specific handler name (e.g., "createRecordHandler")
+        domain: string,           // Domain/module (e.g., "records", "schema", "uploads")
+        timestamp: number,        // Operation start timestamp
+        parameters: object,       // Request parameters (API tokens automatically redacted)
+        performance: {
+          startTime: number,      // Start timestamp
+          endTime: number,        // End timestamp  
+          duration: number,       // Total execution time in milliseconds
+          apiCallDuration: number,// Time spent on DatoCMS API calls
+          stages: {
+            validation: number,   // Schema validation time
+            handler: number       // Handler execution time
+          }
+        },
+        trace: string[]          // Step-by-step execution log with timestamps
+      },
+      response: {
+        dataSize: number,        // Response payload size in bytes
+        dataType: string         // Type of data returned
+      },
+      api: {                     // DatoCMS API call information
+        endpoint: string,        // API endpoint called
+        method: string,          // HTTP method used
+        duration: number         // API call duration
+      },
+      error?: {                  // Only present on errors
+        type: string,            // Error type/class
+        message: string,         // Error message
+        stack: string,           // Full stack trace (debug mode only)
+        details: object          // Additional error details from API
+      }
+    }
+  }
+}
+```
 
+### 🎯 Debug Features
+
+#### 1. **Automatic Execution Tracking**
+Every handler automatically tracks:
+- Start/end timestamps
+- Operation type and context
+- Step-by-step execution traces
+- Performance breakdowns by stage
+
+#### 2. **Performance Monitoring**
+```json
+{
+  "performance": {
+    "duration": 245,
+    "stages": {
+      "validation": 15,      // Zod schema validation time
+      "handler": 230         // Handler business logic time
+    },
+    "apiCallDuration": 180   // Time spent on DatoCMS API
+  }
+}
+```
+
+#### 3. **Security & Sanitization**
+- **API tokens automatically redacted**: `"f9a6b2c8...a7b63db"`
+- **Sensitive data filtered**: Passwords, secrets, and keys
+- **Safe for logging**: No sensitive information exposed
+
+#### 4. **Detailed Execution Traces**
+```json
+{
+  "trace": [
+    "[+0ms] Starting createRecordHandler",
+    "[+15ms] Validating input with create schema",
+    "[+15ms] Validation completed in 15ms",
+    "[+16ms] Initializing DatoCMS client",
+    "[+18ms] Creating Record with itemType: blog_post",
+    "[+195ms] Record created successfully: rec_abc123",
+    "[+245ms] Handler completed in 230ms"
+  ]
+}
+```
+
+#### 5. **Error Context Enrichment**
+When errors occur, debug mode provides:
+- Full error stack traces
+- DatoCMS API error details
+- Context about what operation was being performed
+- Parameter values that caused the error (sanitized)
+
+### 🛠️ Debug Configuration
+
+#### Environment Variables
+```bash
+# .env configuration options
+DEBUG=true|false                    # Master debug toggle
+TRACK_PERFORMANCE=true|false        # Performance monitoring only
+LOG_LEVEL=error|warn|info|debug     # Logging verbosity
+NODE_ENV=development|production     # Environment mode
+```
+
+#### Debug Modes
+| Mode | Purpose | Use Case |
+|------|---------|----------|
+| `DEBUG=false` | Production mode | No debug overhead, minimal logging |
+| `TRACK_PERFORMANCE=true` | Performance only | Monitor timing without full debug |
+| `DEBUG=true` | Full debug | Development, troubleshooting, analysis |
+
+### 🔧 For Developers
+
+#### Enhanced Factory Integration
+All handlers using the enhanced factory pattern automatically get debug support:
+
+```typescript
+import { createCreateHandler } from "../../../../utils/enhancedHandlerFactory.js";
+
+// This handler automatically gets debug tracking
 export const myHandler = createCreateHandler({
   domain: 'myDomain',
-  schemaName: 'create',
+  schemaName: 'create', 
   schema: mySchema,
   entityName: 'MyEntity',
   clientAction: async (client, args) => {
-    // Your implementation
-    return result;
+    // Your business logic here
+    // Debug tracking is automatic!
+    return await client.myEntities.create(args);
   }
 });
 ```
 
-All handlers using the enhanced factory automatically get:
-- Performance tracking
-- Execution traces  
-- Error context enrichment
-- Parameter sanitization
+#### Manual Debug Integration (Advanced)
+For custom handlers not using factories:
+
+```typescript
+import { createDebugContext, addTrace, trackApiCall } from "./debugUtils.js";
+
+export const customHandler = async (args) => {
+  const context = createDebugContext({
+    operation: 'custom',
+    handler: 'customHandler',
+    domain: 'myDomain',
+    parameters: args
+  });
+  
+  addTrace(context, 'Starting custom operation');
+  
+  const timer = createTimer();
+  const result = await someApiCall();
+  
+  trackApiCall(context, {
+    endpoint: '/custom',
+    method: 'GET',
+    duration: timer.stop()
+  });
+  
+  return createStandardResponse(result, {
+    debug: createDebugData(context)
+  });
+};
+```
+
+### 📈 Performance Analysis
+
+Use debug data to analyze performance:
+
+```typescript
+// Example debug output for performance analysis
+{
+  "performance": {
+    "duration": 1250,           // Total time: 1.25 seconds
+    "stages": {
+      "validation": 25,          // Schema validation: 25ms
+      "handler": 1225            // Handler logic: 1.225 seconds
+    },
+    "apiCallDuration": 1100     // API calls took 1.1 seconds
+  }
+}
+```
+
+**Performance insights:**
+- **High validation time**: Complex schema or large payloads
+- **High handler time**: Business logic optimization needed
+- **High API duration**: Network latency or complex DatoCMS operations
+
+### 🚨 Security Considerations
+
+1. **Never enable in production**
+   ```bash
+   # Production .env should have:
+   DEBUG=false
+   TRACK_PERFORMANCE=false
+   LOG_LEVEL=error
+   ```
+
+2. **Automatic sanitization patterns**:
+   - API tokens: `f9a6b2c8...a7b63db`
+   - Passwords: `[REDACTED]`
+   - Keys ending in `_key`, `_secret`: `[REDACTED]`
+   - URLs with tokens: Query parameters sanitized
+
+3. **Performance overhead**:
+   - Debug mode adds ~5-10ms per request
+   - Memory usage increases for trace storage
+   - Network payload size increases
+
+### 🧪 Testing Debug Features
+
+```bash
+# Run the debug test script
+npm run test:debug
+
+# This will:
+# 1. Enable debug mode
+# 2. Execute a handler with invalid token
+# 3. Show debug data in response
+# 4. Demonstrate error tracking
+# 5. Display performance metrics
+```
+
+### 🎛️ Debug Utilities Reference
+
+| Function | Purpose | Usage |
+|----------|---------|-------|
+| `createDebugContext()` | Initialize debug tracking | Start of handler |
+| `addTrace()` | Add execution step | Throughout handler |
+| `trackApiCall()` | Record API call metrics | After API calls |
+| `createTimer()` | Performance measurement | Time operations |
+| `sanitizeSensitiveData()` | Remove sensitive info | Before logging |
+| `createDebugData()` | Format debug response | End of handler |
+| `formatBytes()` | Human readable sizes | Response formatting |
+
+### 💡 Debug Best Practices
+
+1. **Use enhanced factories** for automatic debug support
+2. **Add meaningful traces** for complex operations
+3. **Track API calls** for performance analysis  
+4. **Never commit** with `DEBUG=true`
+5. **Monitor performance impact** in development
+6. **Use debug data** to optimize slow operations
+7. **Include context** in error scenarios
+
+### 🔍 Troubleshooting Debug Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| No debug data in response | `DEBUG=false` | Set `DEBUG=true` in `.env` |
+| Missing performance metrics | `TRACK_PERFORMANCE=false` | Enable performance tracking |
+| Sensitive data visible | Missing sanitization pattern | Add pattern to `debugUtils.ts` |
+| High debug overhead | Complex trace logging | Reduce trace granularity |
 
 ## 🤝 Contributing
 

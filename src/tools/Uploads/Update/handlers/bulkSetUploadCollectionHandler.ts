@@ -1,45 +1,30 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import {
-  isAuthorizationError,
-  isNotFoundError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 
-export const bulkSetUploadCollectionHandler = async (
-  args: z.infer<typeof uploadsSchemas.bulk_set_collection>
-) => {
+export const bulkSetUploadCollectionHandler = createCustomHandler({
+  domain: "uploads",
+  schemaName: "bulk_set_collection",
+  schema: uploadsSchemas.bulk_set_collection,
+  errorContext: {
+    operation: "bulk_update",
+    resourceType: "Upload Collection Assignment",
+    handlerName: "bulkSetUploadCollectionHandler"
+  }
+}, async (args, context) => {
   const { apiToken, uploadIds, collectionId, environment } = args;
 
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  const client = context.getClient(apiToken, environment);
 
-    await client.uploads.bulkSetUploadCollection({
-      uploads: uploadIds.map(id => ({ type: "upload", id })),
-      upload_collection: collectionId
-        ? { type: "upload_collection", id: collectionId }
-        : null
-    });
+  await client.uploads.bulkSetUploadCollection({
+    uploads: uploadIds.map(id => ({ type: "upload", id })),
+    upload_collection: collectionId
+      ? { type: "upload_collection", id: collectionId }
+      : null
+  });
 
-    const action = collectionId
-      ? `assigned to collection '${collectionId}'`
-      : "removed from their collection";
-    return createResponse(`Successfully ${action} ${uploadIds.length} uploads.`);
-  } catch (apiError: unknown) {
-    if (isAuthorizationError(apiError)) {
-      return createErrorResponse("Invalid or unauthorized API token.");
-    }
-    if (isNotFoundError(apiError)) {
-      return createErrorResponse(
-        "Specified uploads or collection not found."
-      );
-    }
-    return createErrorResponse(
-      `Bulk set collection error: ${
-        extractDetailedErrorInfo(apiError)
-      }`
-    );
-  }
-};
+  const action = collectionId
+    ? `assigned to collection '${collectionId}'`
+    : "removed from their collection";
+  return createResponse(`Successfully ${action} ${uploadIds.length} uploads.`);
+});

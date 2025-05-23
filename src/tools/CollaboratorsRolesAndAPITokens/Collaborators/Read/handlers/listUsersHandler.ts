@@ -3,44 +3,24 @@
  * @description Handler for listing DatoCMS site users
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { collaboratorSchemas } from "../../../schemas.js";
-
-type Params = z.infer<typeof collaboratorSchemas.user_list>;
+import { z } from "zod";
+import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
  * Handler for listing DatoCMS site users
  */
-export const listUsersHandler = async (params: Params) => {
-  const { apiToken, environment } = params;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    
-    try {
-      // Fetch all users using the users.list() method
-      const users = await client.users.list();
-
-      // Convert to JSON and create response
-      return createResponse(JSON.stringify({
-        success: true,
-        data: users,
-        message: "Users retrieved successfully"
-      }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error listing DatoCMS site users: ${extractDetailedErrorInfo(error)}`);
+export const listUsersHandler = createListHandler({
+  domain: "collaborators.users",
+  schemaName: "user_list",
+  schema: collaboratorSchemas.user_list,
+  entityName: "User",
+  clientType: "collaborators",
+  listGetter: async (client) => {
+    return await client.listCollaborators();
+  },
+  countGetter: async (client) => {
+    const users = await client.listCollaborators();
+    return users.length;
   }
-};
+});

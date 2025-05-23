@@ -3,46 +3,19 @@
  * @description Handler for deleting a fieldset from DatoCMS
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { schemaSchemas } from "../../../schemas.js";
+import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { schemaSchemas } from "../../../schemas.js";
 
 /**
  * Handler to delete a fieldset from DatoCMS
  */
-export const destroyFieldsetHandler = async (args: z.infer<typeof schemaSchemas.delete_fieldset>) => {
-  const { apiToken, fieldsetId, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken as string, environment as string);
-    
-    try {
-      // Delete the fieldset
-      await client.fieldsets.destroy(fieldsetId as string);
-      
-      // Return success response
-      return createResponse(JSON.stringify({
-        success: true,
-        message: `Fieldset ${fieldsetId} was successfully deleted.`
-      }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Check if it's a not found error
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Fieldset with ID '${fieldsetId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error deleting DatoCMS fieldset: ${extractDetailedErrorInfo(error)}`);
+export const destroyFieldsetHandler = createDeleteHandler({
+  domain: "schema.fieldset",
+  schemaName: "delete_fieldset",
+  schema: schemaSchemas.delete_fieldset,
+  entityName: "Fieldset",
+  idParam: "fieldsetId",
+  clientAction: async (client, args) => {
+    await client.fieldsets.destroy(args.fieldsetId);
   }
-};
+});

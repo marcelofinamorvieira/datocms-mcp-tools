@@ -1,80 +1,43 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import {
-  isAuthorizationError,
-  createErrorResponse,
-  extractDetailedErrorInfo 
-} from "../../../../utils/errorHandlers.js";
+import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
-import { createTypedUploadsClient } from "../../uploadsClient.js";
-import { ListUploadsResponse, isUploadsAuthorizationError } from "../../uploadsTypes.js";
+import { createStandardResponse } from "../../../../utils/standardResponse.js";
 
-export const queryUploadsHandler = async (
-  args: z.infer<typeof uploadsSchemas.query>
-): Promise<ListUploadsResponse> => {
-  const {
-    apiToken,
-    ids,
-    query,
-    fields,
-    locale,
-    order_by,
-    page,
-    returnOnlyIds,
-    environment
-  } = args;
-
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    const typedClient = createTypedUploadsClient(client);
-
+export const queryUploadsHandler = createListHandler({
+  domain: "uploads",
+  schemaName: "query",
+  schema: uploadsSchemas.query,
+  entityName: "Upload",
+  listGetter: async (client, args) => {
     // Prepare query parameters
     const queryParams: any = {};
-    if (ids) queryParams.ids = ids;
-    if (query) queryParams.query = query;
-    if (fields) queryParams.fields = fields;
-    if (locale) queryParams.locale = locale;
-    if (order_by) queryParams.order_by = order_by;
-    if (page) queryParams.page = page;
+    if (args.ids) queryParams.ids = args.ids;
+    if (args.query) queryParams.query = args.query;
+    if (args.fields) queryParams.fields = args.fields;
+    if (args.locale) queryParams.locale = args.locale;
+    if (args.order_by) queryParams.order_by = args.order_by;
+    if (args.page) queryParams.page = args.page;
 
-    // Use the typed client
-    const uploads = await typedClient.listUploads(queryParams);
-
+    const uploads = await client.uploads.list(queryParams);
+    
     // Handle empty results
     if (!uploads.length) {
-      return {
+      return createStandardResponse({
         success: true,
         data: [],
         message: "No uploads matched your query."
-      };
+      });
     }
     
     // Handle IDs-only request
-    if (returnOnlyIds) {
-      return {
+    if (args.returnOnlyIds) {
+      return createStandardResponse({
         success: true,
-        data: uploads.map(u => ({ id: u.id, type: u.type })) as any, // Type casting due to partial result
+        data: uploads.map(u => ({ id: u.id, type: u.type })),
         message: `Found ${uploads.length} uploads matching your query.`
-      };
+      });
     }
     
     // Return full uploads
-    return {
-      success: true,
-      data: uploads,
-      message: `Found ${uploads.length} uploads matching your query.`
-    };
-  } catch (apiError: unknown) {
-    if (isUploadsAuthorizationError(apiError)) {
-      return {
-        success: false,
-        error: "Error: Invalid or unauthorized DatoCMS API token."
-      };
-    }
-    return {
-      success: false,
-      error: `Error querying uploads: ${extractDetailedErrorInfo(apiError)}`
-    };
+    return uploads;
   }
-};
+});

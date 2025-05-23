@@ -4,47 +4,28 @@
  * Extracted from the GetDatoCMSRecordVersion tool
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import type { recordsSchemas } from "../../schemas.js";
+import { createRetrieveHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { recordsSchemas } from "../../schemas.js";
 
 /**
  * Handler function for retrieving a specific version of a DatoCMS record
  */
-export const getRecordVersionHandler = async (args: z.infer<typeof recordsSchemas.version_get>) => {
-  const { apiToken, versionId, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const getRecordVersionHandler = createRetrieveHandler({
+  domain: "records",
+  schemaName: "version_get",
+  schema: recordsSchemas.version_get,
+  entityName: "Record Version",
+  idParam: "versionId",
+  clientAction: async (client, args) => {
+    const { versionId } = args;
     
-    try {
-      // Fetch the specific version of the record
-      const itemVersion = await client.itemVersions.find(versionId);
-      
-      // Return the version information as JSON using createResponse for consistent formatting
-      return createResponse(JSON.stringify({
-        message: `Successfully retrieved record version with ID: ${versionId}`,
-        version: itemVersion
-      }, null, 2));
-      
-    } catch (error: unknown) {
-      // Handle specific error cases
-      if (error instanceof Error && error.message.includes("404")) {
-        return createErrorResponse(
-          `Record version not found: The version with ID ${versionId} does not exist or has been deleted.`
-        );
-      }
-      
-      return createErrorResponse(
-        `Error retrieving record version: ${extractDetailedErrorInfo(error)}`
-      );
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(
-      `Error initializing DatoCMS client: ${extractDetailedErrorInfo(error)}`
-    );
+    // Fetch the specific version of the record
+    const itemVersion = await client.itemVersions.find(versionId);
+    
+    // Return the version information
+    return {
+      message: `Successfully retrieved record version with ID: ${versionId}`,
+      version: itemVersion
+    };
   }
-};
+});

@@ -3,42 +3,36 @@
  * @description Handler for activating maintenance mode
  */
 
-import type { z } from "zod";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { environmentSchemas } from "../../schemas.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { environmentSchemas } from "../../schemas.js";
 
 /**
  * Handler for activating maintenance mode
  */
-export const activateMaintenanceModeHandler = async (args: z.infer<typeof environmentSchemas.maintenance_activate>) => {
+export const activateMaintenanceModeHandler = createCustomHandler({
+  domain: "environments",
+  schemaName: "maintenance_activate",
+  schema: environmentSchemas.maintenance_activate,
+  errorContext: {
+    operation: "activateMaintenanceMode",
+    resourceType: "MaintenanceMode",
+    handlerName: "activateMaintenanceModeHandler"
+  }
+}, async (args) => {
   const { apiToken, force = false } = args;
   
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken);
-    
-    try {
-      // Activate maintenance mode
-      const options = { force };
-      const maintenanceMode = await client.maintenanceMode.activate(options);
-      
-      if (!maintenanceMode) {
-        return createErrorResponse("Error: Failed to activate maintenance mode.");
-      }
-      
-      return createResponse(JSON.stringify(maintenanceMode, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error activating maintenance mode: ${extractDetailedErrorInfo(error)}`);
+  // Initialize DatoCMS client
+  const client = UnifiedClientManager.getDefaultClient(apiToken);
+  
+  // Activate maintenance mode
+  const options = { force };
+  const maintenanceMode = await client.maintenanceMode.activate(options);
+  
+  if (!maintenanceMode) {
+    throw new Error("Failed to activate maintenance mode.");
   }
-};
+  
+  return createResponse(JSON.stringify(maintenanceMode, null, 2));
+});

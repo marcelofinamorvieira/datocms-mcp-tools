@@ -1,43 +1,19 @@
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { z } from "zod";
+import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { apiTokenSchemas } from "../../../schemas.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-
-type Params = z.infer<typeof apiTokenSchemas.destroy_token>;
 
 /**
  * Handler for deleting an API token in DatoCMS
  */
-export const destroyTokenHandler = async (params: Params) => {
-  const { apiToken, tokenId, environment } = params;
-
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-
-    try {
-      // Delete the token
-      await client.accessTokens.destroy(tokenId);
-
-      // Return success response
-      return createResponse(JSON.stringify({
-        success: true,
-        message: `API token with ID '${tokenId}' was successfully deleted`
-      }, null, 2));
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: API token with ID '${tokenId}' not found.`);
-      }
-
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error deleting DatoCMS API token: ${extractDetailedErrorInfo(error)}`);
+export const destroyTokenHandler = createDeleteHandler({
+  domain: "collaborators.apiTokens",
+  schemaName: "destroy_token",
+  schema: apiTokenSchemas.destroy_token,
+  entityName: "API Token",
+  idParam: "tokenId",
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof apiTokenSchemas.destroy_token>) => {
+    await client.destroyAPIToken(args.tokenId);
+    return { success: true };
   }
-};
+});

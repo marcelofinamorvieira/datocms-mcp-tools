@@ -1,86 +1,60 @@
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { z } from "zod";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { apiTokenSchemas } from "../../../schemas.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-
-type Params = z.infer<typeof apiTokenSchemas.update_token>;
+import { UpdateAPITokenParams, Role } from "../../../collaboratorsTypes.js";
 
 /**
  * Handler for updating an API token in DatoCMS
  */
-export const updateTokenHandler = async (params: Params) => {
-  const {
-    apiToken,
-    tokenId,
-    name,
-    role,
-    can_access_cda,
-    can_access_cda_preview,
-    can_access_cma,
-    environment
-  } = params;
+export const updateTokenHandler = createUpdateHandler({
+  domain: "collaborators.apiTokens",
+  schemaName: "update_token",
+  schema: apiTokenSchemas.update_token,
+  entityName: "API Token",
+  idParam: "tokenId",
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof apiTokenSchemas.update_token>) => {
+    const {
+      tokenId,
+      name,
+      role,
+      can_access_cda,
+      can_access_cda_preview,
+      can_access_cma
+    } = args;
 
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+    // Prepare the update payload with all required fields
+    const updatePayload: UpdateAPITokenParams = {
+      name: name,
+      can_access_cda: can_access_cda,
+      can_access_cda_preview: can_access_cda_preview,
+      can_access_cma: can_access_cma,
+      role: null
+    };
 
-    try {
-      // First, get the current token to ensure we have all required fields
-      const currentToken = await client.accessTokens.find(tokenId);
-
-      // Prepare the update payload with all required fields
-      const updatePayload: any = {
-        name: name,
-        can_access_cda: can_access_cda,
-        can_access_cda_preview: can_access_cda_preview,
-        can_access_cma: can_access_cma
-      };
-
-      // Handle role assignment
-      if (role === null) {
-        updatePayload.role = null;
-      } else if (typeof role === 'string') {
-        // Handle predefined role names or role IDs
-        if (['admin', 'editor', 'developer', 'seo', 'contributor'].includes(role)) {
-          const roles = await client.roles.list();
-          const matchingRole = roles.find(r => r.name.toLowerCase() === role.toLowerCase());
-          if (matchingRole) {
-            updatePayload.role = { id: matchingRole.id, type: "role" };
-          } else {
-            throw new Error(`Predefined role '${role}' not found in your DatoCMS project.`);
-          }
+    // Handle role assignment
+    if (role === null) {
+      updatePayload.role = null;
+    } else if (typeof role === 'string') {
+      // Handle predefined role names or role IDs
+      if (['admin', 'editor', 'developer', 'seo', 'contributor'].includes(role)) {
+        const roles = await client.listRoles();
+        const matchingRole = roles.find((r: Role) => r.attributes.name.toLowerCase() === role.toLowerCase());
+        if (matchingRole) {
+          updatePayload.role = { id: matchingRole.id, type: "role" };
         } else {
-          // Assume it's a role ID
-          updatePayload.role = { id: role, type: "role" };
+          throw new Error(`Predefined role '${role}' not found in your DatoCMS project.`);
         }
-      } else if (typeof role === 'object' && role !== null) {
-        // Direct role object assignment
-        updatePayload.role = role;
+      } else {
+        // Assume it's a role ID
+        updatePayload.role = { id: role, type: "role" };
       }
-
-      // Update the API token with all required fields
-      const updatedToken = await client.accessTokens.update(tokenId, updatePayload);
-
-      // Convert to JSON and create response
-      return createResponse(JSON.stringify({
-        success: true,
-        data: updatedToken,
-        message: "API token updated successfully"
-      }, null, 2));
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: API token with ID '${tokenId}' not found.`);
-      }
-
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+    } else if (typeof role === 'object' && role !== null) {
+      // Direct role object assignment
+      updatePayload.role = role;
     }
-  } catch (error) {
-    return createErrorResponse(`Error updating DatoCMS API token: ${extractDetailedErrorInfo(error)}`);
+
+    // Update the API token with all required fields
+    return await client.updateAPIToken(tokenId, updatePayload);
   }
-};
+});

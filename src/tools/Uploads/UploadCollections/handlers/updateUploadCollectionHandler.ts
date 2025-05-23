@@ -1,33 +1,18 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import {
-  isAuthorizationError,
-  isNotFoundError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createUpdateHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
+import { createErrorResponse } from "../../../../utils/responseHandlers.js";
 
-export const updateUploadCollectionHandler = async (
-  args: z.infer<typeof uploadsSchemas.update_collection>
-) => {
-  const { apiToken, uploadCollectionId, environment, ...data } = args;
-  if (Object.keys(data).length === 0) {
-    return createErrorResponse("At least one field must be provided for update.");
-  }
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    const updated = await client.uploadCollections.update(uploadCollectionId, data);
-    return createResponse(JSON.stringify(updated, null, 2));
-  } catch (e) {
-    if (isAuthorizationError(e)) {
-      return createErrorResponse("Invalid or unauthorized API token.");
+export const updateUploadCollectionHandler = createUpdateHandler({
+  domain: "uploads",
+  schemaName: "update_collection",
+  schema: uploadsSchemas.update_collection,
+  entityName: "Upload Collection",
+  idParam: "uploadCollectionId",
+  clientAction: async (client, args) => {
+    const { apiToken, uploadCollectionId, environment, ...data } = args;
+    if (Object.keys(data).length === 0) {
+      throw new Error("At least one field must be provided for update.");
     }
-    if (isNotFoundError(e)) {
-      return createErrorResponse(`Collection '${uploadCollectionId}' not found.`);
-    }
-    return createErrorResponse(
-      `Error updating collection: ${e instanceof Error ? e.message : String(e)}`
-    );
+    return await client.uploadCollections.update(uploadCollectionId, data);
   }
-};
+});

@@ -1,11 +1,6 @@
-import { z } from "zod";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { createRetrieveHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
-import type { McpResponse } from "../../../webhookAndBuildTriggerTypes.js";
-
-type RetrieveBuildTriggerParams = z.infer<typeof buildTriggerSchemas.retrieve>;
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Retrieves a specific build trigger by ID
@@ -13,38 +8,13 @@ type RetrieveBuildTriggerParams = z.infer<typeof buildTriggerSchemas.retrieve>;
  * @param params Parameters for retrieving a build trigger
  * @returns Response with the build trigger details
  */
-export async function retrieveBuildTriggerHandler(
-  params: RetrieveBuildTriggerParams
-): Promise<McpResponse> {
-  try {
-    const { apiToken, environment, buildTriggerId } = params;
-    
-    // Initialize the client with the API token and environment
-    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
-
-    // Fetch the build trigger by ID with proper typing
-    const buildTrigger = await client.getBuildTrigger(buildTriggerId);
-
-    // Return the build trigger details
-    return createResponse(JSON.stringify(buildTrigger, null, 2));
-  } catch (error) {
-    // Handle authorization errors
-    if (isAuthorizationError(error)) {
-      return createErrorResponse(
-        "The provided API token does not have permission to access build triggers."
-      );
-    }
-
-    // Handle not found errors
-    if (isNotFoundError(error)) {
-      return createErrorResponse(
-        `No build trigger found with ID: ${params.buildTriggerId}`
-      );
-    }
-
-    // Handle other errors
-    return createErrorResponse(
-      `Failed to retrieve build trigger: ${extractDetailedErrorInfo(error)}`
-    );
+export const retrieveBuildTriggerHandler = createRetrieveHandler({
+  domain: "webhooks.buildTriggers",
+  schemaName: "retrieve",
+  schema: buildTriggerSchemas.retrieve,
+  entityName: "Build Trigger",
+  idParam: "buildTriggerId",
+  clientAction: async (client, args) => {
+    return await client.buildTriggers.find(args.buildTriggerId);
   }
-}
+});

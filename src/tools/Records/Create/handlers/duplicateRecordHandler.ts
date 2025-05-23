@@ -4,52 +4,34 @@
  * Extracted from the DuplicateDatoCMSRecord tool
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { recordsSchemas } from "../../schemas.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { recordsSchemas } from "../../schemas.js";
 
 /**
  * Handler function for duplicating a DatoCMS record
  */
-export const duplicateRecordHandler = async (args: z.infer<typeof recordsSchemas.duplicate>) => {
-  const { apiToken, itemId, returnOnlyConfirmation = false, environment } = args;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const duplicateRecordHandler = createCustomHandler({
+  domain: "records",
+  schemaName: "duplicate",
+  schema: recordsSchemas.duplicate,
+  entityName: "Record",
+  clientAction: async (client, args) => {
+    const { itemId, returnOnlyConfirmation = false } = args;
     
-    try {
-      // Duplicate the item
-      const duplicatedItem = await client.items.duplicate(itemId);
-      
-      // If no item returned, return error
-      if (!duplicatedItem) {
-        return createErrorResponse(`Error: Failed to duplicate record with ID '${itemId}'.`);
-      }
-
-      // Return only confirmation message if requested (to save on tokens)
-      if (returnOnlyConfirmation) {
-        return createResponse(`Successfully duplicated record with ID '${itemId}'. New record ID: '${duplicatedItem.id}'`);
-      }
-
-      // Otherwise return the full record data
-      return createResponse(JSON.stringify(duplicatedItem, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Record with ID '${itemId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
+    // Duplicate the item
+    const duplicatedItem = await client.items.duplicate(itemId);
+    
+    // If no item returned, return error
+    if (!duplicatedItem) {
+      throw new Error(`Failed to duplicate record with ID '${itemId}'.`);
     }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error duplicating DatoCMS record: ${extractDetailedErrorInfo(error)}`);
+
+    // Return only confirmation message if requested (to save on tokens)
+    if (returnOnlyConfirmation) {
+      return `Successfully duplicated record with ID '${itemId}'. New record ID: '${duplicatedItem.id}'`;
+    }
+
+    // Otherwise return the full record data
+    return duplicatedItem;
   }
-};
+});

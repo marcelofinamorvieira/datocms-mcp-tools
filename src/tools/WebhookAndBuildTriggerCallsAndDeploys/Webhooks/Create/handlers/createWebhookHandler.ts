@@ -1,11 +1,7 @@
-import { z } from "zod";
-import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { createWebhookAndBuildTriggerClient } from "../../../webhookAndBuildTriggerClient.js";
-import type { McpResponse, CreateWebhookParams as ClientCreateParams } from "../../../webhookAndBuildTriggerTypes.js";
-
-type CreateWebhookParams = z.infer<typeof webhookSchemas.create>;
+import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
+import type { CreateWebhookParams as ClientCreateParams } from "../../../webhookAndBuildTriggerTypes.js";
 
 /**
  * Creates a new webhook in DatoCMS
@@ -13,14 +9,13 @@ type CreateWebhookParams = z.infer<typeof webhookSchemas.create>;
  * @param params Parameters for creating a webhook
  * @returns Response with the created webhook details
  */
-export async function createWebhookHandler(
-  params: CreateWebhookParams
-): Promise<McpResponse> {
-  try {
-    const { apiToken, environment, name, url, headers, events } = params;
-    
-    // Initialize the client with the API token and environment
-    const client = createWebhookAndBuildTriggerClient(apiToken, environment);
+export const createWebhookHandler = createCreateHandler({
+  domain: "webhooks.webhooks",
+  schemaName: "create",
+  schema: webhookSchemas.create,
+  entityName: "Webhook",
+  clientAction: async (client, args) => {
+    const { name, url, headers, events } = args;
 
     // Create the webhook with the provided parameters using our typed client
     const createParams: ClientCreateParams = {
@@ -31,34 +26,6 @@ export async function createWebhookHandler(
     };
 
     // Create the webhook with proper typing
-    const webhook = await client.createWebhook(createParams);
-
-    // Return the created webhook details
-    return createResponse(JSON.stringify(webhook, null, 2));
-  } catch (error) {
-    // Handle authorization errors
-    if (isAuthorizationError(error)) {
-      return createErrorResponse(
-        "The provided API token does not have permission to create webhooks."
-      );
-    }
-
-    // Handle validation errors
-    if (
-      typeof error === 'object' && 
-      error !== null && 
-      ('status' in error && error.status === 422 ||
-       'message' in error && typeof error.message === 'string' && 
-       (error.message.includes('422') || error.message.toLowerCase().includes('validation')))
-    ) {
-      return createErrorResponse(
-        `Invalid webhook data: ${extractDetailedErrorInfo(error)}`
-      );
-    }
-
-    // Handle other errors
-    return createErrorResponse(
-      `Failed to create webhook: ${extractDetailedErrorInfo(error)}`
-    );
+    return await client.webhooks.create(createParams);
   }
-}
+});

@@ -4,47 +4,43 @@
  * Extracted from the QueryDatoCMSRecords tool
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { isAuthorizationError, createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
+import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
-import type { recordsSchemas } from "../../schemas.js";
-import type { Item, RecordFilter, RecordQueryParams, McpResponse } from "../../types.js";
+import { recordsSchemas } from "../../schemas.js";
+import type { Item, RecordQueryParams } from "../../types.js";
 
 /**
  * Handler function for querying DatoCMS records with various filters
  */
-export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.query>): Promise<McpResponse> => {
-  const { 
-    apiToken, 
-    textSearch, 
-    ids, 
-    modelId, 
-    modelName, 
-    version = "current", 
-    returnAllLocales = false, 
-    returnOnlyIds = false,
-    page,
-    nested = true,
-    order_by,
-    fields,
-    locale,
-    environment
-  } = args;
+export const queryRecordsHandler = createListHandler({
+  domain: "records",
+  schemaName: "query",
+  schema: recordsSchemas.query,
+  entityName: "Record",
+  listGetter: async (client, args) => {
+    const { 
+      textSearch, 
+      ids, 
+      modelId, 
+      modelName, 
+      version = "current", 
+      returnAllLocales = false, 
+      returnOnlyIds = false,
+      page,
+      nested = true,
+      order_by,
+      fields,
+      locale
+    } = args;
 
-  try {
     // Validate that field filtering requires a model specification
     if (fields && Object.keys(fields).length > 0 && !modelId && !modelName && !textSearch) {
-      return createErrorResponse(
+      throw new Error(
         "Field filtering requires either 'modelId' or 'modelName' to be specified. " +
         "DatoCMS does not support cross-model field filtering. " +
         "Please specify which model/content type you want to filter within."
       );
     }
-
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     // Prepare query parameters with proper typing
     const queryParams: RecordQueryParams = {
@@ -141,126 +137,120 @@ export const queryRecordsHandler = async (args: z.infer<typeof recordsSchemas.qu
       queryParams.filter = filter;
     }
     
-    try {
-      // Use type assertion to handle the client's expected types
-      // This allows us to maintain our enhanced type system while still working with the client
-      const clientParams = queryParams as any; // Use any here to bridge the gap between our types and client types
-      
-      
-      // Pass the filter directly to the API since we're no longer trying to combine
-      // filter[type] with filter[fields] - field filtering is handled client-side
-      
-      // Type the response properly
-      let paginatedItems = await client.items.list(clientParams) as Item[] & {
-        meta?: { 
-          total_count?: number;
-          [key: string]: unknown;
-        }
-      };
-      
-      // Apply client-side field filtering if needed
-      // This is necessary because DatoCMS API doesn't support filter[type] + filter[fields]
-      if (fields && Object.keys(fields).length > 0) {
-        paginatedItems = paginatedItems.filter(item => {
-          return Object.entries(fields).every(([fieldName, fieldValue]) => {
-            const itemValue = (item as any)[fieldName];
-            
-            if (typeof fieldValue === 'object' && fieldValue !== null && !Array.isArray(fieldValue)) {
-              // Handle condition objects like { eq: "value" }
-              const conditions = fieldValue as Record<string, any>;
-              return Object.entries(conditions).every(([operator, value]) => {
-                switch (operator) {
-                  case 'eq':
-                    return itemValue === value;
-                  case 'neq':
-                    return itemValue !== value;
-                  case 'in':
-                    return Array.isArray(value) && value.includes(itemValue);
-                  case 'nin':
-                    return Array.isArray(value) && !value.includes(itemValue);
-                  case 'gt':
-                    return itemValue > value;
-                  case 'gte':
-                    return itemValue >= value;
-                  case 'lt':
-                    return itemValue < value;
-                  case 'lte':
-                    return itemValue <= value;
-                  case 'exists':
-                    return value ? (itemValue !== null && itemValue !== undefined) : (itemValue === null || itemValue === undefined);
-                  default:
-                    // For unsupported operators, fall back to equality check
-                    return itemValue === value;
-                }
-              });
-            } else {
-              // Direct value comparison
-              return itemValue === fieldValue;
-            }
-          });
-        }) as Item[] & { meta?: { total_count?: number; [key: string]: unknown; } };
+    // Use type assertion to handle the client's expected types
+    // This allows us to maintain our enhanced type system while still working with the client
+    const clientParams = queryParams as any; // Use any here to bridge the gap between our types and client types
+    
+    
+    // Pass the filter directly to the API since we're no longer trying to combine
+    // filter[type] with filter[fields] - field filtering is handled client-side
+    
+    // Type the response properly
+    let paginatedItems = await client.items.list(clientParams) as Item[] & {
+      meta?: { 
+        total_count?: number;
+        [key: string]: unknown;
       }
-
-      // Return enhanced response for empty results with metadata
-      if (paginatedItems.length === 0) {
-        return createResponse(JSON.stringify({
-          message: "No items found matching your query.",
-          pagination: {
-            limit: pageParams.limit,
-            offset: pageParams.offset,
-            total: 0,
-            has_more: false
-          },
-          records: []
-        }, null, 2));
-      }
+    };
       
-      // Check for meta property with better typing
-      const totalCount = paginatedItems.meta?.total_count ?? paginatedItems.length;
-      
-      // Calculate if there might be more records
-      const hasMoreRecords = paginatedItems.length === pageParams.limit && 
-                          (pageParams.offset + paginatedItems.length) < totalCount;
-      
-      // Enhanced pagination metadata
-      const paginationInfo = {
-        limit: pageParams.limit,
-        offset: pageParams.offset,
-        total: totalCount,
-        has_more: hasMoreRecords
-      };
-      
-      // Use map approach for collecting IDs
-      if (returnOnlyIds) {
-        const allItemIds = paginatedItems.map(item => item.id);
-        return createResponse(JSON.stringify({
-          message: `Found ${allItemIds.length} record(s) matching your query.`,
-          pagination: paginationInfo,
-          recordIds: allItemIds
-        }, null, 2));
-      }
-      
-      // Process items to filter locales with better typing
-      const allItems = paginatedItems.map(item => 
-        returnMostPopulatedLocale(item, returnAllLocales)
-      );
-      
-      // Return processed items with enhanced pagination metadata and debug info
-      return createResponse(JSON.stringify({
-        message: `Found ${allItems.length} record(s) matching your query.`,
-        pagination: paginationInfo,
-        records: allItems
-      }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      // Generic API error handling with improved type safety
-      return createErrorResponse(`Error querying DatoCMS records: ${extractDetailedErrorInfo(apiError)}`);
+    // Apply client-side field filtering if needed
+    // This is necessary because DatoCMS API doesn't support filter[type] + filter[fields]
+    if (fields && Object.keys(fields).length > 0) {
+      paginatedItems = paginatedItems.filter(item => {
+        return Object.entries(fields).every(([fieldName, fieldValue]) => {
+          const itemValue = (item as any)[fieldName];
+          
+          if (typeof fieldValue === 'object' && fieldValue !== null && !Array.isArray(fieldValue)) {
+            // Handle condition objects like { eq: "value" }
+            const conditions = fieldValue as Record<string, any>;
+            return Object.entries(conditions).every(([operator, value]) => {
+              switch (operator) {
+                case 'eq':
+                  return itemValue === value;
+                case 'neq':
+                  return itemValue !== value;
+                case 'in':
+                  return Array.isArray(value) && value.includes(itemValue);
+                case 'nin':
+                  return Array.isArray(value) && !value.includes(itemValue);
+                case 'gt':
+                  return itemValue > value;
+                case 'gte':
+                  return itemValue >= value;
+                case 'lt':
+                  return itemValue < value;
+                case 'lte':
+                  return itemValue <= value;
+                case 'exists':
+                  return value ? (itemValue !== null && itemValue !== undefined) : (itemValue === null || itemValue === undefined);
+                default:
+                  // For unsupported operators, fall back to equality check
+                  return itemValue === value;
+              }
+            });
+          } else {
+            // Direct value comparison
+            return itemValue === fieldValue;
+          }
+        });
+      }) as Item[] & { meta?: { total_count?: number; [key: string]: unknown; } };
     }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error querying DatoCMS records: ${extractDetailedErrorInfo(error)}`);
+
+    // Use map approach for collecting IDs
+    if (returnOnlyIds) {
+      const allItemIds = paginatedItems.map(item => item.id);
+      return {
+        message: `Found ${allItemIds.length} record(s) matching your query.`,
+        recordIds: allItemIds
+      };
+    }
+    
+    // Process items to filter locales with better typing
+    const allItems = paginatedItems.map(item => 
+      returnMostPopulatedLocale(item, returnAllLocales)
+    );
+    
+    // Return processed items
+    return allItems;
+  },
+  countGetter: async (client, args) => {
+    // For count, we need to run the same query logic
+    const { 
+      textSearch, 
+      ids, 
+      modelId, 
+      modelName, 
+      version = "current", 
+      nested = true,
+      locale
+    } = args;
+
+    const queryParams: RecordQueryParams = {
+      version: version as "published" | "current",
+      nested,
+      page: { limit: 1, offset: 0 } // Just get count
+    };
+    
+    let filter: Record<string, unknown> | undefined;
+    
+    if (ids) {
+      filter = { ids: Array.isArray(ids) ? ids : [ids] };
+      if (locale) filter.locale = locale;
+    } else if (textSearch) {
+      filter = { query: textSearch };
+      if ((modelId || modelName)) filter.type = modelId || modelName;
+      if (locale) filter.locale = locale;
+    } else if (modelId || modelName) {
+      filter = { type: modelId || modelName };
+      if (locale) filter.locale = locale;
+    }
+    
+    if (filter) queryParams.filter = filter;
+    
+    const result = await client.items.list(queryParams as any) as Item[] & {
+      meta?: { total_count?: number }
+    };
+    
+    return result.meta?.total_count ?? 0;
   }
-};
+});

@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import mime from "mime-types";
 import { createResponse } from "../../../../utils/responseHandlers.js";
-import { withErrorHandling } from "../../../../utils/errorHandlerWrapper.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
 
 interface UploadRequestResponse {
@@ -20,9 +20,16 @@ const getFilenameFromUrl = (url: string) => {
   return clean.substring(clean.lastIndexOf("/") + 1) || "downloaded-file";
 };
 
-export const createUploadHandlerImplementation = async (
-  args: z.infer<typeof uploadsSchemas.create>
-) => {
+export const createUploadHandler = createCustomHandler({
+  domain: "uploads",
+  schemaName: "create",
+  schema: uploadsSchemas.create,
+  errorContext: {
+    operation: "create",
+    resourceType: "Upload",
+    handlerName: "createUploadHandler"
+  }
+}, async (args) => {
   const {
     apiToken,
     url,
@@ -132,13 +139,4 @@ export const createUploadHandlerImplementation = async (
 
   const upload = await client.uploads.create(payload);
   return createResponse(JSON.stringify(upload, null, 2));
-};
-
-// Wrap with consistent error handling
-export const createUploadHandler = withErrorHandling(
-  createUploadHandlerImplementation,
-  {
-    handlerName: "createUpload",
-    resourceType: "upload"
-  }
-);
+});

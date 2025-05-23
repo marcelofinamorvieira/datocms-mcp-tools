@@ -1,28 +1,14 @@
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import {
-  isAuthorizationError,
-  createErrorResponse
-, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
 
-export const listUploadTagsHandler = async (
-  args: z.infer<typeof uploadsSchemas.list_tags>
-) => {
-  const { apiToken, filter, environment } = args;
-  try {
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const listUploadTagsHandler = createListHandler({
+  domain: "uploads",
+  schemaName: "list_tags",
+  schema: uploadsSchemas.list_tags,
+  entityName: "Upload Tag",
+  listGetter: async (client, args) => {
     const opts: any = {};
-    if (filter) opts.filter = { query: filter };
-    const tags = await client.uploadTags.list(opts);
-    return createResponse(JSON.stringify(tags, null, 2));
-  } catch (e) {
-    if (isAuthorizationError(e)) {
-      return createErrorResponse("Invalid or unauthorized API token.");
-    }
-    return createErrorResponse(
-      `Error listing upload tags: ${e instanceof Error ? e.message : String(e)}`
-    );
+    if (args.filter) opts.filter = { query: args.filter };
+    return await client.uploadTags.list(opts);
   }
-};
+});

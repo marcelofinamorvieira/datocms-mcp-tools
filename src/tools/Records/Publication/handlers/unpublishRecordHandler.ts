@@ -4,43 +4,32 @@
  * Extracted from the UnpublishDatoCMSRecord tool
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createErrorResponse, extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import type { recordsSchemas } from "../../schemas.js";
-import type { Item, McpResponse, DatoCMSValidationError } from "../../types.js";
-import { isAuthorizationError, isNotFoundError, isValidationError } from "../../types.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { recordsSchemas } from "../../schemas.js";
+import type { Item, DatoCMSValidationError } from "../../types.js";
+import { isValidationError } from "../../types.js";
 
 /**
  * Handler function for unpublishing a DatoCMS record
  */
-export const unpublishRecordHandler = async (args: z.infer<typeof recordsSchemas.unpublish>): Promise<McpResponse> => {
-  const { apiToken, itemId, recursive = false, environment } = args;
+export const unpublishRecordHandler = createCustomHandler({
+  domain: "records",
+  schemaName: "unpublish",
+  schema: recordsSchemas.unpublish,
+  entityName: "Record",
+  clientAction: async (client, args) => {
+    const { itemId, recursive = false } = args;
 
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    
     try {
       // Unpublish entire record (all locales) - content_in_locales is not in the schema
       const unpublishedItem: Item = await client.items.unpublish(itemId, undefined, { recursive });
       
       if (!unpublishedItem) {
-        return createErrorResponse(`Error: Failed to unpublish record with ID '${itemId}'.`);
+        throw new Error(`Failed to unpublish record with ID '${itemId}'.`);
       }
       
-      return createResponse(JSON.stringify(unpublishedItem, null, 2));
-      
+      return unpublishedItem;
     } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: Record with ID '${itemId}' not found.`);
-      }
-      
       if (isValidationError(apiError)) {
         const validationError = apiError as DatoCMSValidationError;
         const validationDetails = validationError.errors?.map(err => 
@@ -49,13 +38,11 @@ export const unpublishRecordHandler = async (args: z.infer<typeof recordsSchemas
             : JSON.stringify(err)
         ).join('\n') || 'Unknown validation error';
         
-        return createErrorResponse(`Error: Unable to unpublish record due to validation errors:\n${validationDetails}`);
+        throw new Error(`Unable to unpublish record due to validation errors:\n${validationDetails}`);
       }
       
-      // Re-throw other API errors to be caught by the outer catch
+      // Re-throw other API errors
       throw apiError;
     }
-  } catch (error: unknown) {
-    return createErrorResponse(`Error unpublishing DatoCMS record: ${extractDetailedErrorInfo(error)}`);
   }
-};
+});

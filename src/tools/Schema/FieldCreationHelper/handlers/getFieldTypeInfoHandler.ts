@@ -1,6 +1,6 @@
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { schemaSchemas } from "../../schemas.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import type { StandardResponse } from "../../../../utils/standardResponse.js";
 import { fieldTemplates, getAvailableFieldTypes, getAvailableAppearances, getFieldTemplate } from "../fieldTemplates/index.js";
 
 /**
@@ -927,17 +927,20 @@ const fieldTypeDocs = {
  * This provides detailed documentation about field types and their supported configurations
  * along with working template examples
  */
-export const getFieldTypeInfoHandler = async (args: { 
-  apiToken: string;
-  environment?: string;
-  fieldType?: string;
-  appearance?: string;
-}): Promise<StandardResponse<any>> => {
+export const getFieldTypeInfoHandler = createCustomHandler({
+  domain: "schema",
+  schemaName: "get_field_type_info",
+  schema: schemaSchemas.get_field_type_info,
+  errorContext: {
+    operation: "getFieldTypeInfo",
+    resourceType: "FieldTypeInfo",
+    handlerName: "getFieldTypeInfoHandler"
+  }
+}, async (args) => {
   // Set default environment if not provided
   const environment = args.environment || "main";
-  try {
-    // Get the client
-    const client = await UnifiedClientManager.getDefaultClient(args.apiToken, environment);
+  // Get the client
+  const client = await UnifiedClientManager.getDefaultClient(args.apiToken, environment);
     
     // If a specific field template is requested
     if (args.fieldType && args.appearance) {
@@ -1095,14 +1098,7 @@ JSON Field (Checkbox Group):
 - Get available field types: no parameters
 `
     };
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      success: false,
-      error: `Error retrieving field type information: ${errorMessage}`
-    };
-  }
-};
+});
 
 /**
  * Helper function to get a flat list of all field types from documentation

@@ -3,55 +3,32 @@
  * @description Handler for updating a DatoCMS user
  */
 
-import type { z } from "zod";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-import type { collaboratorSchemas } from "../../../schemas.js";
-
-type Params = z.infer<typeof collaboratorSchemas.user_update>;
+import { z } from "zod";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { collaboratorSchemas } from "../../../schemas.js";
+import { UpdateCollaboratorParams } from "../../../collaboratorsTypes.js";
 
 /**
  * Handler for updating a DatoCMS user
  */
-export const updateUserHandler = async (params: Params) => {
-  const { apiToken, userId, email, first_name, last_name, role_id, environment } = params;
-  
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+export const updateUserHandler = createUpdateHandler({
+  domain: "collaborators.users",
+  schemaName: "user_update",
+  schema: collaboratorSchemas.user_update,
+  entityName: "User",
+  idParam: "userId",
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.user_update>) => {
+    const { userId, email, first_name, last_name, role_id } = args;
     
-    try {
-      // Create update payload, filtering out undefined fields
-      const updatePayload: Record<string, any> = {};
-      if (email !== undefined) updatePayload.email = email;
-      if (first_name !== undefined) updatePayload.first_name = first_name;
-      if (last_name !== undefined) updatePayload.last_name = last_name;
-      if (role_id !== undefined) updatePayload.role = { id: role_id, type: 'role' as const };
-      
-      // Update the user
-      const updatedUser = await client.users.update(userId, updatePayload);
-      
-      // Convert to JSON and create response
-      return createResponse(JSON.stringify({
-        success: true,
-        data: updatedUser,
-        message: "User updated successfully"
-      }, null, 2));
-      
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-      
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Error: The user with ID '${userId}' was not found.`);
-      }
-      
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error updating DatoCMS user: ${extractDetailedErrorInfo(error)}`);
+    // Create update payload, filtering out undefined fields
+    const updatePayload: UpdateCollaboratorParams = {};
+    if (email !== undefined) updatePayload.email = email;
+    if (first_name !== undefined) updatePayload.first_name = first_name;
+    if (last_name !== undefined) updatePayload.last_name = last_name;
+    if (role_id !== undefined) updatePayload.role = { id: role_id, type: 'role' as const };
+    
+    // Update the user
+    return await client.updateCollaborator(userId, updatePayload);
   }
-};
+});

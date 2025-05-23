@@ -3,30 +3,32 @@
  * @description Handler for building the DatoCMS editor URL for a specific record using project URL and item type ID
  */
 
-import type { z } from "zod";
-import { createResponse } from "../../../../utils/responseHandlers.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
-import type { recordsSchemas } from "../../schemas.js";
+import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { recordsSchemas } from "../../schemas.js";
 
 /**
  * Handler to build the editor URL for a specific DatoCMS record using project URL and item type
  * Extracted from the BuildDatoCMSRecordUrl tool
  */
-export const buildRecordEditorUrlFromTypeHandler = async (args: z.infer<typeof recordsSchemas.record_url>) => {
-  const { projectUrl, itemTypeId, itemId, environment } = args;
-  
-  try {
+export const buildRecordEditorUrlFromTypeHandler = createCustomHandler({
+  domain: "records",
+  schemaName: "record_url",
+  schema: recordsSchemas.record_url,
+  entityName: "Record Editor URL",
+  clientAction: async (_client, args) => {
+    const { projectUrl, itemTypeId, itemId, environment } = args;
+    
     // Validate required parameters
     if (!projectUrl) {
-      return createErrorResponse("Error: A valid project URL is required.");
+      throw new Error("A valid project URL is required.");
     }
     
     if (!itemTypeId) {
-      return createErrorResponse("Error: A valid item type ID is required.");
+      throw new Error("A valid item type ID is required.");
     }
     
     if (!itemId) {
-      return createErrorResponse("Error: A valid record ID is required.");
+      throw new Error("A valid record ID is required.");
     }
     
     // Sanitize the project URL by removing trailing slashes
@@ -41,16 +43,9 @@ export const buildRecordEditorUrlFromTypeHandler = async (args: z.infer<typeof r
     }
     
     // Return the response using the same format as the original tool
-    return createResponse(JSON.stringify({
+    return {
       message: "Here is the URL for the DatoCMS record. You can use this to directly access the record in the DatoCMS editor.",
       url: editorUrl
-    }, null, 2));
-  } catch (error: unknown) {
-    return {
-      content: [{
-        type: "text" as const,
-        text: `Error building DatoCMS URL: ${extractDetailedErrorInfo(error)}`
-      }]
     };
   }
-};
+});

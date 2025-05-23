@@ -1,43 +1,19 @@
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 import { z } from "zod";
+import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { roleSchemas } from "../../../schemas.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse , extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
-
-type Params = z.infer<typeof roleSchemas.destroy_role>;
 
 /**
  * Handler for deleting a role in DatoCMS
  */
-export const destroyRoleHandler = async (params: Params) => {
-  const { apiToken, roleId, environment } = params;
-
-  try {
-    // Initialize DatoCMS client
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-
-    try {
-      // Delete the role
-      await client.roles.destroy(roleId);
-
-      // Create success response
-      return createResponse(JSON.stringify({
-        success: true,
-        message: "Role deleted successfully"
-      }, null, 2));
-    } catch (apiError: unknown) {
-      if (isAuthorizationError(apiError)) {
-        return createErrorResponse("Error: Please provide a valid DatoCMS API token. The token you provided was rejected by the DatoCMS API.");
-      }
-
-      if (isNotFoundError(apiError)) {
-        return createErrorResponse(`Role with ID "${roleId}" not found.`);
-      }
-
-      // Re-throw other API errors to be caught by the outer catch
-      throw apiError;
-    }
-  } catch (error) {
-    return createErrorResponse(`Error deleting DatoCMS role: ${extractDetailedErrorInfo(error)}`);
+export const destroyRoleHandler = createDeleteHandler({
+  domain: "collaborators.roles",
+  schemaName: "destroy_role",
+  schema: roleSchemas.destroy_role,
+  entityName: "Role",
+  idParam: "roleId",
+  clientType: "collaborators",
+  clientAction: async (client, args: z.infer<typeof roleSchemas.destroy_role>) => {
+    await client.destroyRole(args.roleId);
+    return { success: true };
   }
-};
+});
