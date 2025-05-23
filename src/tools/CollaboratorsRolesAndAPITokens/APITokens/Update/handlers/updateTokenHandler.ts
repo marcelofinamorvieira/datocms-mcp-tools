@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createUpdateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { apiTokenSchemas } from "../../../schemas.js";
 import { UpdateAPITokenParams, Role } from "../../../collaboratorsTypes.js";
 
@@ -12,8 +13,9 @@ export const updateTokenHandler = createUpdateHandler({
   schema: apiTokenSchemas.update_token,
   entityName: "API Token",
   idParam: "tokenId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof apiTokenSchemas.update_token>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `API Token '${result.attributes.name}' updated successfully.`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof apiTokenSchemas.update_token>) => {
     const {
       tokenId,
       name,
@@ -29,12 +31,12 @@ export const updateTokenHandler = createUpdateHandler({
       can_access_cda: can_access_cda,
       can_access_cda_preview: can_access_cda_preview,
       can_access_cma: can_access_cma,
-      role: null
+      role: undefined
     };
 
     // Handle role assignment
     if (role === null) {
-      updatePayload.role = null;
+      updatePayload.role = undefined;
     } else if (typeof role === 'string') {
       // Handle predefined role names or role IDs
       if (['admin', 'editor', 'developer', 'seo', 'contributor'].includes(role)) {

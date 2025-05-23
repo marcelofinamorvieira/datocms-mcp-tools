@@ -6,7 +6,7 @@
 import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { pluginSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { PluginUpdateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler function for updating a DatoCMS plugin
@@ -17,11 +17,13 @@ export const updatePluginHandler = createUpdateHandler({
   schema: pluginSchemas.update,
   entityName: "Plugin",
   idParam: "pluginId",
-  clientAction: async (client, args) => {
+  clientAction: async (client, args: z.infer<typeof pluginSchemas.update>) => {
     const typedClient = createTypedUIClient(client);
     
     // Create update payload with only provided fields
-    const payload: PluginUpdateParams = {};
+    // Note: description, parameters, package_version, and permissions are part of the schema
+    // but not in the type definition. We pass them directly to the API which accepts them
+    const payload: any = {};
 
     // Add fields that are defined
     if (args.name !== undefined) payload.name = args.name;

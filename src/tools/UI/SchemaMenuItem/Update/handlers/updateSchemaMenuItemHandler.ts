@@ -6,7 +6,7 @@
 import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { schemaMenuItemSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { SchemaMenuItemUpdateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler function for updating a DatoCMS schema menu item
@@ -17,11 +17,13 @@ export const updateSchemaMenuItemHandler = createUpdateHandler({
   schema: schemaMenuItemSchemas.update,
   entityName: "Schema Menu Item",
   idParam: "schemaMenuItemId",
-  clientAction: async (client, args) => {
+  clientAction: async (client, args: z.infer<typeof schemaMenuItemSchemas.update>) => {
     const typedClient = createTypedUIClient(client);
     
     // Create schema menu item update payload (only including defined fields)
-    const payload: SchemaMenuItemUpdateParams = {};
+    // Note: parent_id is part of the schema but not in the type definition
+    // We pass it directly to the API which accepts it
+    const payload: any = {};
 
     // Add fields only if they are defined
     if (args.label !== undefined) payload.label = args.label;

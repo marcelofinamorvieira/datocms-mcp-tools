@@ -5,20 +5,28 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../utils/unifiedClientManager.js";
 import { recordsSchemas } from "../../schemas.js";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { Item, DatoCMSValidationError, DatoCMSVersionConflictError } from "../../types.js";
 import { isValidationError, isVersionConflictError } from "../../types.js";
 
 /**
  * Handler function for publishing a DatoCMS record
  */
-export const publishRecordHandler = createCustomHandler({
-  domain: "records",
-  schemaName: "publish",
-  schema: recordsSchemas.publish,
-  entityName: "Record",
-  clientAction: async (client, args) => {
-    const { itemId, content_in_locales, non_localized_content, recursive = false } = args;
+export const publishRecordHandler = createCustomHandler(
+  {
+    domain: "records",
+    schemaName: "publish",
+    schema: recordsSchemas.publish,
+    clientType: ClientType.DEFAULT
+  },
+  async (args: any) => {
+    const { itemId, content_in_locales, non_localized_content, recursive = false, apiToken, environment } = args;
+    
+    // Get the records client
+    const { UnifiedClientManager } = await import("../../../../utils/unifiedClientManager.js");
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     try {
       let publishedItem: Item;
@@ -45,7 +53,7 @@ export const publishRecordHandler = createCustomHandler({
         throw new Error(`Failed to publish record with ID '${itemId}'.`);
       }
       
-      return publishedItem;
+      return createResponse(JSON.stringify(publishedItem, null, 2));
     } catch (apiError: unknown) {
       if (isValidationError(apiError)) {
         const validationError = apiError as DatoCMSValidationError;
@@ -70,4 +78,4 @@ export const publishRecordHandler = createCustomHandler({
       throw apiError;
     }
   }
-});
+);

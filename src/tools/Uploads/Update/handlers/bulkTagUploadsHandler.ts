@@ -1,6 +1,7 @@
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 
 export const bulkTagUploadsHandler = createCustomHandler({
   domain: "uploads",
@@ -11,13 +12,13 @@ export const bulkTagUploadsHandler = createCustomHandler({
     resourceType: "Upload",
     handlerName: "bulkTagUploadsHandler"
   }
-}, async (args, context) => {
+}, async (args) => {
   const { apiToken, uploadIds, tags, environment } = args;
 
-  const client = context.getClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
   const uploadsParam: { type: "upload"; id: string }[] =
-    uploadIds.map(id => ({ type: "upload", id }));
+    uploadIds.map((id: string) => ({ type: "upload", id }));
   await client.uploads.bulkTag({ uploads: uploadsParam, tags });
 
   return createResponse(

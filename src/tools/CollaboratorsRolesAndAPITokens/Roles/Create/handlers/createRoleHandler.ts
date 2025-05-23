@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
@@ -10,8 +11,9 @@ export const createRoleHandler = createCreateHandler({
   schemaName: "create_role",
   schema: roleSchemas.create_role,
   entityName: "Role",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof roleSchemas.create_role>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `Role '${result.attributes.name}' created successfully with ID: ${result.id}`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.create_role>) => {
     const {
       name,
       can_edit_schema,

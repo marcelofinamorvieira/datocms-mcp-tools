@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createRetrieveHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createRetrieveHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
@@ -11,8 +12,8 @@ export const retrieveRoleHandler = createRetrieveHandler({
   schema: roleSchemas.retrieve_role,
   entityName: "Role",
   idParam: "roleId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof roleSchemas.retrieve_role>) => {
+  clientType: ClientType.COLLABORATORS,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.retrieve_role>) => {
     return await client.findRole(args.roleId);
   }
 });

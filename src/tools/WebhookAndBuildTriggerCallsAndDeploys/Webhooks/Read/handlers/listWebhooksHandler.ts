@@ -13,11 +13,7 @@ export const listWebhooksHandler = createListHandler({
   schemaName: "list",
   schema: webhookSchemas.list,
   entityName: "Webhook",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     return await client.webhooks.list();
-  },
-  countGetter: async (client) => {
-    const webhooks = await client.webhooks.list();
-    return webhooks.length;
   }
 });

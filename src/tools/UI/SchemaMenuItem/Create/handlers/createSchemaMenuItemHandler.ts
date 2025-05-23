@@ -16,11 +16,12 @@ export const createSchemaMenuItemHandler = createCreateHandler({
   schemaName: "create",
   schema: schemaMenuItemSchemas.create,
   entityName: "Schema Menu Item",
+  successMessage: (result: any) => `Successfully created schema menu item '${result.label}' with ID ${result.id}`,
   clientAction: async (client, args) => {
     const typedClient = createTypedUIClient(client);
     
     // Create schema menu item payload
-    const payload: SchemaMenuItemCreateParams = {
+    const payload: any = {
       label: args.label,
       kind: "item_type" // This is required by the API but wasn't in the schema
     };

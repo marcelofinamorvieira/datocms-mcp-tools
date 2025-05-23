@@ -1,23 +1,19 @@
 import { z } from "zod";
-import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
  * Handler for duplicating a role in DatoCMS
  */
-export const duplicateRoleHandler = createCustomHandler({
+export const duplicateRoleHandler = createCreateHandler({
   domain: "collaborators.roles",
-  operation: "duplicate",
   schemaName: "duplicate_role",
   schema: roleSchemas.duplicate_role,
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof roleSchemas.duplicate_role>) => {
-    const duplicatedRole = await client.duplicateRole(args.roleId);
-    return {
-      data: duplicatedRole,
-      meta: {
-        message: "Role duplicated successfully"
-      }
-    };
+  entityName: "Role",
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `Role '${result.attributes.name}' duplicated successfully with ID: ${result.id}`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.duplicate_role>) => {
+    return await client.duplicateRole(args.roleId);
   }
 });

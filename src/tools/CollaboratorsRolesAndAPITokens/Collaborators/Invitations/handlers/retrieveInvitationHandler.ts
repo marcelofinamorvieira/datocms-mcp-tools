@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { createRetrieveHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createRetrieveHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
@@ -16,8 +17,8 @@ export const retrieveInvitationHandler = createRetrieveHandler({
   schema: collaboratorSchemas.invitation_retrieve,
   entityName: "Invitation",
   idParam: "invitationId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_retrieve>) => {
+  clientType: ClientType.COLLABORATORS,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.invitation_retrieve>) => {
     return await client.findInvitation(args.invitationId);
   }
 });

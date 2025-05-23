@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createDeleteHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
@@ -16,9 +17,9 @@ export const destroyInvitationHandler = createDeleteHandler({
   schema: collaboratorSchemas.invitation_destroy,
   entityName: "Invitation",
   idParam: "invitationId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_destroy>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (invitationId: any) => `Invitation with ID '${invitationId}' was successfully deleted.`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.invitation_destroy>) => {
     await client.destroyInvitation(args.invitationId);
-    return { success: true };
   }
 });

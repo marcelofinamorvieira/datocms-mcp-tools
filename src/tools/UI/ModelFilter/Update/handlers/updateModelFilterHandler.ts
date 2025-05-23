@@ -1,7 +1,7 @@
 import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { modelFilterSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { ModelFilterUpdateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler for updating a model filter
@@ -12,15 +12,22 @@ export const updateModelFilterHandler = createUpdateHandler({
   schema: modelFilterSchemas.update,
   entityName: "Model Filter",
   idParam: "modelFilterId",
-  clientAction: async (client, args) => {
+  clientAction: async (client, args: z.infer<typeof modelFilterSchemas.update>) => {
     const typedClient = createTypedUIClient(client);
 
     // Prepare the payload for updating the model filter
-    const payload: ModelFilterUpdateParams = {};
+    // Note: columns and order_by are part of the schema but not in the type definition
+    // We pass them directly to the API which accepts them
+    const payload: any = {};
 
     // Add optional fields if provided
     if (args.name !== undefined) payload.name = args.name;
-    if (args.filter !== undefined) payload.filter = args.filter;
+    if (args.filter !== undefined) {
+      payload.filter = {
+        type: "query",
+        attributes: args.filter
+      };
+    }
     if (args.columns !== undefined) payload.columns = args.columns;
     if (args.order_by !== undefined) payload.order_by = args.order_by;
     if (args.shared !== undefined) payload.shared = args.shared;

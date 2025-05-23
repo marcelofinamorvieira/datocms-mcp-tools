@@ -3,7 +3,7 @@
 ## 📚 Essential Documentation
 
 ### DatoCMS Documentation
-- **CMA API Docs**: `node_modules/@datocms/cma-client-node` - The official client library
+- **CMA API Docs**: `node_modules/@datocms/cma-client-node` - The official client library for types. try to avoid as much as possible using anys
 - **API Reference**: https://www.datocms.com/docs/content-management-api
 - **Field Types**: See `FieldTypeDocs.md` for comprehensive field type documentation
 - **Field Creation Guide**: `docs/FIELD_CREATION_GUIDE.md` for detailed examples
@@ -100,3 +100,6 @@ const schema = z.object({
 3. **Use `.js` extensions** in imports - TypeScript requirement
 4. **Validate with Zod schemas** - Input sanitization is automatic
 5. **Write detailed Zod descriptions** - They're Claude's primary documentation
+
+## 🔍 Development Approach
+- constantly build while implementing new features to test for errors

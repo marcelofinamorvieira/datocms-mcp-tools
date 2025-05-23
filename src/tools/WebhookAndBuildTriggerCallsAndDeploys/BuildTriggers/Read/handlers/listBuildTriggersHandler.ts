@@ -13,11 +13,7 @@ export const listBuildTriggersHandler = createListHandler({
   schemaName: "list",
   schema: buildTriggerSchemas.list,
   entityName: "Build Trigger",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     return await client.buildTriggers.list();
-  },
-  countGetter: async (client) => {
-    const buildTriggers = await client.buildTriggers.list();
-    return buildTriggers.length;
   }
 });

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createUpdateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
@@ -11,8 +12,9 @@ export const updateRoleHandler = createUpdateHandler({
   schema: roleSchemas.update_role,
   entityName: "Role",
   idParam: "roleId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof roleSchemas.update_role>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `Role '${result.attributes.name}' updated successfully.`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.update_role>) => {
     const {
       roleId,
       name,

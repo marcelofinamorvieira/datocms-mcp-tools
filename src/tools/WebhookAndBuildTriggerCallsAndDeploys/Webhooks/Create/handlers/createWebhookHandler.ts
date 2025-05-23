@@ -14,6 +14,7 @@ export const createWebhookHandler = createCreateHandler({
   schemaName: "create",
   schema: webhookSchemas.create,
   entityName: "Webhook",
+  successMessage: (result: any) => `Successfully created webhook '${result.name}' with ID ${result.id}`,
   clientAction: async (client, args) => {
     const { name, url, headers, events } = args;
 

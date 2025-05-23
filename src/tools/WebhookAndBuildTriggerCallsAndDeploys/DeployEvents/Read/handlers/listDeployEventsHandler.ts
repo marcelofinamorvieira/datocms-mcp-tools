@@ -13,17 +13,11 @@ export const listDeployEventsHandler = createListHandler({
   schemaName: "list",
   schema: deployEventSchemas.list,
   entityName: "Deploy Event",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     // Fetch deploy events for the specific build trigger with optional filters
     const deployEvents = await client.deployEvents.list({
       "filter[build_trigger_id][eq]": args.buildTriggerId
     });
     return deployEvents;
-  },
-  countGetter: async (client, args) => {
-    const deployEvents = await client.deployEvents.list({
-      "filter[build_trigger_id][eq]": args.buildTriggerId
-    });
-    return deployEvents.length;
   }
 });

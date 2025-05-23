@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
@@ -15,8 +16,9 @@ export const createInvitationHandler = createCreateHandler({
   schemaName: "invitation_create",
   schema: collaboratorSchemas.invitation_create,
   entityName: "Invitation",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_create>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `Invitation created successfully for ${result.attributes.email}`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.invitation_create>) => {
     const { email, role } = args;
     
     // Create the invitation - handle different role formats

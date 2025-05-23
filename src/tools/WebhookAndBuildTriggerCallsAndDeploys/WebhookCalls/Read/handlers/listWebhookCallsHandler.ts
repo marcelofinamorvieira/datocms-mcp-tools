@@ -13,17 +13,11 @@ export const listWebhookCallsHandler = createListHandler({
   schemaName: "list",
   schema: webhookCallSchemas.list,
   entityName: "Webhook Call",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     // Fetch webhook call logs for the specific webhook with proper typing
     const webhookCalls = await client.webhookCalls.list({
       "filter[webhook_id][eq]": args.webhookId
     });
     return webhookCalls;
-  },
-  countGetter: async (client, args) => {
-    const webhookCalls = await client.webhookCalls.list({
-      "filter[webhook_id][eq]": args.webhookId
-    });
-    return webhookCalls.length;
   }
 });

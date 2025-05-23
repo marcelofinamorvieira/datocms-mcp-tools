@@ -286,27 +286,9 @@ export const registerAPITokensRouter = (server: McpServer) => {
             throw new Error(`Unsupported action: ${action}`);
         }
 
-        // Handle typed response
+        // Handlers already return Response objects, so we can return them directly
         if (response) {
-          if ('success' in response) {
-            if (response.success) {
-              return createResponse(JSON.stringify(response.data, null, 2));
-            } else {
-              // Handle error response
-              if (response.validationErrors && response.validationErrors.length > 0) {
-                const validationErrorMessages = response.validationErrors
-                  .map((err) => `  - ${err.field || 'General'}: ${err.message}`)
-                  .join('\n');
-                
-                return createErrorResponse(`${response.error || 'Validation failed'}\n\nValidation errors:\n${validationErrorMessages}`);
-              }
-              
-              return createErrorResponse(response.error || 'Unknown error');
-            }
-          } else {
-            // Handle legacy response (compatibility with non-updated handlers)
-            return response;
-          }
+          return response;
         }
 
         return createErrorResponse('No response from handler');

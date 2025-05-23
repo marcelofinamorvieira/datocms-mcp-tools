@@ -5,6 +5,8 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { ClientType, UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 import { recordsSchemas } from "../../schemas.js";
 
 /**
@@ -14,14 +16,16 @@ export const cancelScheduledUnpublicationHandler = createCustomHandler({
   domain: "records",
   schemaName: "cancel_scheduled_unpublication",
   schema: recordsSchemas.cancel_scheduled_unpublication,
-  entityName: "Scheduled Unpublication",
-  clientAction: async (client, args) => {
-    const { itemId } = args;
-    
-    // Cancel the scheduled unpublication
-    await client.scheduledUnpublishing.destroy(itemId);
-    
-    // Return success response
-    return `Successfully cancelled scheduled unpublication for item with ID '${itemId}'.`;
-  }
+}, async (args: any) => {
+  const { apiToken, environment, itemId } = args;
+  
+  // Initialize client
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  
+  // Cancel the scheduled unpublication
+  await client.scheduledUnpublishing.destroy(itemId);
+  
+  // Return success response
+  const result = `Successfully cancelled scheduled unpublication for item with ID '${itemId}'.`;
+  return createResponse(result);
 });

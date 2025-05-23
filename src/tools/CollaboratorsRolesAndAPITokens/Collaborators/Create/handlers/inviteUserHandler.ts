@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
@@ -15,8 +16,9 @@ export const inviteUserHandler = createCreateHandler({
   schemaName: "user_invite",
   schema: collaboratorSchemas.user_invite,
   entityName: "User Invitation",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.user_invite>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `User invitation sent successfully to ${result.attributes.email}`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.user_invite>) => {
     const { email, role_id, first_name, last_name } = args;
     
     // Get the first role ID and convert to the format expected by the API

@@ -6,7 +6,6 @@ import {
 } from "./schemas.js";
 import { createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 import { createResponse } from "../../utils/responseHandlers.js";
-import { UploadsResponse } from "./uploadsTypes.js";
 
 // Handler imports
 import { getUploadByIdHandler } from "./Read/handlers/getUploadByIdHandler.js";
@@ -74,11 +73,11 @@ export const registerUploadsRouter = (server: McpServer) => {
 
       switch (action as UploadAction) {
         case "get":
-          return handleTypedResponse(await getUploadByIdHandler(validated));
+          return await getUploadByIdHandler(validated);
         case "query":
-          return handleTypedResponse(await queryUploadsHandler(validated));
+          return await queryUploadsHandler(validated);
         case "references":
-          return handleTypedResponse(await getUploadReferencesHandler(validated));
+          return await getUploadReferencesHandler(validated);
         case "create":
           return createUploadHandler(validated);
         case "update":
@@ -121,23 +120,3 @@ export const registerUploadsRouter = (server: McpServer) => {
   );
 };
 
-/**
- * Helper function to handle typed responses
- */
-function handleTypedResponse<T>(response: UploadsResponse<T>) {
-  if (response.success) {
-    // Success response
-    return createResponse(JSON.stringify(response.data, null, 2));
-  } else {
-    // Error response
-    if (response.validationErrors && response.validationErrors.length > 0) {
-      const validationErrorMessages = response.validationErrors
-        .map((err) => `  - ${err.field || 'General'}: ${err.message}`)
-        .join('\n');
-      
-      return createErrorResponse(`${response.error || 'Validation failed'}\n\nValidation errors:\n${validationErrorMessages}`);
-    }
-    
-    return createErrorResponse(response.error || 'Unknown error');
-  }
-}

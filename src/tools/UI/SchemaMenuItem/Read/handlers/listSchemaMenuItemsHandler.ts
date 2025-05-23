@@ -15,20 +15,12 @@ export const listSchemaMenuItemsHandler = createListHandler({
   schemaName: "list",
   schema: schemaMenuItemSchemas.list,
   entityName: "Schema Menu Item",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     const typedClient = createTypedUIClient(client);
     
     // Get the list of schema menu items
     const schemaMenuItems = await typedClient.listSchemaMenuItems(args.page);
     
     return schemaMenuItems;
-  },
-  countGetter: async (client) => {
-    const typedClient = createTypedUIClient(client);
-    
-    // Get all schema menu items to count them (API doesn't provide count endpoint)
-    const allItems = await typedClient.listSchemaMenuItems();
-    
-    return allItems.length;
   }
 });

@@ -15,20 +15,12 @@ export const listPluginsHandler = createListHandler({
   schemaName: "list",
   schema: pluginSchemas.list,
   entityName: "Plugin",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     const typedClient = createTypedUIClient(client);
     
     // Get plugins with pagination parameters
     const plugins = await typedClient.listPlugins(args.page);
     
     return plugins;
-  },
-  countGetter: async (client) => {
-    const typedClient = createTypedUIClient(client);
-    
-    // Get all plugins to count them (API doesn't provide count endpoint)
-    const allPlugins = await typedClient.listPlugins();
-    
-    return allPlugins.length;
   }
 });

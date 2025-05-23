@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { apiTokenSchemas } from "../../../schemas.js";
 import { CreateAPITokenParams, Role } from "../../../collaboratorsTypes.js";
 
@@ -11,8 +12,9 @@ export const createTokenHandler = createCreateHandler({
   schemaName: "create_token",
   schema: apiTokenSchemas.create_token,
   entityName: "API Token",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof apiTokenSchemas.create_token>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `API Token '${result.attributes.name}' created successfully with ID: ${result.id}`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof apiTokenSchemas.create_token>) => {
     const {
       name,
       role,

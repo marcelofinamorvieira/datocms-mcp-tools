@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createListHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
@@ -15,12 +16,8 @@ export const listInvitationsHandler = createListHandler({
   schemaName: "invitation_list",
   schema: collaboratorSchemas.invitation_list,
   entityName: "Invitation",
-  clientType: "collaborators",
-  listGetter: async (client) => {
+  clientType: ClientType.COLLABORATORS,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.invitation_list>) => {
     return await client.listInvitations();
-  },
-  countGetter: async (client) => {
-    const invitations = await client.listInvitations();
-    return invitations.length;
   }
 });

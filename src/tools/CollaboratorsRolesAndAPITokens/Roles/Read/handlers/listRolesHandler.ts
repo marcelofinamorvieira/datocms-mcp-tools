@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createListHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
@@ -10,12 +11,8 @@ export const listRolesHandler = createListHandler({
   schemaName: "list_roles",
   schema: roleSchemas.list_roles,
   entityName: "Role",
-  clientType: "collaborators",
-  listGetter: async (client) => {
+  clientType: ClientType.COLLABORATORS,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.list_roles>) => {
     return await client.listRoles();
-  },
-  countGetter: async (client) => {
-    const roles = await client.listRoles();
-    return roles.length;
   }
 });

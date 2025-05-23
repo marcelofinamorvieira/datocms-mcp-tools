@@ -3,7 +3,6 @@ import { UnifiedClientManager } from "../../utils/unifiedClientManager.js";
 import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { UIResponse } from "./uiTypes.js";
 
 // Import the UI action schemas and handlers
 import { uiSchemas, uiActionsList } from "./schemas.js";
@@ -179,11 +178,11 @@ This will show you all the required parameters and their types.`);
           switch (validAction) {
             // MenuItem handlers
             case "menu_item_list":
-              return handleTypedResponse(await listMenuItemsHandler(validatedArgs as ActionArgsMap['menu_item_list']));
+              return await listMenuItemsHandler(validatedArgs as ActionArgsMap['menu_item_list']);
             case "menu_item_retrieve":
-              return handleTypedResponse(await retrieveMenuItemHandler(validatedArgs as ActionArgsMap['menu_item_retrieve']));
+              return await retrieveMenuItemHandler(validatedArgs as ActionArgsMap['menu_item_retrieve']);
             case "menu_item_create":
-              return handleTypedResponse(await createMenuItemHandler(validatedArgs as ActionArgsMap['menu_item_create']));
+              return await createMenuItemHandler(validatedArgs as ActionArgsMap['menu_item_create']);
             case "menu_item_update":
               return updateMenuItemHandler(validatedArgs as ActionArgsMap['menu_item_update']);
             case "menu_item_delete":
@@ -306,21 +305,3 @@ function formatZodError(error: z.ZodError) {
   return error.issues.map(issue => `- ${issue.path.join('.')}: ${issue.message}`).join('\n');
 }
 
-// Helper function to handle typed responses
-function handleTypedResponse<T>(response: UIResponse<T>) {
-  if (response.success) {
-    // Success response
-    return createResponse(JSON.stringify(response.data, null, 2));
-  } else {
-    // Error response
-    if (response.validationErrors && response.validationErrors.length > 0) {
-      const validationErrorMessages = response.validationErrors
-        .map((err) => `  - ${err.field || 'General'}: ${err.message}`)
-        .join('\n');
-      
-      return createErrorResponse(`${response.error || 'Validation failed'}\n\nValidation errors:\n${validationErrorMessages}`);
-    }
-    
-    return createErrorResponse(response.error || 'Unknown error');
-  }
-}

@@ -1,6 +1,7 @@
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
-import { createStandardResponse } from "../../../../utils/standardResponse.js";
+import { createStandardSuccessResponse, createStandardMcpResponse } from "../../../../utils/standardResponse.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 
 export const getUploadReferencesHandler = createCustomHandler({
   domain: "uploads",
@@ -11,7 +12,7 @@ export const getUploadReferencesHandler = createCustomHandler({
     resourceType: "Upload References",
     handlerName: "getUploadReferencesHandler"
   }
-}, async (args, context) => {
+}, async (args) => {
   const {
     apiToken,
     uploadId,
@@ -21,7 +22,7 @@ export const getUploadReferencesHandler = createCustomHandler({
     environment
   } = args;
 
-  const client = context.getClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
   // Get references
   const references = await client.uploads.references(uploadId, {
@@ -31,24 +32,27 @@ export const getUploadReferencesHandler = createCustomHandler({
 
   // Return appropriate response based on result and requested format
   if (!references.length) {
-    return createStandardResponse({
-      success: true,
-      data: [],
-      message: "No records reference this upload."
-    });
+    return createStandardMcpResponse(
+      createStandardSuccessResponse(
+        [],
+        "No records reference this upload."
+      )
+    );
   }
   
   if (returnOnlyIds) {
-    return createStandardResponse({
-      success: true,
-      data: references.map(r => ({ id: r.id, type: r.type })),
-      message: `Found ${references.length} references to this upload.`
-    });
+    return createStandardMcpResponse(
+      createStandardSuccessResponse(
+        references.map((r: any) => ({ id: r.id, type: r.type })),
+        `Found ${references.length} references to this upload.`
+      )
+    );
   }
   
-  return createStandardResponse({
-    success: true,
-    data: references,
-    message: `Found ${references.length} references to this upload.`
-  });
+  return createStandardMcpResponse(
+    createStandardSuccessResponse(
+      references,
+      `Found ${references.length} references to this upload.`
+    )
+  );
 });

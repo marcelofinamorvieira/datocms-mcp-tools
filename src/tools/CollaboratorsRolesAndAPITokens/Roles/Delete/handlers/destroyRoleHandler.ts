@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createDeleteHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
@@ -11,9 +12,9 @@ export const destroyRoleHandler = createDeleteHandler({
   schema: roleSchemas.destroy_role,
   entityName: "Role",
   idParam: "roleId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof roleSchemas.destroy_role>) => {
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (roleId: any) => `Role with ID '${roleId}' was successfully deleted.`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.destroy_role>) => {
     await client.destroyRole(args.roleId);
-    return { success: true };
   }
 });

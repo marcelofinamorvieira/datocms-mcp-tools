@@ -16,6 +16,7 @@ export const createMenuItemHandler = createCreateHandler({
   schemaName: "create",
   schema: menuItemSchemas.create,
   entityName: "Menu Item",
+  successMessage: (result: any) => `Successfully created menu item '${result.label}' with ID ${result.id}`,
   clientAction: async (client, args) => {
     const typedClient = createTypedUIClient(client);
     

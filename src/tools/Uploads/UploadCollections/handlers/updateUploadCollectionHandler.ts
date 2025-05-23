@@ -1,6 +1,5 @@
 import { createUpdateHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
-import { createErrorResponse } from "../../../../utils/responseHandlers.js";
 
 export const updateUploadCollectionHandler = createUpdateHandler({
   domain: "uploads",

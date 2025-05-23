@@ -15,20 +15,12 @@ export const listUploadsFiltersHandler = createListHandler({
   schemaName: "list",
   schema: uploadsFilterSchemas.list,
   entityName: "Uploads Filter",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     const typedClient = createTypedUIClient(client);
     
     // Get the list of uploads filters
     const uploadsFilters = await typedClient.listUploadsFilters(args.page);
     
     return uploadsFilters;
-  },
-  countGetter: async (client) => {
-    const typedClient = createTypedUIClient(client);
-    
-    // Get all uploads filters to count them (API doesn't provide count endpoint)
-    const allFilters = await typedClient.listUploadsFilters();
-    
-    return allFilters.length;
   }
 });

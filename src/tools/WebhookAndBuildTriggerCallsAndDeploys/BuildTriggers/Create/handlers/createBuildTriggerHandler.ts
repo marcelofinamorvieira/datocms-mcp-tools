@@ -13,6 +13,7 @@ export const createBuildTriggerHandler = createCreateHandler({
   schemaName: "create",
   schema: buildTriggerSchemas.create,
   entityName: "Build Trigger",
+  successMessage: (result: any) => `Successfully created build trigger '${result.name}' with ID '${result.id}'`,
   clientAction: async (client, args) => {
     const { name, adapter, adapter_settings, indexing_enabled } = args;
     

@@ -6,7 +6,7 @@
 import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { uploadsFilterSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { UploadsFilterCreateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler function for creating a DatoCMS uploads filter
@@ -16,13 +16,18 @@ export const createUploadsFilterHandler = createCreateHandler({
   schemaName: "create",
   schema: uploadsFilterSchemas.create,
   entityName: "Uploads Filter",
-  clientAction: async (client, args) => {
+  successMessage: (result: any) => `Successfully created uploads filter '${result.name}' with ID ${result.id}`,
+  clientAction: async (client, args: z.infer<typeof uploadsFilterSchemas.create>) => {
     const typedClient = createTypedUIClient(client);
     
     // Create uploads filter payload
-    const filterPayload: UploadsFilterCreateParams = {
+    // The schema uses 'payload' but the API expects 'filter' with type and attributes
+    const filterPayload: any = {
       name: args.name,
-      filter: args.payload,
+      filter: {
+        type: 'filter',
+        attributes: args.payload || {}
+      },
       shared: true
     };
 

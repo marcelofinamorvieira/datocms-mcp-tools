@@ -17,7 +17,7 @@ export const queryRecordsHandler = createListHandler({
   schemaName: "query",
   schema: recordsSchemas.query,
   entityName: "Record",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     const { 
       textSearch, 
       ids, 
@@ -199,10 +199,8 @@ export const queryRecordsHandler = createListHandler({
     // Use map approach for collecting IDs
     if (returnOnlyIds) {
       const allItemIds = paginatedItems.map(item => item.id);
-      return {
-        message: `Found ${allItemIds.length} record(s) matching your query.`,
-        recordIds: allItemIds
-      };
+      // Return just the IDs array with metadata attached
+      return allItemIds as any;
     }
     
     // Process items to filter locales with better typing
@@ -212,45 +210,5 @@ export const queryRecordsHandler = createListHandler({
     
     // Return processed items
     return allItems;
-  },
-  countGetter: async (client, args) => {
-    // For count, we need to run the same query logic
-    const { 
-      textSearch, 
-      ids, 
-      modelId, 
-      modelName, 
-      version = "current", 
-      nested = true,
-      locale
-    } = args;
-
-    const queryParams: RecordQueryParams = {
-      version: version as "published" | "current",
-      nested,
-      page: { limit: 1, offset: 0 } // Just get count
-    };
-    
-    let filter: Record<string, unknown> | undefined;
-    
-    if (ids) {
-      filter = { ids: Array.isArray(ids) ? ids : [ids] };
-      if (locale) filter.locale = locale;
-    } else if (textSearch) {
-      filter = { query: textSearch };
-      if ((modelId || modelName)) filter.type = modelId || modelName;
-      if (locale) filter.locale = locale;
-    } else if (modelId || modelName) {
-      filter = { type: modelId || modelName };
-      if (locale) filter.locale = locale;
-    }
-    
-    if (filter) queryParams.filter = filter;
-    
-    const result = await client.items.list(queryParams as any) as Item[] & {
-      meta?: { total_count?: number }
-    };
-    
-    return result.meta?.total_count ?? 0;
   }
 });

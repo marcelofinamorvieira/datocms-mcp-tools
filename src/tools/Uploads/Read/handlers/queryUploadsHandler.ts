@@ -1,13 +1,12 @@
 import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
-import { createStandardResponse } from "../../../../utils/standardResponse.js";
 
 export const queryUploadsHandler = createListHandler({
   domain: "uploads",
   schemaName: "query",
   schema: uploadsSchemas.query,
   entityName: "Upload",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     // Prepare query parameters
     const queryParams: any = {};
     if (args.ids) queryParams.ids = args.ids;
@@ -21,20 +20,12 @@ export const queryUploadsHandler = createListHandler({
     
     // Handle empty results
     if (!uploads.length) {
-      return createStandardResponse({
-        success: true,
-        data: [],
-        message: "No uploads matched your query."
-      });
+      return [];
     }
     
     // Handle IDs-only request
     if (args.returnOnlyIds) {
-      return createStandardResponse({
-        success: true,
-        data: uploads.map(u => ({ id: u.id, type: u.type })),
-        message: `Found ${uploads.length} uploads matching your query.`
-      });
+      return uploads.map((u: any) => ({ id: u.id, type: u.type }));
     }
     
     // Return full uploads

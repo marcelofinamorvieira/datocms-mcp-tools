@@ -5,20 +5,28 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../utils/unifiedClientManager.js";
 import { recordsSchemas } from "../../schemas.js";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { Item, DatoCMSValidationError } from "../../types.js";
 import { isValidationError } from "../../types.js";
 
 /**
  * Handler function for unpublishing a DatoCMS record
  */
-export const unpublishRecordHandler = createCustomHandler({
-  domain: "records",
-  schemaName: "unpublish",
-  schema: recordsSchemas.unpublish,
-  entityName: "Record",
-  clientAction: async (client, args) => {
-    const { itemId, recursive = false } = args;
+export const unpublishRecordHandler = createCustomHandler(
+  {
+    domain: "records",
+    schemaName: "unpublish",
+    schema: recordsSchemas.unpublish,
+    clientType: ClientType.DEFAULT
+  },
+  async (args: any) => {
+    const { itemId, recursive = false, apiToken, environment } = args;
+
+    // Get the records client
+    const { UnifiedClientManager } = await import("../../../../utils/unifiedClientManager.js");
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
 
     try {
       // Unpublish entire record (all locales) - content_in_locales is not in the schema
@@ -28,7 +36,7 @@ export const unpublishRecordHandler = createCustomHandler({
         throw new Error(`Failed to unpublish record with ID '${itemId}'.`);
       }
       
-      return unpublishedItem;
+      return createResponse(JSON.stringify(unpublishedItem, null, 2));
     } catch (apiError: unknown) {
       if (isValidationError(apiError)) {
         const validationError = apiError as DatoCMSValidationError;
@@ -45,4 +53,4 @@ export const unpublishRecordHandler = createCustomHandler({
       throw apiError;
     }
   }
-});
+);

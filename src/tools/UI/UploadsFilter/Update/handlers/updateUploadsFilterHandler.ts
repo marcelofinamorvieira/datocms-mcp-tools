@@ -6,7 +6,7 @@
 import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { uploadsFilterSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { UploadsFilterUpdateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler function for updating a DatoCMS uploads filter
@@ -17,15 +17,21 @@ export const updateUploadsFilterHandler = createUpdateHandler({
   schema: uploadsFilterSchemas.update,
   entityName: "Uploads Filter",
   idParam: "uploadsFilterId",
-  clientAction: async (client, args) => {
+  clientAction: async (client, args: z.infer<typeof uploadsFilterSchemas.update>) => {
     const typedClient = createTypedUIClient(client);
     
     // Create uploads filter update payload (only including defined fields)
-    const filterPayload: UploadsFilterUpdateParams = {};
+    const filterPayload: any = {};
 
     // Add fields only if they are defined
     if (args.name !== undefined) filterPayload.name = args.name;
-    if (args.payload !== undefined) filterPayload.filter = args.payload;
+    if (args.payload !== undefined) {
+      // The schema uses 'payload' but the API expects 'filter' with type and attributes
+      filterPayload.filter = {
+        type: 'filter',
+        attributes: args.payload
+      };
+    }
     
     // Note: The typed client will handle default values for shared if needed
     

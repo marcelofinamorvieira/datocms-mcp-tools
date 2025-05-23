@@ -4,25 +4,23 @@
  */
 
 import { z } from "zod";
-import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createUpdateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
  * Handler for resending a DatoCMS site invitation
  */
-export const resendInvitationHandler = createCustomHandler({
+export const resendInvitationHandler = createUpdateHandler({
   domain: "collaborators.invitations",
-  operation: "resend",
   schemaName: "invitation_resend",
   schema: collaboratorSchemas.invitation_resend,
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof collaboratorSchemas.invitation_resend>) => {
+  entityName: "Invitation",
+  idParam: "invitationId",
+  clientType: ClientType.COLLABORATORS,
+  successMessage: (result: any) => `Invitation with ID ${result.id} successfully resent.`,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.invitation_resend>) => {
     await client.resendInvitation(args.invitationId);
-    return {
-      data: { success: true },
-      meta: {
-        message: `Invitation with ID ${args.invitationId} successfully resent.`
-      }
-    };
+    return { id: args.invitationId, success: true };
   }
 });

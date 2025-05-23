@@ -6,7 +6,7 @@ export const listUploadTagsHandler = createListHandler({
   schemaName: "list_tags",
   schema: uploadsSchemas.list_tags,
   entityName: "Upload Tag",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     const opts: any = {};
     if (args.filter) opts.filter = { query: args.filter };
     return await client.uploadTags.list(opts);

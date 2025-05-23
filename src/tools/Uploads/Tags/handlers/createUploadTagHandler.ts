@@ -8,5 +8,6 @@ export const createUploadTagHandler = createCreateHandler({
   entityName: "Upload Tag",
   clientAction: async (client, args) => {
     return await client.uploadTags.create({ name: args.name });
-  }
+  },
+  successMessage: (result: any) => `Successfully created upload tag '${result.name}' with ID ${result.id}`
 });

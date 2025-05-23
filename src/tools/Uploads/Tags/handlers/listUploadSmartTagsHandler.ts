@@ -6,7 +6,7 @@ export const listUploadSmartTagsHandler = createListHandler({
   schemaName: "list_smart_tags",
   schema: uploadsSchemas.list_smart_tags,
   entityName: "Upload Smart Tag",
-  listGetter: async (client, args) => {
+  clientAction: async (client, args) => {
     const opts: any = {};
     if (args.filter) opts.filter = args.filter;
     if (args.page) opts.page = args.page;

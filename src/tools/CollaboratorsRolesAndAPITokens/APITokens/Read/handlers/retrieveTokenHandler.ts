@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createRetrieveHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createRetrieveHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType } from "../../../../../utils/unifiedClientManager.js";
 import { apiTokenSchemas } from "../../../schemas.js";
 
 /**
@@ -11,8 +12,8 @@ export const retrieveTokenHandler = createRetrieveHandler({
   schema: apiTokenSchemas.retrieve_token,
   entityName: "API Token",
   idParam: "tokenId",
-  clientType: "collaborators",
-  clientAction: async (client, args: z.infer<typeof apiTokenSchemas.retrieve_token>) => {
+  clientType: ClientType.COLLABORATORS,
+  clientAction: async (client: DatoCMSClient, args: z.infer<typeof apiTokenSchemas.retrieve_token>) => {
     return await client.findAPIToken(args.tokenId);
   }
 });

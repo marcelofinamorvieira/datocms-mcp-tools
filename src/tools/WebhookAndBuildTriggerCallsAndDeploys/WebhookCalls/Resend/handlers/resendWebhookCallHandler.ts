@@ -1,6 +1,7 @@
 import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { ClientType, UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { webhookCallSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Resends a specific webhook call
@@ -12,17 +13,23 @@ export const resendWebhookCallHandler = createCustomHandler({
   domain: "webhooks.webhookCalls",
   schemaName: "resend",
   schema: webhookCallSchemas.resend,
-  entityName: "Webhook Call",
-  operation: "resend",
-  clientAction: async (client, args) => {
-    // Resend the webhook call with proper typing
-    const webhookCall = await client.webhookCalls.resend(args.callId);
-
-    // Return success response
-    return {
-      success: true,
-      message: `Webhook call with ID ${args.callId} has been successfully resent.`,
-      webhook_call: webhookCall
-    };
+  errorContext: {
+    operation: "resend"
   }
+}, async (args: any) => {
+  const { apiToken, environment, callId } = args;
+  
+  // Initialize client
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  
+  // Resend the webhook call
+  await (client as any).webhookCalls.resend(callId);
+
+  // Return success response
+  const result = {
+    success: true,
+    message: `Webhook call with ID ${callId} has been successfully resent.`
+  };
+  
+  return createResponse(JSON.stringify(result, null, 2));
 });

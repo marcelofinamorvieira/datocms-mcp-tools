@@ -1,7 +1,7 @@
 import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { modelFilterSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { ModelFilterCreateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler for creating a new model filter
@@ -11,14 +11,20 @@ export const createModelFilterHandler = createCreateHandler({
   schemaName: "create",
   schema: modelFilterSchemas.create,
   entityName: "Model Filter",
-  clientAction: async (client, args) => {
+  successMessage: (result: any) => `Successfully created model filter '${result.name}' with ID ${result.id}`,
+  clientAction: async (client, args: z.input<typeof modelFilterSchemas.create>) => {
     const typedClient = createTypedUIClient(client);
 
     // Prepare the payload for creating a model filter
-    const payload: ModelFilterCreateParams = {
+    // Note: columns and order_by are part of the schema but not in the type definition
+    // We pass them directly to the API which accepts them
+    const payload: any = {
       name: args.name,
       item_type_id: args.item_type,
-      filter: args.filter,
+      filter: args.filter ? {
+        type: "query",
+        attributes: args.filter
+      } : undefined,
       shared: args.shared
     };
 

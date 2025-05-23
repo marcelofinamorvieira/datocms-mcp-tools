@@ -6,7 +6,7 @@
 import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { pluginSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { PluginCreateParams } from "../../../uiTypes.js";
+import { z } from "zod";
 
 /**
  * Handler function for creating a DatoCMS plugin
@@ -16,11 +16,14 @@ export const createPluginHandler = createCreateHandler({
   schemaName: "create",
   schema: pluginSchemas.create,
   entityName: "Plugin",
-  clientAction: async (client, args) => {
+  successMessage: (result: any) => `Successfully created plugin '${result.name}' with ID ${result.id}`,
+  clientAction: async (client, args: z.infer<typeof pluginSchemas.create>) => {
     const typedClient = createTypedUIClient(client);
     
     // Create plugin payload
-    const payload: PluginCreateParams = {
+    // Note: description, parameters, package_version, and permissions are part of the schema
+    // but not in the type definition. We pass them directly to the API which accepts them
+    const payload: any = {
       name: args.name,
       url: args.url
     };
