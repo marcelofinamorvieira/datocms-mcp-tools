@@ -28,6 +28,9 @@ import { createBuildTriggerHandler } from "./BuildTriggers/Create/handlers/index
 import { updateBuildTriggerHandler } from "./BuildTriggers/Update/handlers/index.js";
 import { deleteBuildTriggerHandler } from "./BuildTriggers/Delete/handlers/index.js";
 import { triggerBuildHandler } from "./BuildTriggers/Trigger/handlers/index.js";
+import { abortBuildHandler } from "./BuildTriggers/Abort/handlers/index.js";
+import { abortIndexingHandler } from "./BuildTriggers/AbortIndexing/handlers/index.js";
+import { reindexHandler } from "./BuildTriggers/Reindex/handlers/index.js";
 
 // Import deploy event handlers
 import { listDeployEventsHandler, retrieveDeployEventHandler } from "./DeployEvents/Read/handlers/index.js";
@@ -180,11 +183,11 @@ export const registerDeliveryManagementRouter = (server: McpServer) => {
               case "trigger":
                 return await triggerBuildHandler(validatedParams as BuildTriggerArgsMap["trigger"]);
               case "abort":
+                return await abortBuildHandler(validatedParams as BuildTriggerArgsMap["abort"]);
               case "abortIndexing":
+                return await abortIndexingHandler(validatedParams as BuildTriggerArgsMap["abortIndexing"]);
               case "reindex":
-                return createErrorResponse(
-                  `Action '${action}' is not yet implemented but will be available soon.`
-                );
+                return await reindexHandler(validatedParams as BuildTriggerArgsMap["reindex"]);
             }
           }
 
