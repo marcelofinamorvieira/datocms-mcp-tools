@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { environmentSchemas, environmentActionsList } from "./schemas.js";
 import { createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { assertNever } from "../../utils/exhaustive.js";
 
 // Import handlers from subdirectories
 import {
@@ -123,8 +124,10 @@ This will show you all the required parameters and their types.`);
               handlerResult = await deactivateMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_deactivate']);
               break;
             
-            default:
-              return createErrorResponse(`Error: No handler implemented for action '${action}'. This is a server configuration error.`);
+            default: {
+              // Exhaustiveness check - TypeScript will error if we miss a case
+              return assertNever(validAction, `Unhandled environment action: ${validAction}`);
+            }
           }
           
           // Handle the handler result

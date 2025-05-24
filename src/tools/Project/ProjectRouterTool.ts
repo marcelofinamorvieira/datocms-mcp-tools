@@ -3,6 +3,7 @@ import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { projectSchemas, projectActionsList } from "./schemas.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { assertNever } from "../../utils/exhaustive.js";
 
 // Import handlers from subdirectories
 import { getProjectInfoHandler } from "./Info/handlers/index.js";
@@ -90,8 +91,10 @@ This will show you all the required parameters and their types.`);
               handlerResult = await updateSiteSettingsHandler(validatedArgs as ActionArgsMap['update_site_settings']);
               break;
             
-            default:
-              return createErrorResponse(`Error: No handler implemented for action '${action}'. This is a server configuration error.`);
+            default: {
+              // Exhaustiveness check - TypeScript will error if we miss a case
+              return assertNever(validAction, `Unhandled project action: ${validAction}`);
+            }
           }
           
           // Handle the new typed responses

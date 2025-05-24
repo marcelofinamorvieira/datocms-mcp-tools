@@ -110,6 +110,91 @@ export interface FieldAppearance {
 }
 
 // Export helper types
-export type * from './guards.js';
-export type * from './zod-helpers.js';
-export type * from './client.js';
+export * from './guards.js';
+export * from './zod-helpers.js';
+export * from './client.js';
+export * from './branded.js';
+export * from './constants.js';
+// Re-export specific items from errors to avoid conflicts
+export { 
+  DatoCMSError as DatoCMSErrorType,
+  DatoCMSErrors,
+  ValidationError,
+  NotFoundError,
+  AuthError,
+  RateLimitError,
+  ConflictError,
+  QuotaError,
+  InvalidOperationError,
+  NetworkError,
+  isValidationError,
+  isNotFoundError,
+  isAuthError,
+  isRateLimitError,
+  isApiError as isApiErrorType,
+  isConflictError,
+  isQuotaError,
+  isInvalidOperationError,
+  isNetworkError,
+  getErrorMessage,
+  fromApiError
+} from './errors.js';
+// Re-export specific items from templates to avoid conflicts  
+export {
+  // Types
+  SortDirection,
+  OrderBy,
+  RecordOrderBy,
+  UploadOrderBy,
+  CustomOrderBy,
+  ApiKey,
+  ExtendedApiKey,
+  LocaleCode,
+  LocaleWithScript,
+  FieldApiKey,
+  NestedFieldPath,
+  DeepFieldPath,
+  ModularBlockApiKey,
+  ModularSectionApiKey,
+  ModularComponentApiKey,
+  WebhookEntityType,
+  WebhookEventType,
+  WebhookEventPattern,
+  EnvironmentName,
+  EnvironmentBranch,
+  PermissionResource,
+  PermissionAction,
+  Permission,
+  WildcardPermission,
+  HttpProtocol,
+  WebhookUrl,
+  AssetUrl,
+  FilterOperator,
+  FilterExpression,
+  ISODate,
+  ISODateTime,
+  SemanticVersion,
+  PreReleaseVersion,
+  PluginParameterKey,
+  PluginFieldExtension,
+  BuildTriggerName,
+  CronExpression,
+  // Functions
+  isValidOrderBy,
+  isValidApiKey,
+  isValidLocaleCode,
+  isValidWebhookUrl,
+  isValidWebhookEvent as isValidWebhookEventPattern,
+  isValidEnvironmentName,
+  isValidPermission,
+  isValidFilterExpression,
+  isValidISODate,
+  isValidISODateTime,
+  isValidSemanticVersion,
+  isValidCronExpression,
+  createOrderBy,
+  createFilterExpression,
+  createWebhookEvent,
+  createPermission,
+  createLocaleCode
+} from './templates.js';

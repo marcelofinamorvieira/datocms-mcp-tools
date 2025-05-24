@@ -36,6 +36,7 @@ import { reindexHandler } from "./BuildTriggers/Reindex/handlers/index.js";
 import { listDeployEventsHandler, retrieveDeployEventHandler } from "./DeployEvents/Read/handlers/index.js";
 
 import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { assertNever } from "../../utils/exhaustive.js";
 
 // Types for the action parameters
 type WebhookAction = keyof typeof webhookSchemas;
@@ -133,7 +134,8 @@ export const registerDeliveryManagementRouter = (server: McpServer) => {
           // Route to the appropriate handler based on the action
           // Webhook Actions
           if (isWebhookAction) {
-            switch (action) {
+            const webhookAction = action as WebhookAction;
+            switch (webhookAction) {
               case "list":
                 return await listWebhooksHandler(validatedParams as WebhookArgsMap["list"]);
               case "retrieve":
@@ -144,24 +146,30 @@ export const registerDeliveryManagementRouter = (server: McpServer) => {
                 return await updateWebhookHandler(validatedParams as WebhookArgsMap["update"]);
               case "delete":
                 return await deleteWebhookHandler(validatedParams as WebhookArgsMap["delete"]);
+              default:
+                return assertNever(webhookAction, `Unhandled webhook action: ${webhookAction}`);
             }
           }
 
           // Webhook Call Actions
           if (isWebhookCallAction) {
-            switch (action) {
+            const webhookCallAction = action as WebhookCallAction;
+            switch (webhookCallAction) {
               case "list":
                 return await listWebhookCallsHandler(validatedParams as WebhookCallArgsMap["list"]);
               case "retrieve":
                 return await retrieveWebhookCallHandler(validatedParams as WebhookCallArgsMap["retrieve"]);
               case "resend":
                 return await resendWebhookCallHandler(validatedParams as WebhookCallArgsMap["resend"]);
+              default:
+                return assertNever(webhookCallAction, `Unhandled webhook call action: ${webhookCallAction}`);
             }
           }
 
           // Build Trigger Actions
           if (isBuildTriggerAction) {
-            switch (action) {
+            const buildTriggerAction = action as BuildTriggerAction;
+            switch (buildTriggerAction) {
               case "list":
                 return await listBuildTriggersHandler(validatedParams as BuildTriggerArgsMap["list"]);
               case "retrieve":
@@ -180,16 +188,21 @@ export const registerDeliveryManagementRouter = (server: McpServer) => {
                 return await abortIndexingHandler(validatedParams as BuildTriggerArgsMap["abortIndexing"]);
               case "reindex":
                 return await reindexHandler(validatedParams as BuildTriggerArgsMap["reindex"]);
+              default:
+                return assertNever(buildTriggerAction, `Unhandled build trigger action: ${buildTriggerAction}`);
             }
           }
 
           // Deploy Event Actions
           if (isDeployEventAction) {
-            switch (action) {
+            const deployEventAction = action as DeployEventAction;
+            switch (deployEventAction) {
               case "list":
                 return await listDeployEventsHandler(validatedParams as DeployEventArgsMap["list"]);
               case "retrieve":
                 return await retrieveDeployEventHandler(validatedParams as DeployEventArgsMap["retrieve"]);
+              default:
+                return assertNever(deployEventAction, `Unhandled deploy event action: ${deployEventAction}`);
             }
           }
 

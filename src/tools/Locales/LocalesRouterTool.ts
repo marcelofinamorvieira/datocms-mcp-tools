@@ -10,6 +10,7 @@ import { createLocaleHandler } from './Create/index.js';
 import { listLocalesHandler, getLocaleHandler } from './Read/index.js';
 import { updateLocaleHandler } from './Update/index.js';
 import { deleteLocaleHandler } from './Delete/index.js';
+import { assertNever } from '../../utils/exhaustive.js';
 
 /**
  * Combined schema for all locale operations
@@ -68,8 +69,10 @@ Locales define the languages available for content in your DatoCMS project.`;
       case "delete":
         return deleteLocaleHandler({ ...baseParams, ...params });
 
-      default:
-        throw new Error(`Unknown operation: ${operation}`);
+      default: {
+        // Exhaustiveness check - TypeScript will error if we miss a case
+        return assertNever(operation, `Unhandled locale operation: ${operation}`);
+      }
     }
   }
 }

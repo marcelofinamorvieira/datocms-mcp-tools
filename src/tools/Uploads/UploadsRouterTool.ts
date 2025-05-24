@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   uploadsSchemas,
   uploadsActionsList
 } from "./schemas.js";
 import { createErrorResponse } from "../../utils/errorHandlers.js";
+import { assertNever } from "../../utils/exhaustive.js";
 
 // Handler imports
 import { getUploadByIdHandler } from "./Read/handlers/getUploadByIdHandler.js";
@@ -71,7 +71,8 @@ export const registerUploadsRouter = (server: McpServer) => {
         throw e;
       }
 
-      switch (action as UploadAction) {
+      const validAction = action as UploadAction;
+      switch (validAction) {
         case "get":
           return await getUploadByIdHandler(validated);
         case "query":
@@ -111,10 +112,10 @@ export const registerUploadsRouter = (server: McpServer) => {
         case "delete_collection":
           return deleteUploadCollectionHandler(validated);
 
-        default:
-          return createResponse(
-            `Action '${action}' is not yet implemented in the router.`
-          );
+        default: {
+          // Exhaustiveness check - TypeScript will error if we miss a case
+          return assertNever(validAction, `Unhandled uploads action: ${validAction}`);
+        }
       }
     }
   );

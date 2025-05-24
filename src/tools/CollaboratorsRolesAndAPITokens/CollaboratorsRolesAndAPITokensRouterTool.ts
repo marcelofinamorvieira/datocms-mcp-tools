@@ -9,6 +9,7 @@ import {
   apiTokenSchemas
 } from "./schemas.js";
 import { createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { assertNever } from "../../utils/exhaustive.js";
 
 // Import handlers from subdirectories for collaborators
 import {
@@ -179,8 +180,10 @@ This will show you all the required parameters and their types.`);
               handlerResult = await inviteUserHandler(validatedArgs as CollaboratorActionArgsMap['user_invite']);
               break;
 
-            default:
-              return createErrorResponse(`Error: No handler implemented for action '${action}'. This is a server configuration error.`);
+            default: {
+              // Exhaustiveness check - TypeScript will error if we miss a case
+              return assertNever(validAction, `Unhandled collaborator action: ${validAction}`);
+            }
           }
           
           // Handle the handler result
@@ -241,8 +244,9 @@ export const registerRolesRouter = (server: McpServer) => {
 
         // Route to the appropriate handler
         let handlerResult: any;
+        const validAction = action as keyof typeof roleSchemas;
         
-        switch (action) {
+        switch (validAction) {
           case "create_role":
             handlerResult = await createRoleHandler(params as z.infer<typeof roleSchemas.create_role>);
             break;
@@ -261,8 +265,10 @@ export const registerRolesRouter = (server: McpServer) => {
           case "duplicate_role":
             handlerResult = await duplicateRoleHandler(params as z.infer<typeof roleSchemas.duplicate_role>);
             break;
-          default:
-            return createErrorResponse(`Unsupported action: ${action}`);
+          default: {
+            // Exhaustiveness check - TypeScript will error if we miss a case
+            return assertNever(validAction, `Unhandled role action: ${validAction}`);
+          }
         }
         
         // Handle the handler result
@@ -304,7 +310,9 @@ export const registerAPITokensRouter = (server: McpServer) => {
 
         // Route to the appropriate handler
         let handlerResult: any;
-        switch (action) {
+        const validAction = action as keyof typeof apiTokenSchemas;
+        
+        switch (validAction) {
           case "create_token":
             handlerResult = await createTokenHandler(params as z.infer<typeof apiTokenSchemas.create_token>);
             break;
@@ -323,8 +331,10 @@ export const registerAPITokensRouter = (server: McpServer) => {
           case "rotate_token":
             handlerResult = await rotateTokenHandler(params as z.infer<typeof apiTokenSchemas.rotate_token>);
             break;
-          default:
-            return createErrorResponse(`Unsupported action: ${action}`);
+          default: {
+            // Exhaustiveness check - TypeScript will error if we miss a case
+            return assertNever(validAction, `Unhandled API token action: ${validAction}`);
+          }
         }
 
         // Handle the handler result
