@@ -1,8 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { environmentSchemas, environmentActionsList } from "./schemas.js";
-import { createResponse } from "../../utils/responseHandlers.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Import handlers from subdirectories
 import {
@@ -18,12 +17,6 @@ import {
   activateMaintenanceModeHandler,
   deactivateMaintenanceModeHandler
 } from "./Maintenance/handlers/index.js";
-
-// Annotate the args parameter with the discriminated union type
-type EnvironmentToolArgs = {
-  action: string;
-  args?: Record<string, unknown>;
-};
 
 // Type for the action parameter
 type EnvironmentAction = keyof typeof environmentSchemas;
@@ -94,34 +87,56 @@ This will show you all the required parameters and their types.`);
           const validatedArgs = actionSchema.parse(args);
           
           // Route to the appropriate handler based on the action
+          let handlerResult: any;
+          
           switch (validAction) {
             // Environment retrieval operations
             case "retrieve":
-              return getEnvironmentHandler(validatedArgs as ActionArgsMap['retrieve']);
+              handlerResult = await getEnvironmentHandler(validatedArgs as ActionArgsMap['retrieve']);
+              break;
             case "list":
-              return listEnvironmentsHandler(validatedArgs as ActionArgsMap['list']);
+              handlerResult = await listEnvironmentsHandler(validatedArgs as ActionArgsMap['list']);
+              break;
 
             // Environment modification operations
             case "delete":
-              return deleteEnvironmentHandler(validatedArgs as ActionArgsMap['delete']);
+              handlerResult = await deleteEnvironmentHandler(validatedArgs as ActionArgsMap['delete']);
+              break;
             case "rename":
-              return renameEnvironmentHandler(validatedArgs as ActionArgsMap['rename']);
+              handlerResult = await renameEnvironmentHandler(validatedArgs as ActionArgsMap['rename']);
+              break;
             case "promote":
-              return promoteEnvironmentHandler(validatedArgs as ActionArgsMap['promote']);
+              handlerResult = await promoteEnvironmentHandler(validatedArgs as ActionArgsMap['promote']);
+              break;
             case "fork":
-              return forkEnvironmentHandler(validatedArgs as ActionArgsMap['fork']);
+              handlerResult = await forkEnvironmentHandler(validatedArgs as ActionArgsMap['fork']);
+              break;
 
             // Maintenance mode operations
             case "maintenance_status":
-              return fetchMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_status']);
+              handlerResult = await fetchMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_status']);
+              break;
             case "maintenance_activate":
-              return activateMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_activate']);
+              handlerResult = await activateMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_activate']);
+              break;
             case "maintenance_deactivate":
-              return deactivateMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_deactivate']);
+              handlerResult = await deactivateMaintenanceModeHandler(validatedArgs as ActionArgsMap['maintenance_deactivate']);
+              break;
             
             default:
               return createErrorResponse(`Error: No handler implemented for action '${action}'. This is a server configuration error.`);
           }
+          
+          // Handle the handler result
+          if (handlerResult && typeof handlerResult === 'object') {
+            // Check if it's already a Response object from createResponse/createErrorResponse
+            if ('content' in handlerResult) {
+              return handlerResult;
+            }
+          }
+          
+          // This shouldn't happen with properly implemented handlers
+          return createErrorResponse(`Unexpected response format from handler for action '${action}'.`);
         } catch (error) {
           if (error instanceof z.ZodError) {
             // Get the schema for documentation purposes

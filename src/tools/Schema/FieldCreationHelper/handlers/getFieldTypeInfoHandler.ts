@@ -1,7 +1,6 @@
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { schemaSchemas } from "../../schemas.js";
-import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { fieldTemplates, getAvailableFieldTypes, getAvailableAppearances, getFieldTemplate } from "../fieldTemplates/index.js";
+import { getAvailableFieldTypes, getAvailableAppearances, getFieldTemplate } from "../fieldTemplates/index.js";
 
 /**
  * Field Type Documentation Organized by Categories
@@ -937,12 +936,7 @@ export const getFieldTypeInfoHandler = createCustomHandler({
     handlerName: "getFieldTypeInfoHandler"
   }
 }, async (args) => {
-  // Set default environment if not provided
-  const environment = args.environment || "main";
-  // Get the client
-  const client = await UnifiedClientManager.getDefaultClient(args.apiToken, environment);
-    
-    // If a specific field template is requested
+  // If a specific field template is requested
     if (args.fieldType && args.appearance) {
       const template = getFieldTemplate(args.fieldType, args.appearance);
       if (template) {
@@ -1103,12 +1097,3 @@ JSON Field (Checkbox Group):
 /**
  * Helper function to get a flat list of all field types from documentation
  */
-function getAllFieldTypes(): string[] {
-  const types = [];
-  
-  for (const category of Object.values(fieldTypeDocs)) {
-    types.push(...Object.keys(category));
-  }
-  
-  return types;
-}

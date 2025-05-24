@@ -277,13 +277,6 @@ export const videoUrlValidatorSchema = z.object({
 });
 
 /**
- * Mappings of field types to their valid validators
- */
-type ValidatorMapping = {
-  [key: string]: z.ZodType[];
-};
-
-/**
  * Map of required validators for specific field types
  */
 const requiredValidatorsMap: Record<string, string[]> = {
@@ -296,129 +289,9 @@ const requiredValidatorsMap: Record<string, string[]> = {
 };
 
 /**
- * Map of field types to their valid validators
- */
-const validatorsMap: ValidatorMapping = {
-  // Base validators for all field types
-  '*': [requiredValidatorSchema],
-
-  // Text-based fields
-  string: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema,
-    formatValidatorSchema,
-    lengthValidatorSchema,
-    enumValidatorSchema,
-    patternValidatorSchema
-  ],
-  text: [
-    requiredValidatorSchema,
-    lengthValidatorSchema
-  ],
-  
-  // Numeric fields
-  integer: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema,
-    numberRangeValidatorSchema,
-    enumValidatorSchema
-  ],
-  float: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema,
-    numberRangeValidatorSchema,
-    enumValidatorSchema
-  ],
-  
-  // Boolean fields
-  boolean: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema
-  ],
-  
-  // Date fields
-  date: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema,
-    dateTimeValidatorSchema
-  ],
-  date_time: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema,
-    dateTimeValidatorSchema
-  ],
-  
-  // Media fields
-  file: [
-    requiredValidatorSchema,
-    fileSizeValidatorSchema,
-    fileTypeValidatorSchema,
-    imageDimensionValidatorSchema
-  ],
-  gallery: [
-    fileSizeValidatorSchema,
-    fileTypeValidatorSchema,
-    imageDimensionValidatorSchema,
-    itemsNumberValidatorSchema
-  ],
-  
-  // Reference fields
-  link: [
-    requiredValidatorSchema,
-    itemItemTypeValidatorSchema
-  ],
-  links: [
-    itemItemTypeValidatorSchema,
-    itemsNumberValidatorSchema
-  ],
-  
-  // Rich text fields
-  rich_text: [
-    richTextBlocksValidatorSchema
-  ],
-  structured_text: [
-    requiredValidatorSchema,
-    structuredTextBlocksValidatorSchema,
-    structuredTextLinksValidatorSchema,
-    structuredTextMarksValidatorSchema,
-    structuredTextNodesValidatorSchema
-  ],
-  
-  // Other specialized fields
-  slug: [
-    requiredValidatorSchema,
-    uniqueValidatorSchema,
-    lengthValidatorSchema
-  ],
-  color: [
-    requiredValidatorSchema
-  ],
-  json: [
-    requiredValidatorSchema
-  ],
-  lat_lon: [
-    requiredValidatorSchema
-  ],
-  seo: [
-    requiredValidatorSchema
-  ],
-  single_block: [
-    requiredValidatorSchema,
-    singleBlockBlocksValidatorSchema
-  ],
-  video: [
-    requiredValidatorSchema,
-    videoUrlValidatorSchema
-  ]
-};
-
-/**
  * Creates a complete validators schema based on field type
  */
 export function createValidatorsSchema(fieldType: string) {
-  // Get validators for this field type, falling back to base validators
-  const fieldValidators = validatorsMap[fieldType] || validatorsMap['*'] || [];
-  
   // Create a schema with more descriptive information including required validators
   const requiredValidator = requiredValidatorsMap[fieldType] 
     ? `Required validators: ${requiredValidatorsMap[fieldType].join(', ')}` 

@@ -2,17 +2,15 @@ import { z } from "zod";
 import {
   apiTokenSchema,
   environmentSchema,
+  baseToolSchema,
   createBaseSchema,
-  createRetrieveSchema,
   createListSchema,
-  createDeleteSchema,
   paginationSchema,
   fieldTypeSchema
 } from "../../utils/sharedSchemas.js";
 
 import { createValidatorsSchema } from "./fieldValidators.js";
 import { createAppearanceSchema, fieldAddonSchema } from "./fieldAppearance.js";
-import { stringFieldExample, richTextFieldExample, textFieldExample } from "./fieldExamples.js";
 
 /**
  * API key validation pattern
@@ -105,7 +103,9 @@ export const schemaSchemas = {
     }).describe("The API key for the duplicated item type (must be unique).")
   }),
 
-  get_item_type: createRetrieveSchema("itemType"),
+  get_item_type: baseToolSchema.extend({
+    itemTypeId: z.string().min(1).describe("The ID of the item type to retrieve.")
+  }),
 
   list_item_types: createListSchema(),
 
@@ -157,7 +157,9 @@ export const schemaSchemas = {
     }
   ),
 
-  delete_item_type: createDeleteSchema("itemType"),
+  delete_item_type: baseToolSchema.extend({
+    itemTypeId: z.string().describe("The ID of the item type to delete")
+  }),
 
   // Fieldset operations
   create_fieldset: createBaseSchema().extend({
@@ -188,9 +190,13 @@ export const schemaSchemas = {
     page: paginationSchema.optional()
   }),
 
-  get_fieldset: createRetrieveSchema("fieldset"),
+  get_fieldset: baseToolSchema.extend({
+    fieldsetId: z.string().min(1).describe("The ID of the fieldset to retrieve.")
+  }),
 
-  delete_fieldset: createDeleteSchema("fieldset"),
+  delete_fieldset: baseToolSchema.extend({
+    fieldsetId: z.string().describe("The ID of the fieldset to delete")
+  }),
 
   // Field operations
   create_field: z.object({
@@ -429,14 +435,18 @@ export const schemaSchemas = {
     }
   ),
 
-  get_field: createRetrieveSchema("field"),
+  get_field: baseToolSchema.extend({
+    fieldId: z.string().describe("The ID of the field to retrieve")
+  }),
 
   list_fields: createBaseSchema().extend({
     itemTypeId: z.string().min(1).describe("ID of the item type to filter fields by."),
     page: paginationSchema.optional()
   }),
 
-  delete_field: createDeleteSchema("field")
+  delete_field: baseToolSchema.extend({
+    fieldId: z.string().describe("The ID of the field to delete")
+  })
 };
 
 // Create an array of all available schema actions for the enum

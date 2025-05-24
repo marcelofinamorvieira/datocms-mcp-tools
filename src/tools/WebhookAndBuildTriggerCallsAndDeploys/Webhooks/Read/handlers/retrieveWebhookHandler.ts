@@ -1,6 +1,5 @@
 import { createRetrieveHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Retrieves a single webhook by ID

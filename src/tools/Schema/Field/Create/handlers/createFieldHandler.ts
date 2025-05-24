@@ -1,13 +1,29 @@
 import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createResponse, Response as MCPResponse } from "../../../../../utils/responseHandlers.js";
 import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { extractDetailedErrorInfo } from "../../../../../utils/errorHandlers.js";
 import { schemaSchemas } from "../../../schemas.js";
+import type { BaseParams } from "../../../../../utils/enhancedHandlerFactory.js";
+import type { Client, SimpleSchemaTypes } from "@datocms/cma-client-node";
+
+interface CreateFieldParams extends BaseParams {
+  itemTypeId: string;
+  field_type: string;
+  label: string;
+  apiKey?: string;
+  validators?: Record<string, unknown>;
+  appearance?: {
+    editor: string;
+    parameters?: Record<string, unknown>;
+    addons?: unknown[];
+  };
+  [key: string]: unknown; // For additional field properties
+}
 
 /**
  * Creates a new field in a DatoCMS item type with improved error handling
  */
-export const createFieldHandler = createCustomHandler({
+export const createFieldHandler = createCustomHandler<CreateFieldParams, MCPResponse>({
   domain: "schema",
   schemaName: "create_field",
   schema: schemaSchemas.create_field,
@@ -48,9 +64,9 @@ export const createFieldHandler = createCustomHandler({
     appearance.editor === 'single_line'
   ) {
     if (!appearance.parameters) {
-      appearance.parameters = { heading: false } as any;
-    } else if ((appearance.parameters as any).heading === undefined) {
-      (appearance.parameters as any).heading = false;
+      appearance.parameters = { heading: false };
+    } else if (appearance.parameters.heading === undefined) {
+      appearance.parameters.heading = false;
     }
   }
 
@@ -59,7 +75,7 @@ export const createFieldHandler = createCustomHandler({
     field_type === 'string' &&
     appearance &&
     (appearance.editor === 'string_radio_group' || appearance.editor === 'string_select') &&
-    (!validators || !validators.enum)
+    (!validators || !(validators as { enum?: unknown }).enum)
   ) {
     throw new Error(
       `Missing required validator 'enum' for string field with ${appearance.editor} editor. ` +
@@ -73,18 +89,18 @@ export const createFieldHandler = createCustomHandler({
     appearance &&
     (appearance.editor === 'string_radio_group' || appearance.editor === 'string_select') &&
     validators &&
-    (validators as any).enum &&
-    Array.isArray((validators as any).enum.values)
+    (validators as { enum?: { values?: unknown[] } }).enum &&
+    Array.isArray((validators as { enum?: { values?: unknown[] } }).enum?.values)
   ) {
     const optionValues = (
-      ((appearance.parameters || {}) as any).radios ||
-      ((appearance.parameters || {}) as any).options ||
+      ((appearance.parameters || {}) as { radios?: Array<{ value: string }>, options?: Array<{ value: string }> }).radios ||
+      ((appearance.parameters || {}) as { radios?: Array<{ value: string }>, options?: Array<{ value: string }> }).options ||
       []
-    ).map((o: any) => o.value);
-    const enumValues = (validators as any).enum.values;
+    ).map((o) => o.value);
+    const enumValues = (validators as { enum: { values: unknown[] } }).enum.values;
     const mismatch =
       optionValues.length !== enumValues.length ||
-      optionValues.some((v: any, idx: number) => v !== enumValues[idx]);
+      optionValues.some((v, idx) => v !== enumValues[idx]);
     if (mismatch) {
       throw new Error(
         "Validator enum values must exactly match the option values in appearance.parameters."
@@ -103,9 +119,9 @@ export const createFieldHandler = createCustomHandler({
   // Validate item_item_type array
   if (
     field_type === 'link' &&
-    (validators as any)?.item_item_type &&
-    (!Array.isArray((validators as any).item_item_type.item_types) ||
-      (validators as any).item_item_type.item_types.length === 0)
+    (validators as { item_item_type?: { item_types?: unknown[] } })?.item_item_type &&
+    (!Array.isArray((validators as { item_item_type?: { item_types?: unknown[] } }).item_item_type?.item_types) ||
+      ((validators as { item_item_type?: { item_types?: unknown[] } }).item_item_type?.item_types?.length ?? 0) === 0)
   ) {
     throw new Error(
       "The 'item_item_type' validator must include an 'item_types' array with at least one valid item type ID."
@@ -123,9 +139,9 @@ export const createFieldHandler = createCustomHandler({
   // Validate items_item_type array
   if (
     field_type === 'links' &&
-    (validators as any)?.items_item_type &&
-    (!Array.isArray((validators as any).items_item_type.item_types) ||
-      (validators as any).items_item_type.item_types.length === 0)
+    (validators as { items_item_type?: { item_types?: unknown[] } })?.items_item_type &&
+    (!Array.isArray((validators as { items_item_type?: { item_types?: unknown[] } }).items_item_type?.item_types) ||
+      ((validators as { items_item_type?: { item_types?: unknown[] } }).items_item_type?.item_types?.length ?? 0) === 0)
   ) {
     throw new Error(
       "The 'items_item_type' validator must include an 'item_types' array with at least one valid item type ID."
@@ -135,7 +151,7 @@ export const createFieldHandler = createCustomHandler({
   // 'required' validator not allowed on some field types
   if (
     validators &&
-    (validators as any).required !== undefined &&
+    (validators as { required?: unknown }).required !== undefined &&
     (field_type === 'gallery' || field_type === 'links' || field_type === 'rich_text')
   ) {
     throw new Error(
@@ -184,7 +200,7 @@ export const createFieldHandler = createCustomHandler({
   }
 
   // Slug fields require slug_title_field validator referencing title field
-  if (field_type === 'slug' && (!validators || !(validators as any).slug_title_field)) {
+  if (field_type === 'slug' && (!validators || !(validators as { slug_title_field?: unknown }).slug_title_field)) {
     throw new Error(
       "Missing required validator 'slug_title_field' for slug field. " +
         "Add { \"slug_title_field\": { \"title_field_id\": \"<field_id>\" } } to validators."
@@ -192,11 +208,11 @@ export const createFieldHandler = createCustomHandler({
   }
 
   // Build the DatoCMS client
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
 
   // Prepare field data for the API. The DatoCMS client expects just the
   // attribute object and will automatically wrap it in the JSON:API format.
-  const fieldData: any = {
+  const fieldData: Record<string, unknown> = {
     ...restFieldData,
     field_type: field_type,
     validators: validators || {},
@@ -210,7 +226,7 @@ export const createFieldHandler = createCustomHandler({
 
   try {
     // Create the field
-    const field = await client.fields.create(itemTypeId, fieldData);
+    const field = await client.fields.create(itemTypeId, fieldData as SimpleSchemaTypes.FieldCreateSchema);
 
     return createResponse({
       success: true,

@@ -1,5 +1,4 @@
 import { config } from 'dotenv';
-import { z } from 'zod';
 
 // Load environment variables
 config();
@@ -302,17 +301,17 @@ export function createDebugLogger(context: DebugContext) {
         }
       }
     },
-    warn: (message: string, data?: any) => {
+    warn: (message: string, _data?: any) => {
       if (shouldLog(LogLevel.WARN)) {
         addTrace(context, `WARN: ${message}`);
       }
     },
-    info: (message: string, data?: any) => {
+    info: (message: string, _data?: any) => {
       if (shouldLog(LogLevel.INFO)) {
         addTrace(context, `INFO: ${message}`);
       }
     },
-    debug: (message: string, data?: any) => {
+    debug: (message: string, _data?: any) => {
       if (shouldLog(LogLevel.DEBUG)) {
         addTrace(context, `DEBUG: ${message}`);
       }

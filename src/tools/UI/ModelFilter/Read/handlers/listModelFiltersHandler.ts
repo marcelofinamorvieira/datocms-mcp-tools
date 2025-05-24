@@ -10,7 +10,7 @@ export const listModelFiltersHandler = createListHandler({
   schemaName: "list",
   schema: modelFilterSchemas.list,
   entityName: "Model Filter",
-  clientAction: async (client, args) => {
+  clientAction: async (client, _args) => {
     const typedClient = createTypedUIClient(client);
 
     // Fetch all model filters

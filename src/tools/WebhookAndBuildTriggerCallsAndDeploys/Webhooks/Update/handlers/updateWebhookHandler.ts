@@ -1,7 +1,6 @@
 import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import type { UpdateWebhookParams as ClientUpdateParams } from "../../../webhookAndBuildTriggerTypes.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Updates an existing webhook in DatoCMS
@@ -9,7 +8,7 @@ import type { UpdateWebhookParams as ClientUpdateParams } from "../../../webhook
  * @param params Parameters for updating a webhook
  * @returns Response with the updated webhook details
  */
-export const updateWebhookHandler = createUpdateHandler({
+export const updateWebhookHandler = createUpdateHandler<any, SimpleSchemaTypes.Webhook>({
   domain: "webhooks.webhooks",
   schemaName: "update",
   schema: webhookSchemas.update,
@@ -19,14 +18,18 @@ export const updateWebhookHandler = createUpdateHandler({
     const { webhookId, name, url, headers, events } = args;
 
     // Build update payload with only the provided parameters
-    const updatePayload: ClientUpdateParams = {};
+    const updatePayload: SimpleSchemaTypes.WebhookUpdateSchema = {};
     
     if (name !== undefined) updatePayload.name = name;
     if (url !== undefined) updatePayload.url = url;
     if (headers !== undefined) updatePayload.headers = headers;
-    if (events !== undefined) updatePayload.events = events;
+    if (events !== undefined) {
+      updatePayload.events = events.map((event: string) => ({
+        entity_type: event.split(':')[0] as any,
+        event_types: [event.split(':')[1]] as any
+      }));
+    }
 
-    // Update the webhook with proper typing
     return await client.webhooks.update(webhookId, updatePayload);
   }
 });

@@ -5,33 +5,60 @@
  */
 
 import type { z } from "zod";
-import { HandlerResponse, createResponse, Response } from "./responseHandlers.js";
-import { UnifiedClientManager, ClientType } from "./unifiedClientManager.js";
+import { createResponse, Response as McpResponse } from "./responseHandlers.js";
+import { UnifiedClientManager } from "./unifiedClientManager.js";
 import { withErrorHandling, ErrorContext } from "./errorHandlerWrapper.js";
 import { withSchemaValidation, Handler } from "./schemaValidationWrapper.js";
 import { SchemaRegistry } from "./schemaRegistry.js";
 import { withDebugTracking } from "./debugMiddleware.js";
 import { 
   createStandardSuccessResponse, 
-  createStandardPaginatedResponse,
-  createStandardMcpResponse,
-  PaginationInfo
+  createStandardMcpResponse
 } from "./standardResponse.js";
+import { Client } from "@datocms/cma-client-node";
+
+// Re-export useful types
+export { Client } from "@datocms/cma-client-node";
 
 /**
- * Type for a generic DatoCMS client
+ * The DatoCMS client type - just use the standard Client
+ * All API methods are already available on this client
  */
-export type DatoCMSClient = any; // Using 'any' for now to simplify type compatibility
+export type DatoCMSClient = Client;
+
+/**
+ * Request context passed to client actions
+ */
+export interface RequestContext {
+  apiToken: string;
+  environment?: string;
+  debug?: boolean;
+}
 
 /**
  * Type for a function that creates a client response object
+ * @template T - The params type
+ * @template R - The return type
  */
-export type ClientActionFn<T, R> = (client: DatoCMSClient, params: T) => Promise<R>;
+export type ClientActionFn<T, R> = (
+  client: DatoCMSClient, 
+  params: T,
+  context: RequestContext
+) => Promise<R>;
+
+/**
+ * Base parameters that all handlers must have
+ */
+export interface BaseParams {
+  apiToken: string;
+  environment?: string;
+  debug?: boolean;
+}
 
 /**
  * Base handler options shared across all handler types
  */
-export interface BaseHandlerOptions<T> {
+export interface BaseHandlerOptions<T extends BaseParams> {
   /** The domain for schema registration and validation */
   domain: string;
   /** The schema name for this handler */
@@ -40,14 +67,12 @@ export interface BaseHandlerOptions<T> {
   schema: z.ZodType<T>;
   /** Error context for detailed error messages */
   errorContext?: ErrorContext;
-  /** Client type to use (default, records, collaborators) */
-  clientType?: ClientType;
 }
 
 /**
  * Options for create operation handler
  */
-export interface CreateHandlerOptions<T, R> extends BaseHandlerOptions<T> {
+export interface CreateHandlerOptions<T extends BaseParams, R> extends BaseHandlerOptions<T> {
   /** Entity name for debugging and messages */
   entityName?: string;
   /** Message to display on successful creation */
@@ -59,7 +84,7 @@ export interface CreateHandlerOptions<T, R> extends BaseHandlerOptions<T> {
 /**
  * Options for retrieve operation handler
  */
-export interface RetrieveHandlerOptions<T, R> extends BaseHandlerOptions<T> {
+export interface RetrieveHandlerOptions<T extends BaseParams, R> extends BaseHandlerOptions<T> {
   /** Entity name for error messages */
   entityName: string;
   /** ID parameter name in the params object */
@@ -71,7 +96,7 @@ export interface RetrieveHandlerOptions<T, R> extends BaseHandlerOptions<T> {
 /**
  * Options for list operation handler
  */
-export interface ListHandlerOptions<T, R> extends BaseHandlerOptions<T> {
+export interface ListHandlerOptions<T extends BaseParams, R> extends BaseHandlerOptions<T> {
   /** Entity name for error messages */
   entityName: string;
   /** Custom client action function */
@@ -83,7 +108,7 @@ export interface ListHandlerOptions<T, R> extends BaseHandlerOptions<T> {
 /**
  * Options for update operation handler
  */
-export interface UpdateHandlerOptions<T, R> extends BaseHandlerOptions<T> {
+export interface UpdateHandlerOptions<T extends BaseParams, R> extends BaseHandlerOptions<T> {
   /** Entity name for error messages */
   entityName: string;
   /** ID parameter name in the params object */
@@ -97,7 +122,7 @@ export interface UpdateHandlerOptions<T, R> extends BaseHandlerOptions<T> {
 /**
  * Options for delete operation handler
  */
-export interface DeleteHandlerOptions<T> extends BaseHandlerOptions<T> {
+export interface DeleteHandlerOptions<T extends BaseParams> extends BaseHandlerOptions<T> {
   /** Entity name for error messages */
   entityName: string;
   /** ID parameter name in the params object */
@@ -116,13 +141,24 @@ export interface DeleteHandlerOptions<T> extends BaseHandlerOptions<T> {
  */
 function composeMiddleware<T, R>(
   baseHandler: Handler<T, R>,
-  middleware: Array<(handler: Handler<any, any>) => Handler<any, any>>
-): Handler<unknown, Response> {
+  middleware: Array<(handler: Handler<unknown, McpResponse>) => Handler<unknown, McpResponse>>
+): Handler<unknown, McpResponse> {
+  // Wrap the base handler to ensure it returns Response
+  const responseHandler: Handler<unknown, McpResponse> = async (args: unknown): Promise<McpResponse> => {
+    const result = await baseHandler(args as T);
+    // If result is already a Response, return it
+    if (result && typeof result === 'object' && 'content' in result) {
+      return result as McpResponse;
+    }
+    // This should not happen with our current implementation
+    throw new Error('Handler must return Response type');
+  };
+  
   // Apply middleware from right to left (last middleware runs first)
   return middleware.reduceRight(
     (handler, applyMiddleware) => applyMiddleware(handler),
-    baseHandler as Handler<any, any>
-  ) as Handler<unknown, Response>;
+    responseHandler
+  );
 }
 
 /**
@@ -132,38 +168,33 @@ function composeMiddleware<T, R>(
  * @param responseTransformer Function to transform the result into a response
  * @returns A fully composed handler with validation and error handling
  */
-function createBaseHandler<T, R>(
+function createBaseHandler<T extends BaseParams, R>(
   options: BaseHandlerOptions<T>,
   clientAction: ClientActionFn<T, R>,
   responseTransformer: (result: R, requestDebug?: boolean) => any
-): Handler<unknown, Response> {
-  const { domain, schemaName, schema, errorContext, clientType = ClientType.DEFAULT } = options;
+): Handler<unknown, McpResponse> {
+  const { domain, schemaName, schema, errorContext } = options;
   
   // Register the schema if it hasn't been registered yet
   SchemaRegistry.register(domain, schemaName, schema);
   
   // Define the base handler function
-  const baseHandler: Handler<T, Response> = async (params: T): Promise<Response> => {
-    // Extract client parameters
-    const apiToken = (params as any).apiToken;
-    const environment = (params as any).environment;
-    const requestDebug = (params as any).debug;
+  const baseHandler: Handler<T, McpResponse> = async (params: T): Promise<McpResponse> => {
+    // Extract client parameters - no type casting needed since T extends BaseParams
+    const { apiToken, environment, debug: requestDebug } = params;
     
-    // Get the appropriate client
-    let client: DatoCMSClient;
-    switch (clientType) {
-      case ClientType.RECORDS:
-        client = UnifiedClientManager.getRecordsClient(apiToken, environment);
-        break;
-      case ClientType.COLLABORATORS:
-        client = UnifiedClientManager.getCollaboratorsClient(apiToken, environment);
-        break;
-      default:
-        client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-    }
+    // Create request context
+    const context: RequestContext = {
+      apiToken,
+      environment,
+      debug: requestDebug
+    };
     
-    // Execute the client action
-    const result = await clientAction(client, params);
+    // Get the standard DatoCMS client
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+    
+    // Execute the client action with context
+    const result = await clientAction(client, params, context);
     
     // Transform and return the result - pass the debug flag from params
     const transformedResult = responseTransformer(result, requestDebug);
@@ -190,7 +221,7 @@ function createBaseHandler<T, R>(
 /**
  * Creates a handler function for create operations
  */
-export function createCreateHandler<T, R>(options: CreateHandlerOptions<T, R>): Handler<unknown, Response> {
+export function createCreateHandler<T extends BaseParams, R>(options: CreateHandlerOptions<T, R>): Handler<unknown, McpResponse> {
   const { successMessage, clientAction, errorContext } = options;
   
   // Create an enhanced error context
@@ -217,7 +248,7 @@ export function createCreateHandler<T, R>(options: CreateHandlerOptions<T, R>): 
 /**
  * Creates a handler function for retrieve operations
  */
-export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R>): Handler<unknown, Response> {
+export function createRetrieveHandler<T extends BaseParams, R>(options: RetrieveHandlerOptions<T, R>): Handler<unknown, McpResponse> {
   const { entityName, idParam, clientAction } = options;
   
   // Create an enhanced error context
@@ -235,19 +266,21 @@ export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R
     // Update error context with the resource ID
     enhancedErrorContext.resourceId = entityId as string | number;
     
-    // Extract client parameters
-    const apiToken = (params as any).apiToken;
-    const environment = (params as any).environment;
+    // Extract client parameters - no type casting needed since T extends BaseParams
+    const { apiToken, environment } = params;
     
-    // Get the appropriate client based on client type
-    const client = options.clientType === ClientType.RECORDS 
-      ? UnifiedClientManager.getRecordsClient(apiToken, environment)
-      : options.clientType === ClientType.COLLABORATORS
-        ? UnifiedClientManager.getCollaboratorsClient(apiToken, environment)
-        : UnifiedClientManager.getDefaultClient(apiToken, environment);
+    // Create request context
+    const context: RequestContext = {
+      apiToken,
+      environment,
+      debug: params.debug
+    };
+    
+    // Get the standard DatoCMS client
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
     
     // Execute the client action
-    const result = await clientAction(client, params);
+    const result = await clientAction(client, params, context);
     
     // Check if entity was found
     if (!result) {
@@ -258,9 +291,9 @@ export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R
   };
   
   // Create a wrapper handler that uses standardized responses
-  const standardizedHandler: Handler<T, Response> = async (params: T): Promise<Response> => {
+  const standardizedHandler: Handler<T, McpResponse> = async (params: T): Promise<McpResponse> => {
     const result = await baseHandler(params);
-    const requestDebug = (params as any).debug;
+    const requestDebug = params.debug; // No cast needed since T extends BaseParams
     const standardResponse = createStandardSuccessResponse(result, undefined, undefined, requestDebug);
     return createStandardMcpResponse(standardResponse);
   };
@@ -285,7 +318,7 @@ export function createRetrieveHandler<T, R>(options: RetrieveHandlerOptions<T, R
 /**
  * Creates a handler function for update operations
  */
-export function createUpdateHandler<T, R>(options: UpdateHandlerOptions<T, R>): Handler<unknown, Response> {
+export function createUpdateHandler<T extends BaseParams, R>(options: UpdateHandlerOptions<T, R>): Handler<unknown, McpResponse> {
   const { entityName, idParam, clientAction, successMessage } = options;
   
   // Create an enhanced error context
@@ -298,7 +331,10 @@ export function createUpdateHandler<T, R>(options: UpdateHandlerOptions<T, R>): 
   
   // Create the response transformer function
   const responseTransformer = (result: R, requestDebug?: boolean) => {
-    const entityId = (result as any).id || 'unknown';
+    // Safely extract ID if the result has one
+    const entityId = (result && typeof result === 'object' && 'id' in result) 
+      ? (result as { id: string | number }).id 
+      : 'unknown';
     const message = successMessage 
       ? (typeof successMessage === 'function' ? successMessage(result) : successMessage)
       : `${entityName} ${entityId} was successfully updated.`;
@@ -309,10 +345,10 @@ export function createUpdateHandler<T, R>(options: UpdateHandlerOptions<T, R>): 
   // Create and return the composed handler with dynamic resourceId
   return createBaseHandler(
     { ...options, errorContext: enhancedErrorContext },
-    async (client, params) => {
+    async (client, params, context) => {
       // Update error context with the resource ID
       enhancedErrorContext.resourceId = params[idParam] as string | number;
-      return await clientAction(client, params);
+      return await clientAction(client, params, context);
     },
     responseTransformer
   );
@@ -321,7 +357,7 @@ export function createUpdateHandler<T, R>(options: UpdateHandlerOptions<T, R>): 
 /**
  * Creates a handler function for delete operations
  */
-export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>): Handler<unknown, Response> {
+export function createDeleteHandler<T extends BaseParams>(options: DeleteHandlerOptions<T>): Handler<unknown, McpResponse> {
   const { entityName, idParam, clientAction, successMessage } = options;
   
   // Create an enhanced error context
@@ -333,7 +369,7 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>): Handle
   };
   
   // Create the response transformer function
-  const responseTransformer = (result: void, requestDebug?: boolean) => {
+  const responseTransformer = (_result: void, requestDebug?: boolean) => {
     const entityId = enhancedErrorContext.resourceId;
     const message = successMessage 
       ? (typeof successMessage === 'function' ? successMessage(entityId) : successMessage)
@@ -345,10 +381,10 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>): Handle
   // Create and return the composed handler with dynamic resourceId
   return createBaseHandler(
     { ...options, errorContext: enhancedErrorContext },
-    async (client, params) => {
+    async (client, params, context) => {
       // Update error context with the resource ID
       enhancedErrorContext.resourceId = params[idParam] as string | number;
-      await clientAction(client, params);
+      await clientAction(client, params, context);
       return undefined;
     },
     responseTransformer
@@ -358,8 +394,8 @@ export function createDeleteHandler<T>(options: DeleteHandlerOptions<T>): Handle
 /**
  * Creates a handler function for list operations
  */
-export function createListHandler<T, R>(options: ListHandlerOptions<T, R>): Handler<unknown, Response> {
-  const { entityName, clientAction, formatResult } = options;
+export function createListHandler<T extends BaseParams, R>(options: ListHandlerOptions<T, R>): Handler<unknown, McpResponse> {
+  const { entityName, clientAction, formatResult: _formatResult } = options;
   
   // Create an enhanced error context
   const enhancedErrorContext: ErrorContext = {
@@ -393,10 +429,10 @@ export function createListHandler<T, R>(options: ListHandlerOptions<T, R>): Hand
  * @param handler The base handler function
  * @returns A composed handler with validation and error handling
  */
-export function createCustomHandler<T, R>(
+export function createCustomHandler<T extends BaseParams, R>(
   options: BaseHandlerOptions<T>, 
-  handler: Handler<T, R | Response>
-): Handler<unknown, Response> {
+  handler: Handler<T, R | McpResponse>
+): Handler<unknown, McpResponse> {
   const { domain, schemaName, errorContext } = options;
   
   // Register the schema if it hasn't been registered yet
@@ -436,14 +472,13 @@ export function createDomainHandlerRegistry<
   handlers: H,
   options: {
     errorContext?: Partial<ErrorContext>;
-    clientType?: ClientType;
   } = {}
-): { [K in keyof H]: Handler<unknown, Response> } {
+): { [K in keyof H]: Handler<unknown, McpResponse> } {
   // Register all schemas
   SchemaRegistry.registerBulk(domain, schemas);
   
   // Create validated and error-handled handlers
-  const enhancedHandlers: Record<string, Handler<unknown, Response>> = {};
+  const enhancedHandlers: Record<string, Handler<unknown, McpResponse>> = {};
   
   for (const [name, handler] of Object.entries(handlers)) {
     if (handler) {
@@ -463,8 +498,7 @@ export function createDomainHandlerRegistry<
         domain,
         schemaName: name,
         schema,
-        errorContext: handlerErrorContext,
-        clientType: options.clientType
+        errorContext: handlerErrorContext
       };
       
       // Create and add the handler with middleware
@@ -472,7 +506,7 @@ export function createDomainHandlerRegistry<
     }
   }
   
-  return enhancedHandlers as { [K in keyof H]: Handler<unknown, Response> };
+  return enhancedHandlers as { [K in keyof H]: Handler<unknown, McpResponse> };
 }
 
 export default {

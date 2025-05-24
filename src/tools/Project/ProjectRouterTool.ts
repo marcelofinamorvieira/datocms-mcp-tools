@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { projectSchemas, projectActionsList } from "./schemas.js";
-import { createResponse } from "../../utils/responseHandlers.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Import handlers from subdirectories
@@ -9,10 +9,11 @@ import { getProjectInfoHandler } from "./Info/handlers/index.js";
 import { updateSiteSettingsHandler } from "./Update/handlers/index.js";
 
 // Annotate the args parameter with the discriminated union type
-type ProjectToolArgs = {
-  action: string;
-  args?: Record<string, unknown>;
-};
+// Currently unused but kept for potential future use
+// type ProjectToolArgs = {
+//   action: string;
+//   args?: Record<string, unknown>;
+// };
 
 // Type for the action parameter
 type ProjectAction = keyof typeof projectSchemas;

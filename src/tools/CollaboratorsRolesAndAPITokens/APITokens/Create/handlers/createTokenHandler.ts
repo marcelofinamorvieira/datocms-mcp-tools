@@ -1,20 +1,21 @@
 import { z } from "zod";
-import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { apiTokenSchemas } from "../../../schemas.js";
-import { CreateAPITokenParams, Role } from "../../../collaboratorsTypes.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for creating a new API token in DatoCMS
  */
-export const createTokenHandler = createCreateHandler({
+export const createTokenHandler = createCreateHandler<
+  z.infer<typeof apiTokenSchemas.create_token>,
+  SimpleSchemaTypes.AccessToken
+>({
   domain: "collaborators.apiTokens",
   schemaName: "create_token",
   schema: apiTokenSchemas.create_token,
   entityName: "API Token",
-  clientType: ClientType.COLLABORATORS,
-  successMessage: (result: any) => `API Token '${result.attributes.name}' created successfully with ID: ${result.id}`,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof apiTokenSchemas.create_token>) => {
+  successMessage: (result) => `API Token '${result.name}' created successfully with ID: ${result.id}`,
+  clientAction: async (client, args) => {
     const {
       name,
       role,
@@ -30,9 +31,9 @@ export const createTokenHandler = createCreateHandler({
     if (typeof role === 'string') {
       // Handle predefined role names or role IDs
       if (['admin', 'editor', 'developer', 'seo', 'contributor'].includes(role)) {
-        // We need to get the client directly as our typed client doesn't have this helper function
-        const roles = await client.listRoles();
-        const matchingRole = roles.find((r: Role) => r.attributes.name.toLowerCase() === role.toLowerCase());
+        // Use the standard client API - roles have name directly on the object
+        const roles = await client.roles.list();
+        const matchingRole = roles.find((r) => r.name.toLowerCase() === role.toLowerCase());
         if (matchingRole) {
           roleId = matchingRole.id;
         } else {
@@ -49,16 +50,17 @@ export const createTokenHandler = createCreateHandler({
       throw new Error("Invalid role specification. Please provide a valid role ID or predefined role name.");
     }
 
-    // Create the token with our properly typed client
-    const createParams: CreateAPITokenParams = {
+    // Create the token using the standard client API
+    // The API expects role to be RoleData: { type: "role", id: string }
+    const createParams: SimpleSchemaTypes.AccessTokenCreateSchema = {
       name,
-      role: { id: roleId, type: 'role' },
-      can_access_cda: can_access_cda === undefined ? true : can_access_cda,
-      can_access_cda_preview: can_access_cda_preview === undefined ? true : can_access_cda_preview,
-      can_access_cma: can_access_cma === undefined ? true : can_access_cma
+      role: { type: "role", id: roleId },
+      can_access_cda: can_access_cda !== undefined ? can_access_cda : true,
+      can_access_cda_preview: can_access_cda_preview !== undefined ? can_access_cda_preview : true,
+      can_access_cma: can_access_cma !== undefined ? can_access_cma : true
     };
 
-    // Our typed client abstracts away the details and handles the API correctly
-    return await client.createAPIToken(createParams);
+    // Use the standard client API
+    return await client.accessTokens.create(createParams);
   }
 });

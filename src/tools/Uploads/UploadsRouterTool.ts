@@ -1,11 +1,11 @@
 import { z } from "zod";
+import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   uploadsSchemas,
   uploadsActionsList
 } from "./schemas.js";
-import { createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
-import { createResponse } from "../../utils/responseHandlers.js";
+import { createErrorResponse } from "../../utils/errorHandlers.js";
 
 // Handler imports
 import { getUploadByIdHandler } from "./Read/handlers/getUploadByIdHandler.js";

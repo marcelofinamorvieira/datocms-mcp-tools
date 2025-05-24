@@ -1,21 +1,22 @@
 import { z } from "zod";
-import { createUpdateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { apiTokenSchemas } from "../../../schemas.js";
-import { UpdateAPITokenParams, Role } from "../../../collaboratorsTypes.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for updating an API token in DatoCMS
  */
-export const updateTokenHandler = createUpdateHandler({
+export const updateTokenHandler = createUpdateHandler<
+  z.infer<typeof apiTokenSchemas.update_token>,
+  SimpleSchemaTypes.AccessToken
+>({
   domain: "collaborators.apiTokens",
   schemaName: "update_token",
   schema: apiTokenSchemas.update_token,
   entityName: "API Token",
   idParam: "tokenId",
-  clientType: ClientType.COLLABORATORS,
-  successMessage: (result: any) => `API Token '${result.attributes.name}' updated successfully.`,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof apiTokenSchemas.update_token>) => {
+  successMessage: (result) => `API Token '${result.name}' updated successfully.`,
+  clientAction: async (client, args) => {
     const {
       tokenId,
       name,
@@ -26,22 +27,22 @@ export const updateTokenHandler = createUpdateHandler({
     } = args;
 
     // Prepare the update payload with all required fields
-    const updatePayload: UpdateAPITokenParams = {
+    const updatePayload: SimpleSchemaTypes.AccessTokenUpdateSchema = {
       name: name,
       can_access_cda: can_access_cda,
       can_access_cda_preview: can_access_cda_preview,
       can_access_cma: can_access_cma,
-      role: undefined
+      role: null  // Default to null, will be updated if needed
     };
 
     // Handle role assignment
     if (role === null) {
-      updatePayload.role = undefined;
+      updatePayload.role = null;
     } else if (typeof role === 'string') {
       // Handle predefined role names or role IDs
       if (['admin', 'editor', 'developer', 'seo', 'contributor'].includes(role)) {
-        const roles = await client.listRoles();
-        const matchingRole = roles.find((r: Role) => r.attributes.name.toLowerCase() === role.toLowerCase());
+        const roles = await client.roles.list();
+        const matchingRole = roles.find((r) => r.name.toLowerCase() === role.toLowerCase());
         if (matchingRole) {
           updatePayload.role = { id: matchingRole.id, type: "role" };
         } else {
@@ -57,6 +58,6 @@ export const updateTokenHandler = createUpdateHandler({
     }
 
     // Update the API token with all required fields
-    return await client.updateAPIToken(tokenId, updatePayload);
+    return await client.accessTokens.update(tokenId, updatePayload);
   }
 });

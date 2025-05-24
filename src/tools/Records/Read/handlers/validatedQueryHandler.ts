@@ -4,9 +4,10 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../utils/unifiedClientManager.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
 import { recordsSchemas } from "../../schemas.js";
+
+// The handler now infers params from the schema, no need for explicit interface
 
 /**
  * Handler that demonstrates schema validation
@@ -16,7 +17,7 @@ export const validatedQueryHandler = createCustomHandler({
   domain: "records",
   schemaName: "query",
   schema: recordsSchemas.query,
-}, async (args: any) => {
+}, async (args) => {
   const {
     apiToken,
     environment,

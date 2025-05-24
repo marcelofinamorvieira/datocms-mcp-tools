@@ -1,6 +1,6 @@
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 import { uploadsSchemas } from "../../schemas.js";
-import { createResponse, createErrorHandlerResponse } from "../../../../utils/responseHandlers.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 
 export const bulkDestroyUploadsHandler = createCustomHandler({
@@ -16,10 +16,10 @@ export const bulkDestroyUploadsHandler = createCustomHandler({
   const { apiToken, uploadIds, environment } = args;
   
   if (!uploadIds.length) {
-    return createResponse(createErrorHandlerResponse("No upload IDs provided."));
+    throw new Error("No upload IDs provided.");
   }
   if (uploadIds.length > 200) {
-    return createResponse(createErrorHandlerResponse("Max 200 uploads per bulk delete."));
+    throw new Error("Max 200 uploads per bulk delete.");
   }
 
   const client = UnifiedClientManager.getDefaultClient(apiToken, environment);

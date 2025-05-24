@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { UnifiedClientManager } from "../../../utils/unifiedClientManager.js";
-import { isAuthorizationError, isNotFoundError, createErrorResponse, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
-import { createResponse } from "../../../utils/responseHandlers.js";
+import { createErrorResponse, extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Import the menu item action schemas and handlers
@@ -95,7 +93,7 @@ This will show you all the required parameters and their types.`);
             default: {
               // This is a type check to ensure we've handled all possible actions
               const _exhaustiveCheck: never = validAction;
-              return createErrorResponse(`Error: Unsupported action '${action}'. This is likely a bug.`);
+              throw new Error(`Unsupported action: ${_exhaustiveCheck}`);
             }
           }
         } catch (error) {

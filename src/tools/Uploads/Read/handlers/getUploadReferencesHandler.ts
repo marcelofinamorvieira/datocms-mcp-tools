@@ -2,6 +2,7 @@ import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js
 import { uploadsSchemas } from "../../schemas.js";
 import { createStandardSuccessResponse, createStandardMcpResponse } from "../../../../utils/standardResponse.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
+import type { Client, SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 export const getUploadReferencesHandler = createCustomHandler({
   domain: "uploads",
@@ -22,7 +23,7 @@ export const getUploadReferencesHandler = createCustomHandler({
     environment
   } = args;
 
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
 
   // Get references
   const references = await client.uploads.references(uploadId, {
@@ -43,7 +44,7 @@ export const getUploadReferencesHandler = createCustomHandler({
   if (returnOnlyIds) {
     return createStandardMcpResponse(
       createStandardSuccessResponse(
-        references.map((r: any) => ({ id: r.id, type: r.type })),
+        references.map((r: SimpleSchemaTypes.Item) => ({ id: r.id, type: r.type })),
         `Found ${references.length} references to this upload.`
       )
     );

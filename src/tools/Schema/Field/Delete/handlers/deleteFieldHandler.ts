@@ -11,9 +11,6 @@ export const deleteFieldHandler = createDeleteHandler({
   entityName: "Field",
   idParam: "fieldId",
   clientAction: async (client, args) => {
-    // First, get the field to return its info later
-    const field = await client.fields.find(args.fieldId);
-    
     // Delete the field
     await client.fields.destroy(args.fieldId);
   },

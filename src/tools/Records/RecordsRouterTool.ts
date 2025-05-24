@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { createErrorResponse } from "../../utils/errorHandlers.js";
-import { createResponse } from "../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SchemaRegistry } from "../../utils/schemaRegistry.js";
 
@@ -114,12 +113,15 @@ export const registerRecordsRouter = (server: McpServer) => {
         }
 
         try {
+          let handlerResult: any;
+          
           switch (validAction) {
             case "query":
               try {
                 // Validate args using schema
                 const validatedArgs = recordsSchemas.query.parse(actionArgs);
-                return await queryRecordsHandler(validatedArgs);
+                handlerResult = await queryRecordsHandler(validatedArgs);
+                break;
               } catch (error) {
                 return createErrorResponse(`Error in records.list.query: ${error}`);
               }
@@ -131,51 +133,87 @@ export const registerRecordsRouter = (server: McpServer) => {
                   // Map 'id' to 'itemId' if present
                   itemId: actionArgs.id || actionArgs.itemId
                 });
-                return await getRecordByIdHandler(validatedArgs);
+                handlerResult = await getRecordByIdHandler(validatedArgs);
+                break;
               } catch (error) {
                 return createErrorResponse(`Error in records.get: ${error}`);
               }
             case "references":
-              return getRecordReferencesHandler(actionArgs as ActionArgsMap['references']);
+              handlerResult = await getRecordReferencesHandler(actionArgs as ActionArgsMap['references']);
+              break;
             case "record_url":
-              return buildRecordEditorUrlFromTypeHandler(actionArgs as ActionArgsMap['record_url']);
+              handlerResult = await buildRecordEditorUrlFromTypeHandler(actionArgs as ActionArgsMap['record_url']);
+              break;
             case "create":
-              return createRecordHandler(actionArgs as ActionArgsMap['create']);
+              handlerResult = await createRecordHandler(actionArgs as ActionArgsMap['create']);
+              break;
             case "update":
-              return updateRecordHandler(actionArgs as ActionArgsMap['update']);
+              handlerResult = await updateRecordHandler(actionArgs as ActionArgsMap['update']);
+              break;
             case "duplicate":
-              return duplicateRecordHandler(actionArgs as ActionArgsMap['duplicate']);
+              handlerResult = await duplicateRecordHandler(actionArgs as ActionArgsMap['duplicate']);
+              break;
             case "destroy":
-              return destroyRecordHandler(actionArgs as ActionArgsMap['destroy']);
+              handlerResult = await destroyRecordHandler(actionArgs as ActionArgsMap['destroy']);
+              break;
             case "bulk_destroy":
-              return bulkDestroyRecordsHandler(actionArgs as ActionArgsMap['bulk_destroy']);
+              handlerResult = await bulkDestroyRecordsHandler(actionArgs as ActionArgsMap['bulk_destroy']);
+              break;
             case "publish":
-              return publishRecordHandler(actionArgs as ActionArgsMap['publish']);
+              handlerResult = await publishRecordHandler(actionArgs as ActionArgsMap['publish']);
+              break;
             case "bulk_publish":
-              return bulkPublishRecordsHandler(actionArgs as ActionArgsMap['bulk_publish']);
+              handlerResult = await bulkPublishRecordsHandler(actionArgs as ActionArgsMap['bulk_publish']);
+              break;
             case "unpublish":
-              return unpublishRecordHandler(actionArgs as ActionArgsMap['unpublish']);
+              handlerResult = await unpublishRecordHandler(actionArgs as ActionArgsMap['unpublish']);
+              break;
             case "bulk_unpublish":
-              return bulkUnpublishRecordsHandler(actionArgs as ActionArgsMap['bulk_unpublish']);
+              handlerResult = await bulkUnpublishRecordsHandler(actionArgs as ActionArgsMap['bulk_unpublish']);
+              break;
             case "schedule_publication":
-              return schedulePublicationHandler(actionArgs as ActionArgsMap['schedule_publication']);
+              handlerResult = await schedulePublicationHandler(actionArgs as ActionArgsMap['schedule_publication']);
+              break;
             case "cancel_scheduled_publication":
-              return cancelScheduledPublicationHandler(actionArgs as ActionArgsMap['cancel_scheduled_publication']);
+              handlerResult = await cancelScheduledPublicationHandler(actionArgs as ActionArgsMap['cancel_scheduled_publication']);
+              break;
             case "schedule_unpublication":
-              return scheduleUnpublicationHandler(actionArgs as ActionArgsMap['schedule_unpublication']);
+              handlerResult = await scheduleUnpublicationHandler(actionArgs as ActionArgsMap['schedule_unpublication']);
+              break;
             case "cancel_scheduled_unpublication":
-              return cancelScheduledUnpublicationHandler(actionArgs as ActionArgsMap['cancel_scheduled_unpublication']);
+              handlerResult = await cancelScheduledUnpublicationHandler(actionArgs as ActionArgsMap['cancel_scheduled_unpublication']);
+              break;
             case "versions_list":
-              return listRecordVersionsHandler(actionArgs as ActionArgsMap['versions_list']);
+              handlerResult = await listRecordVersionsHandler(actionArgs as ActionArgsMap['versions_list']);
+              break;
             case "version_get":
-              return getRecordVersionHandler(actionArgs as ActionArgsMap['version_get']);
+              handlerResult = await getRecordVersionHandler(actionArgs as ActionArgsMap['version_get']);
+              break;
             case "version_restore":
-              return restoreRecordVersionHandler(actionArgs as ActionArgsMap['version_restore']);
+              handlerResult = await restoreRecordVersionHandler(actionArgs as ActionArgsMap['version_restore']);
+              break;
             default: {
               const _exhaustiveCheck: never = validAction;
-              return createErrorResponse(`Error: Unsupported action '${action}'. This is likely a bug.`);
+              throw new Error(`Unsupported action: ${_exhaustiveCheck}`);
             }
           }
+          
+          // Check if we have a result from the switch statement
+          if (!handlerResult) {
+            // For cases that still use return, we won't reach here
+            return createErrorResponse(`No result from handler for action '${action}'`);
+          }
+          
+          // Process the handler result
+          if (handlerResult && typeof handlerResult === 'object') {
+            if ('content' in handlerResult) {
+              // Already a proper MCP response
+              return handlerResult;
+            }
+          }
+          
+          // If we got here, something unexpected happened
+          return handlerResult;
         } catch (error) {
           return createErrorResponse(`Error processing '${action}' action: ${error instanceof Error ? error.message : String(error)}`);
         }

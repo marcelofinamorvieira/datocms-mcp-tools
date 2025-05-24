@@ -1,9 +1,7 @@
 import { z } from "zod";
 import {
-  apiTokenSchema,
-  environmentSchema,
+  baseToolSchema,
   createBaseSchema,
-  createRetrieveSchema,
   createListSchema,
   paginationSchema
 } from "../../utils/sharedSchemas.js";
@@ -13,7 +11,6 @@ import {
   webhookTriggerTypeSchema,
   webhookPayloadFormatSchema,
   webhookHeadersSchema,
-  webhookCallStatusSchema,
   webhookCallFilterSchema
 } from "./webhookTypes.js";
 
@@ -33,7 +30,9 @@ import {
 export const webhookSchemas = {
   list: createListSchema(),
 
-  retrieve: createRetrieveSchema("webhook"),
+  retrieve: baseToolSchema.extend({
+    webhookId: z.string().min(1).describe("The ID of the webhook to retrieve.")
+  }),
 
   create: createBaseSchema().extend({
     name: z.string().min(1).describe("A name for the webhook."),
@@ -105,7 +104,9 @@ export const webhookCallSchemas = {
 export const buildTriggerSchemas = {
   list: createListSchema(),
 
-  retrieve: createRetrieveSchema("buildTrigger"),
+  retrieve: baseToolSchema.extend({
+    buildTriggerId: z.string().min(1).describe("The ID of the build trigger to retrieve.")
+  }),
 
   create: createBaseSchema().extend({
     name: z.string().min(1).describe("A name for the build trigger."),

@@ -2,7 +2,7 @@
  * Utility functions for error handling and response formatting in DatoCMS MCP tools
  */
 
-import { HandlerResponse, createResponse, Response } from "./responseHandlers.js";
+import { HandlerResponse, Response } from "./responseHandlers.js";
 import { createStandardErrorResponse, createStandardMcpResponse } from "./standardResponse.js";
 
 /**

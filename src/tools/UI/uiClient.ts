@@ -215,7 +215,7 @@ export class TypedUIClient implements UIClient {
   }
 
   // MenuItem methods
-  async listMenuItems(params?: { offset?: number; limit?: number }): Promise<MenuItem[]> {
+  async listMenuItems(_params?: { offset?: number; limit?: number }): Promise<MenuItem[]> {
     try {
       // Using default parameters as the API requires specific format
       const response = await this.client.menuItems.list();
@@ -268,7 +268,7 @@ export class TypedUIClient implements UIClient {
     }
   }
 
-  async deleteMenuItem(id: string, params?: { force?: boolean }): Promise<void> {
+  async deleteMenuItem(id: string, _params?: { force?: boolean }): Promise<void> {
     try {
       await this.client.menuItems.destroy(id);
     } catch (error: any) {
@@ -277,7 +277,7 @@ export class TypedUIClient implements UIClient {
   }
 
   // SchemaMenuItem methods
-  async listSchemaMenuItems(params?: { offset?: number; limit?: number }): Promise<SchemaMenuItem[]> {
+  async listSchemaMenuItems(_params?: { offset?: number; limit?: number }): Promise<SchemaMenuItem[]> {
     try {
       // Using default parameters as the API requires specific format
       const response = await this.client.schemaMenuItems.list();
@@ -329,7 +329,7 @@ export class TypedUIClient implements UIClient {
   }
 
   // UploadsFilter methods
-  async listUploadsFilters(params?: { offset?: number; limit?: number }): Promise<UploadsFilter[]> {
+  async listUploadsFilters(_params?: { offset?: number; limit?: number }): Promise<UploadsFilter[]> {
     try {
       const response = await this.client.uploadFilters.list();
       return response.map(uiAdapters.toUploadsFilter);
@@ -388,7 +388,7 @@ export class TypedUIClient implements UIClient {
   }
 
   // ModelFilter methods
-  async listModelFilters(params?: { offset?: number; limit?: number }): Promise<ModelFilter[]> {
+  async listModelFilters(_params?: { offset?: number; limit?: number }): Promise<ModelFilter[]> {
     try {
       // NOTE: Using itemTypeFilters to maintain compatibility with the DatoCMS CMA client
       const response = await this.client.itemTypeFilters.list();
@@ -445,7 +445,7 @@ export class TypedUIClient implements UIClient {
   }
 
   // Plugin methods
-  async listPlugins(params?: { offset?: number; limit?: number }): Promise<Plugin[]> {
+  async listPlugins(_params?: { offset?: number; limit?: number }): Promise<Plugin[]> {
     try {
       const response = await this.client.plugins.list();
       return response.map(uiAdapters.toPlugin);

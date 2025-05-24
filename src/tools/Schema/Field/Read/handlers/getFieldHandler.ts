@@ -1,12 +1,17 @@
 import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createResponse, Response as McpResponse } from "../../../../../utils/responseHandlers.js";
 import { schemaSchemas } from "../../../schemas.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
+import type { BaseParams } from "../../../../../utils/enhancedHandlerFactory.js";
+
+interface GetFieldParams extends BaseParams {
+  fieldId: string;
+}
 
 /**
  * Retrieves a specific field by ID
  */
-export const getFieldHandler = createCustomHandler({
+export const getFieldHandler = createCustomHandler<GetFieldParams, McpResponse>({
   domain: "schema",
   schemaName: "get_field",
   schema: schemaSchemas.get_field,

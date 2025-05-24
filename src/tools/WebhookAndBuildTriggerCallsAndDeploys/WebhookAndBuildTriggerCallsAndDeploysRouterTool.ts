@@ -43,12 +43,6 @@ type WebhookCallAction = keyof typeof webhookCallSchemas;
 type BuildTriggerAction = keyof typeof buildTriggerSchemas;
 type DeployEventAction = keyof typeof deployEventSchemas;
 
-// Type for tool arguments
-type DeliveryToolArgs = {
-  action: string;
-  args?: Record<string, unknown>;
-};
-
 // Type map for webhook action arguments
 type WebhookArgsMap = {
   list: z.infer<typeof webhookSchemas.list>;
@@ -88,8 +82,6 @@ type DeployEventArgsMap = {
  * Registers the Webhook and Build Trigger Calls And Deploys Router tool with the MCP server
  */
 export const registerDeliveryManagementRouter = (server: McpServer) => {
-  const actionEnum = z.enum(webhookActionsList as [string, ...string[]]);
-  
   // Combine all actions into a single enum for the tool
   const allActions = [...webhookActionsList, ...webhookCallActionsList, ...buildTriggerActionsList, ...deployEventActionsList];
   const combinedActionEnum = z.enum([...allActions] as [string, ...string[]]);

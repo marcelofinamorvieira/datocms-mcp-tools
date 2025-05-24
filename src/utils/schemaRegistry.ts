@@ -112,7 +112,7 @@ export class SchemaRegistry {
    */
   static unregister(domain: string, name: string): boolean {
     const key = this.getSchemaKey(domain, name);
-    const descriptionRemoved = this.schemaDescriptions.delete(key);
+    this.schemaDescriptions.delete(key);
     return this.schemas.delete(key);
   }
 

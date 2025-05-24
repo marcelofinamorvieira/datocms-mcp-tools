@@ -13,7 +13,7 @@ import {
   isVersionConflictError,
   extractDetailedErrorInfo
 } from "./errorHandlers.js";
-import { HandlerResponse, createResponse, Response } from "./responseHandlers.js";
+import { HandlerResponse, Response } from "./responseHandlers.js";
 import { 
   createStandardErrorResponse, 
   createStandardMcpResponse 
@@ -135,11 +135,11 @@ ${detailedError}`,
  * @param context Error context information
  * @returns A new handler function with error handling
  */
-export function withErrorHandling<Args, Result>(
-  handlerFn: (args: Args) => Promise<Result | Response>,
+export function withErrorHandling<Args>(
+  handlerFn: (args: Args) => Promise<Response>,
   context?: ErrorContext
-): (args: Args) => Promise<Result | Response> {
-  return async function(args: Args): Promise<Result | Response> {
+): (args: Args) => Promise<Response> {
+  return async function(args: Args): Promise<Response> {
     try {
       return await handlerFn(args);
     } catch (error: unknown) {
@@ -179,9 +179,9 @@ export function withErrorHandling<Args, Result>(
       }
       
       // Fall back to original error handling for backward compatibility
-      const errorResult = handleErrorWithContext(error, context);
+      handleErrorWithContext(error, context);
       
-      // Create standardized error response even when not in debug mode
+      // Always return Response type
       return createStandardMcpResponse(
         createStandardErrorResponse(error, { 
           error_code: getErrorCode(error)

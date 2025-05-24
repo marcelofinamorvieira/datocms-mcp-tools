@@ -1,20 +1,22 @@
 import { z } from "zod";
-import { createUpdateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { roleSchemas } from "../../../schemas.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for updating a role in DatoCMS
  */
-export const updateRoleHandler = createUpdateHandler({
+export const updateRoleHandler = createUpdateHandler<
+  z.infer<typeof roleSchemas.update_role>,
+  SimpleSchemaTypes.Role
+>({
   domain: "collaborators.roles",
   schemaName: "update_role",
   schema: roleSchemas.update_role,
   entityName: "Role",
   idParam: "roleId",
-  clientType: ClientType.COLLABORATORS,
-  successMessage: (result: any) => `Role '${result.attributes.name}' updated successfully.`,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.update_role>) => {
+  successMessage: (result) => `Role '${result.name}' updated successfully.`,
+  clientAction: async (client, args) => {
     const {
       roleId,
       name,
@@ -40,6 +42,6 @@ export const updateRoleHandler = createUpdateHandler({
     };
 
     // Update the role
-    return await client.updateRole(roleId, rolePayload);
+    return await client.roles.update(roleId, rolePayload);
   }
 });

@@ -6,7 +6,6 @@
 import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { schemaMenuItemSchemas } from "../../schemas.js";
 import { createTypedUIClient } from "../../../uiClient.js";
-import { SchemaMenuItemCreateParams } from "../../../uiTypes.js";
 
 /**
  * Handler function for creating a DatoCMS schema menu item

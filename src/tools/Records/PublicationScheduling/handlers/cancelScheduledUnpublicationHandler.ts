@@ -4,28 +4,20 @@
  * Extracted from the DestroyScheduledUnpublicationOnRecord tool
  */
 
-import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { ClientType, UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createDeleteHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { recordsSchemas } from "../../schemas.js";
 
 /**
  * Handler function for canceling a scheduled unpublication for a DatoCMS record
  */
-export const cancelScheduledUnpublicationHandler = createCustomHandler({
+export const cancelScheduledUnpublicationHandler = createDeleteHandler({
   domain: "records",
   schemaName: "cancel_scheduled_unpublication",
   schema: recordsSchemas.cancel_scheduled_unpublication,
-}, async (args: any) => {
-  const { apiToken, environment, itemId } = args;
-  
-  // Initialize client
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
-  
-  // Cancel the scheduled unpublication
-  await client.scheduledUnpublishing.destroy(itemId);
-  
-  // Return success response
-  const result = `Successfully cancelled scheduled unpublication for item with ID '${itemId}'.`;
-  return createResponse(result);
+  entityName: "Scheduled Unpublication",
+  idParam: "itemId",
+  clientAction: async (client, args) => {
+    await client.scheduledUnpublishing.destroy(args.itemId);
+  },
+  successMessage: (itemId) => `Successfully canceled scheduled unpublication for record '${itemId}'`
 });

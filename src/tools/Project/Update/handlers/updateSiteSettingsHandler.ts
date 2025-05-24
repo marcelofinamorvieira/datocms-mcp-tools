@@ -14,7 +14,6 @@ import { createResponse } from "../../../../utils/responseHandlers.js";
 import { projectSchemas } from "../../schemas.js";
 import { createProjectClient } from "../../projectClient.js";
 import { isDatoCMSValidationError, SiteUpdateParams } from "../../projectTypes.js";
-import { extractDetailedErrorInfo } from "../../../../utils/errorHandlers.js";
 
 /**
  * Handler for updating DatoCMS site settings
@@ -55,9 +54,6 @@ export const updateSiteSettingsHandler = createCustomHandler({
     // Check for validation errors
     if (isDatoCMSValidationError(apiError)) {
       const validationErrors = apiError.errors || [];
-      const validationErrorMessages = validationErrors
-        .map((err: { field?: string; message: string }) => `  - ${err.field || 'General'}: ${err.message}`)
-        .join('\n');
       
       // Return error response with validation details
       return createResponse(JSON.stringify({

@@ -1,6 +1,5 @@
 import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Retrieves a list of all webhooks in the DatoCMS project
@@ -13,7 +12,7 @@ export const listWebhooksHandler = createListHandler({
   schemaName: "list",
   schema: webhookSchemas.list,
   entityName: "Webhook",
-  clientAction: async (client, args) => {
+  clientAction: async (client, _args) => {
     return await client.webhooks.list();
   }
 });

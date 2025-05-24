@@ -3,20 +3,20 @@
  * @description Handler for building the DatoCMS editor URL for a specific record using project URL and item type ID
  */
 
-import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createResponse, Response as McpResponse } from "../../../../utils/responseHandlers.js";
 import { recordsSchemas } from "../../schemas.js";
+import { z } from "zod";
+
+// Use the schema's inferred type
+type BuildRecordUrlParams = z.infer<typeof recordsSchemas.record_url>;
 
 /**
  * Handler to build the editor URL for a specific DatoCMS record using project URL and item type
  * Extracted from the BuildDatoCMSRecordUrl tool
+ * 
+ * Note: This handler doesn't need API access, so we use a direct function instead of factory
  */
-export const buildRecordEditorUrlFromTypeHandler = createCustomHandler({
-  domain: "records",
-  schemaName: "record_url",
-  schema: recordsSchemas.record_url,
-}, async (args: any) => {
+export const buildRecordEditorUrlFromTypeHandler = async (args: BuildRecordUrlParams): Promise<McpResponse> => {
   const { projectUrl, itemTypeId, itemId, environment } = args;
   
   // Validate required parameters
@@ -50,4 +50,4 @@ export const buildRecordEditorUrlFromTypeHandler = createCustomHandler({
   };
   
   return createResponse(JSON.stringify(result, null, 2));
-});
+};

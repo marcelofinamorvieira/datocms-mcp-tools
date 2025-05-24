@@ -1,6 +1,5 @@
 import { createDeleteHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Deletes a webhook from DatoCMS

@@ -4,9 +4,9 @@
  */
 
 import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createResponse } from "../../../../../utils/responseHandlers.js";
 import { schemaSchemas } from "../../../schemas.js";
 import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
 
 /**
  * Handler to duplicate an existing Item Type in DatoCMS

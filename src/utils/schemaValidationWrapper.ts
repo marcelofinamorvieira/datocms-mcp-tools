@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import { SchemaRegistry } from "./schemaRegistry.js";
-import { HandlerResponse, createErrorHandlerResponse } from "./responseHandlers.js";
+import { HandlerResponse, createErrorHandlerResponse, createResponse, Response } from "./responseHandlers.js";
 
 /**
  * Handler function type
@@ -27,12 +27,12 @@ export interface ValidationErrorInfo {
  * @param handler The handler function that processes validated data
  * @returns A wrapped handler that validates input
  */
-export function withSchemaValidation<T, R>(
+export function withSchemaValidation<T>(
   domain: string,
   schemaName: string,
-  handler: Handler<T, R>
-): Handler<unknown, R | HandlerResponse<unknown>> {
-  return async (args: unknown): Promise<R | HandlerResponse<unknown>> => {
+  handler: Handler<T, Response>
+): Handler<unknown, Response> {
+  return async (args: unknown): Promise<Response> => {
     // Validate input against the registered schema
     const validationResult = SchemaRegistry.validate<T>(domain, schemaName, args);
     
@@ -40,10 +40,12 @@ export function withSchemaValidation<T, R>(
       // Format validation errors for a better user experience
       const errorDetails = formatZodError(validationResult.error);
       
-      return createErrorHandlerResponse(
+      // Return a proper Response for validation errors
+      const errorResponse = createErrorHandlerResponse(
         `Validation failed for ${domain}:${schemaName}. ${errorDetails.message}`,
         { validationErrors: errorDetails }
       );
+      return createResponse(JSON.stringify(errorResponse, null, 2));
     }
     
     // Pass validated data to the handler
@@ -65,8 +67,10 @@ export function formatZodError(error: z.ZodError): ValidationErrorInfo {
   
   // Create a summary message
   const message = errors.length === 1
-    ? `Error in field "${errors[0].path || 'input'}": ${errors[0].message}`
-    : `Found ${errors.length} validation errors. First error: "${errors[0].message}"`;
+    ? `Error in field "${errors[0]?.path || 'input'}": ${errors[0]?.message}`
+    : errors.length > 0
+    ? `Found ${errors.length} validation errors. First error: "${errors[0]?.message}"`
+    : "Validation error";
   
   return {
     message,

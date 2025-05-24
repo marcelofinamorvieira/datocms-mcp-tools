@@ -1,5 +1,6 @@
 import { createCreateHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
+import type { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 export const createUploadTagHandler = createCreateHandler({
   domain: "uploads",
@@ -9,5 +10,5 @@ export const createUploadTagHandler = createCreateHandler({
   clientAction: async (client, args) => {
     return await client.uploadTags.create({ name: args.name });
   },
-  successMessage: (result: any) => `Successfully created upload tag '${result.name}' with ID ${result.id}`
+  successMessage: (result: SimpleSchemaTypes.UploadTag) => `Successfully created upload tag '${result.name}' with ID ${result.id}`
 });

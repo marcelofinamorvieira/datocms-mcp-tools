@@ -4,34 +4,23 @@
  * Uses the unified handler factory pattern with middleware composition
  */
 
-import type { z } from "zod";
-import { ClientType } from "../../../../utils/unifiedClientManager.js";
 import { createListHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import { recordsSchemas } from "../../schemas.js";
-import type { Item, RecordQueryParams } from "../../types.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
-// Define augmented results type that includes meta information
-interface ResultsWithMeta {
-  items: Item[];
-  meta?: { 
-    total_count?: number;
-    [key: string]: unknown;
-  }
-}
+// The results type is now simply SimpleSchemaTypes.Item[]
+// since we're using the standard client methods
 
 /**
  * Create the record query handler using the enhanced handler factory
  */
-export const enhancedQueryRecordsHandler = createListHandler({
+export const enhancedQueryRecordsHandler = createListHandler<any, SimpleSchemaTypes.Item>({
   // Handler identification and schema information
   domain: "records",
   schemaName: "query",
   schema: recordsSchemas.query,
   entityName: "Record",
-  
-  // Client type to use (using the appropriate client for records)
-  clientType: ClientType.RECORDS,
   
   // Enhanced error context for better error messages
   errorContext: {
@@ -58,9 +47,9 @@ export const enhancedQueryRecordsHandler = createListHandler({
     } = args;
     
     // Prepare query parameters
-    const queryParams: RecordQueryParams = {
+    const queryParams: SimpleSchemaTypes.ItemInstancesHrefSchema = {
       version: version as "published" | "current",
-      nested
+      nested: nested || false
     };
     
     // Add order_by parameter if provided with a model type filter
@@ -126,21 +115,11 @@ export const enhancedQueryRecordsHandler = createListHandler({
     // Use type assertion to bridge the gap between our types and client types
     const clientParams = queryParams as any;
 
-    // Execute the query using the typed records client
-    // When ClientType.RECORDS is used, `client` is an instance of
-    // `TypedRecordsClient` which exposes the `listRecords` method.
-    // Using this method avoids accessing the underlying `items` property,
-    // preventing runtime errors when `client.items` is undefined.
-    const results = await client.listRecords(clientParams);
+    // Execute the query using the standard DatoCMS client
+    const results = await client.items.list(clientParams);
     
-    // The DatoCMS client may return items with meta information
-    // Here we ensure we have a consistent format by wrapping items in a result object
-    const resultsWithMeta: ResultsWithMeta = {
-      items: Array.isArray(results) ? results : [],
-      meta: (results as any).meta || { total_count: Array.isArray(results) ? results.length : 0 }
-    };
-    
-    return resultsWithMeta.items;
+    // Return the items directly
+    return results;
   },
   
   // Result formatter function that formats the API response for the client

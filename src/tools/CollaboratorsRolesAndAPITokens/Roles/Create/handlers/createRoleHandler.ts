@@ -1,19 +1,20 @@
 import { z } from "zod";
-import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { roleSchemas } from "../../../schemas.js";
 
 /**
  * Handler for creating a new role in DatoCMS
  */
-export const createRoleHandler = createCreateHandler({
+export const createRoleHandler = createCreateHandler<
+  z.infer<typeof roleSchemas.create_role>,
+  any  // Role type from DatoCMS
+>({
   domain: "collaborators.roles",
   schemaName: "create_role",
   schema: roleSchemas.create_role,
   entityName: "Role",
-  clientType: ClientType.COLLABORATORS,
-  successMessage: (result: any) => `Role '${result.attributes.name}' created successfully with ID: ${result.id}`,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof roleSchemas.create_role>) => {
+  successMessage: (result: { id: string; attributes: { name: string } }) => `Role '${result.attributes.name}' created successfully with ID: ${result.id}`,
+  clientAction: async (client, args) => {
     const {
       name,
       can_edit_schema,
@@ -37,7 +38,7 @@ export const createRoleHandler = createCreateHandler({
       ...(can_edit_site_entity !== undefined && { can_edit_site_entity }),
     };
 
-    // Create the role using typed client
-    return await client.createRole(rolePayload);
+    // Create the role using standard client
+    return await client.roles.create(rolePayload);
   }
 });

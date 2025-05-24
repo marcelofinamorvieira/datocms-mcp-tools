@@ -11,7 +11,7 @@
 
 import { createUpdateHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { environmentSchemas } from "../../schemas.js";
-import { createEnvironmentClient } from "../../environmentClient.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for renaming a DatoCMS environment
@@ -22,21 +22,18 @@ import { createEnvironmentClient } from "../../environmentClient.js";
  * - Provides execution trace for troubleshooting
  * - Sanitizes sensitive data (API tokens) in debug output
  */
-export const renameEnvironmentHandler = createUpdateHandler({
+export const renameEnvironmentHandler = createUpdateHandler<any, SimpleSchemaTypes.Environment>({
   domain: 'environments',
   schemaName: 'rename',
   schema: environmentSchemas.rename,
   entityName: 'Environment',
   idParam: 'environmentId',
-  successMessage: (result: any) => `Environment renamed successfully from '${result.id}' to '${result.id}'.`,
+  successMessage: (result) => `Environment renamed successfully to '${result.id}'.`,
   clientAction: async (client, args) => {
-    const { apiToken, environmentId, newId } = args;
+    const { environmentId, newId } = args;
     
-    // Initialize our type-safe environment client
-    const environmentClient = createEnvironmentClient(apiToken);
-    
-    // Rename the environment using our type-safe client
-    const environment = await environmentClient.renameEnvironment(environmentId, {
+    // Use the standard DatoCMS client to rename the environment
+    const environment = await client.environments.rename(environmentId, {
       id: newId
     });
     

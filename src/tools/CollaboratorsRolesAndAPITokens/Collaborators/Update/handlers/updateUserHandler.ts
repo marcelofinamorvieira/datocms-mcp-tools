@@ -4,33 +4,38 @@
  */
 
 import { z } from "zod";
-import { createUpdateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { collaboratorSchemas } from "../../../schemas.js";
-import { UpdateCollaboratorParams } from "../../../collaboratorsTypes.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for updating a DatoCMS user
  */
-export const updateUserHandler = createUpdateHandler({
+export const updateUserHandler = createUpdateHandler<
+  z.infer<typeof collaboratorSchemas.user_update>,
+  SimpleSchemaTypes.User
+>({
   domain: "collaborators.users",
   schemaName: "user_update",
   schema: collaboratorSchemas.user_update,
   entityName: "User",
   idParam: "userId",
-  clientType: ClientType.COLLABORATORS,
-  successMessage: (result: any) => `User '${result.attributes.email}' updated successfully.`,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.user_update>) => {
-    const { userId, email, first_name, last_name, role_id } = args;
+  successMessage: (result) => `User '${result.email}' updated successfully.`,
+  clientAction: async (client, args) => {
+    const { userId, role_id } = args;
+    // Note: email, first_name, and last_name cannot be updated via the API
     
-    // Create update payload, filtering out undefined fields
-    const updatePayload: UpdateCollaboratorParams = {};
-    // Note: email cannot be updated according to the API
-    if (first_name !== undefined) updatePayload.first_name = first_name;
-    if (last_name !== undefined) updatePayload.last_name = last_name;
-    if (role_id !== undefined) updatePayload.role = { id: role_id, type: 'role' as const };
+    // Create update payload according to DatoCMS API
+    // Note: The API only allows updating is_active and role, not name or email
+    const updatePayload: SimpleSchemaTypes.UserUpdateSchema = {};
+    
+    // The API doesn't support updating first_name, last_name, or email
+    // Only role can be updated from the provided parameters
+    if (role_id !== undefined) {
+      updatePayload.role = { id: role_id, type: 'role' };
+    }
     
     // Update the user
-    return await client.updateCollaborator(userId, updatePayload);
+    return await client.users.update(userId, updatePayload);
   }
 });

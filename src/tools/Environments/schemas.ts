@@ -1,10 +1,7 @@
 import { z } from "zod";
 import {
-  apiTokenSchema,
-  environmentSchema,
-  createIdSchema,
+  baseToolSchema,
   createBaseSchema,
-  createRetrieveSchema,
   createListSchema
 } from "../../utils/sharedSchemas.js";
 
@@ -25,7 +22,7 @@ const environmentIdSchema = z.string()
  */
 export const environmentSchemas = {
   // Environment retrieval operations
-  retrieve: createRetrieveSchema("environment").extend({
+  retrieve: baseToolSchema.extend({
     environmentId: environmentIdSchema,
   }),
 

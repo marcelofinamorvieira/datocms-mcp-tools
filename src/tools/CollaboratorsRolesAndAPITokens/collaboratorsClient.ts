@@ -21,7 +21,6 @@ import {
   UpdateAPITokenParams,
   UpdateCollaboratorParams,
   UpdateRoleParams,
-  ValidationFieldError,
 } from './collaboratorsTypes.js';
 
 // Error factory for creating typed errors
@@ -49,25 +48,43 @@ const collaboratorsErrorFactory = {
   }),
 };
 
+// Type for raw API responses (unknown structure)
+type RawAPIResponse = unknown;
+
+// Type guard to check if response has basic structure
+function isObjectWithId(data: unknown): data is { id: string; type: string } {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    'id' in data &&
+    'type' in data &&
+    typeof (data as any).id === 'string' &&
+    typeof (data as any).type === 'string'
+  );
+}
+
 // Adapters to convert API responses to our typed models
 const collaboratorsAdapters = {
-  toCollaborator: (rawData: any): Collaborator => {
+  toCollaborator: (rawData: RawAPIResponse): Collaborator => {
     // Create a safe version of the data with defaults for missing properties
-    if (!rawData) {
-      console.warn('Received null or undefined collaborator data, creating placeholder');
-      rawData = {};
+    if (!rawData || !isObjectWithId(rawData)) {
+      console.warn('Received invalid collaborator data, creating placeholder');
+      const emptyData = {} as any;
+      rawData = emptyData;
     }
     
+    const data = rawData as any; // Safe cast after validation
+    
     // Ensure we have valid structures even if they don't exist in the input
-    const attributes = rawData.attributes || {};
-    const relationships = rawData.relationships || {};
+    const attributes = data.attributes || {};
+    const relationships = data.relationships || {};
     const roleData = relationships.role?.data || {};
     const avatar = attributes.avatar || {};
     
     // Construct a valid collaborator object with defaults
     return {
-      id: rawData.id || 'unknown',
-      type: rawData.type || 'user',
+      id: data.id || 'unknown',
+      type: data.type || 'user',
       attributes: {
         email: attributes.email || 'unknown@example.com',
         first_name: attributes.first_name || null,
@@ -92,21 +109,24 @@ const collaboratorsAdapters = {
     };
   },
 
-  toRole: (rawData: any): Role => {
+  toRole: (rawData: RawAPIResponse): Role => {
     // Create a safe version of the data with defaults for missing properties
-    if (!rawData) {
-      console.warn('Received null or undefined role data, creating placeholder');
-      rawData = {};
+    if (!rawData || !isObjectWithId(rawData)) {
+      console.warn('Received invalid role data, creating placeholder');
+      const emptyData = {} as any;
+      rawData = emptyData;
     }
     
+    const data = rawData as any; // Safe cast after validation
+    
     // Ensure we have valid structures even if they don't exist in the input
-    const attributes = rawData.attributes || {};
-    const relationships = rawData.relationships || {};
+    const attributes = data.attributes || {};
+    const relationships = data.relationships || {};
     
     // Construct a valid role object with defaults
     return {
-      id: rawData.id || 'unknown',
-      type: rawData.type || 'role',
+      id: data.id || 'unknown',
+      type: data.type || 'role',
       attributes: {
         name: attributes.name || 'Unknown Role',
         can_destroy: attributes.can_destroy ?? true,
@@ -128,7 +148,7 @@ const collaboratorsAdapters = {
     };
   },
 
-  toAPIToken: (rawData: any): APIToken => {
+  toAPIToken: (rawData: RawAPIResponse): APIToken => {
     try {
       // If we got null/undefined data, create a minimal placeholder
       if (!rawData) {
@@ -151,23 +171,24 @@ const collaboratorsAdapters = {
       }
       
       // Processing API token
+      const data = rawData as any; // Safe cast for processing
       
       // Extract direct fields from the raw response based on exact structure in error messages
       // The format appears to be a flat structure with these fields directly on the object
       let token: APIToken = {
-        id: rawData.id || 'unknown',
-        type: rawData.type === 'access_token' ? 'api_token' : (rawData.type || 'api_token'),
+        id: data.id || 'unknown',
+        type: data.type === 'access_token' ? 'api_token' : (data.type || 'api_token'),
         attributes: {
-          name: rawData.name || 'Unknown Token',
-          token: rawData.token || null,
-          hardcoded_type: rawData.hardcoded_type || null,
-          created_at: rawData.created_at || new Date().toISOString(),
-          updated_at: rawData.updated_at || new Date().toISOString(),
+          name: data.name || 'Unknown Token',
+          token: data.token || null,
+          hardcoded_type: data.hardcoded_type || null,
+          created_at: data.created_at || new Date().toISOString(),
+          updated_at: data.updated_at || new Date().toISOString(),
         },
         relationships: {
           role: {
-            data: rawData.role ? {
-              id: typeof rawData.role === 'object' ? (rawData.role.id || '') : '',
+            data: data.role ? {
+              id: typeof data.role === 'object' ? (data.role.id || '') : '',
               type: 'role' as const,
             } : null,
           },
@@ -178,16 +199,16 @@ const collaboratorsAdapters = {
       };
       
       // Handle CDA access flags if present
-      if ('can_access_cda' in rawData) {
-        token.attributes.can_access_cda = rawData.can_access_cda;
+      if ('can_access_cda' in data) {
+        token.attributes.can_access_cda = data.can_access_cda;
       }
       
-      if ('can_access_cda_preview' in rawData) {
-        token.attributes.can_access_cda_preview = rawData.can_access_cda_preview;
+      if ('can_access_cda_preview' in data) {
+        token.attributes.can_access_cda_preview = data.can_access_cda_preview;
       }
       
-      if ('can_access_cma' in rawData) {
-        token.attributes.can_access_cma = rawData.can_access_cma;
+      if ('can_access_cma' in data) {
+        token.attributes.can_access_cma = data.can_access_cma;
       }
       
       return token;
@@ -195,7 +216,7 @@ const collaboratorsAdapters = {
       
       // Return a minimal valid token as fallback
       return {
-        id: rawData?.id || 'error',
+        id: (rawData as any)?.id || 'error',
         type: 'api_token' as const,
         attributes: {
           name: 'Error Processing Token',
@@ -212,23 +233,26 @@ const collaboratorsAdapters = {
     }
   },
 
-  toInvitation: (rawData: any): Invitation => {
+  toInvitation: (rawData: RawAPIResponse): Invitation => {
     // Create a safe version of the data with defaults for missing properties
-    if (!rawData) {
-      console.warn('Received null or undefined invitation data, creating placeholder');
-      rawData = {};
+    if (!rawData || !isObjectWithId(rawData)) {
+      console.warn('Received invalid invitation data, creating placeholder');
+      const emptyData = {} as any;
+      rawData = emptyData;
     }
     
+    const data = rawData as any; // Safe cast after validation
+    
     // Ensure we have valid structures even if they don't exist in the input
-    const attributes = rawData.attributes || {};
-    const relationships = rawData.relationships || {};
+    const attributes = data.attributes || {};
+    const relationships = data.relationships || {};
     const roleData = relationships.role?.data || {};
     const creatorData = relationships.creator?.data || null;
     
     // Construct a valid invitation object with defaults
     return {
-      id: rawData.id || 'unknown',
-      type: rawData.type || 'user_invitation',
+      id: data.id || 'unknown',
+      type: data.type || 'user_invitation',
       attributes: {
         email: attributes.email || 'unknown@example.com',
         created_at: attributes.created_at || new Date().toISOString(),

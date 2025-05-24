@@ -9,14 +9,13 @@
  * and other metadata.
  */
 
-import { createResponse, Response } from "./responseHandlers.js";
 import { extractDetailedErrorInfo, isDatoCMSApiError } from "./errorHandlers.js";
 import { 
   DebugData, 
   isDebugEnabled, 
-  sanitizeSensitiveData,
   formatErrorForDebug 
 } from "./debugUtils.js";
+import { createResponse, Response } from "./responseHandlers.js";
 
 /**
  * Standard pagination information

@@ -81,7 +81,10 @@ export function createSchemaRegistry<T extends Record<string, () => z.ZodType>>(
   const registry = {} as { [K in keyof T]: ReturnType<T[K]> };
   
   for (const key in schemaFactories) {
-    registry[key] = lazy(schemaFactories[key]) as unknown as ReturnType<T[typeof key]>;
+    const factory = schemaFactories[key];
+    if (factory) {
+      registry[key] = lazy(factory) as unknown as ReturnType<T[typeof key]>;
+    }
   }
   
   return registry;

@@ -1,6 +1,6 @@
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { uploadsSchemas } from "../../schemas.js";
 import { createResponse } from "../../../../utils/responseHandlers.js";
+import { uploadsSchemas } from "../../schemas.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 
 export const bulkTagUploadsHandler = createCustomHandler({

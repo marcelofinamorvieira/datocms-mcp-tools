@@ -5,26 +5,31 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../utils/unifiedClientManager.js";
+import { createResponse, Response as MCPResponse } from "../../../../utils/responseHandlers.js";
 import { recordsSchemas } from "../../schemas.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import type { BaseParams } from "../../../../utils/enhancedHandlerFactory.js";
+import type { Client } from "@datocms/cma-client-node";
+
+interface DuplicateRecordParams extends BaseParams {
+  itemId: string;
+  returnOnlyConfirmation?: boolean;
+}
 
 /**
  * Handler function for duplicating a DatoCMS record
  */
-export const duplicateRecordHandler = createCustomHandler(
+export const duplicateRecordHandler = createCustomHandler<DuplicateRecordParams, MCPResponse>(
   {
     domain: "records",
     schemaName: "duplicate",
-    schema: recordsSchemas.duplicate,
-    clientType: ClientType.DEFAULT
+    schema: recordsSchemas.duplicate
   },
-  async (args: any) => {
+  async (args) => {
     const { itemId, returnOnlyConfirmation = false, apiToken, environment } = args;
     
     // Get the records client
     const { UnifiedClientManager } = await import("../../../../utils/unifiedClientManager.js");
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
     
     // Duplicate the item
     const duplicatedItem = await client.items.duplicate(itemId);

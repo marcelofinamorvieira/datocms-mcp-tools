@@ -7,7 +7,6 @@ import { retrieveModelFilterHandler } from "./Read/handlers/index.js";
 import { updateModelFilterHandler } from "./Update/handlers/index.js";
 import { deleteModelFilterHandler } from "./Delete/handlers/index.js";
 import { createErrorResponse , extractDetailedErrorInfo } from "../../../utils/errorHandlers.js";
-import { createResponse } from "../../../utils/responseHandlers.js";
 import { ZodError } from "zod";
 
 // Create action enum from model filter schema keys

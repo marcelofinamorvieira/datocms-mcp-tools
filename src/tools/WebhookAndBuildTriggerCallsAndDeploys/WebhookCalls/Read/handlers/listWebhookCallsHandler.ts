@@ -1,6 +1,5 @@
 import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookCallSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Retrieves a list of webhook call logs for a specific webhook

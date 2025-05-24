@@ -21,7 +21,8 @@ import {
   registerPermissionsRouter,
   registerSchemaRouter,
   registerDeliveryManagementRouter,
-  registerUIRouter
+  registerUIRouter,
+  registerLocalesRouter
 } from "./tools/index.js";
 
 // Import schema initializer to register all schemas in the registry
@@ -57,6 +58,7 @@ const createServer = (): McpServer => {
   registerSchemaRouter(server);           // Schema operations (item types, fieldsets, etc.)
   registerDeliveryManagementRouter(server); // Webhooks and delivery management
   registerUIRouter(server);               // Unified UI tools (menu items, schema menu items, etc.)
+  registerLocalesRouter(server);          // Locales management (multilingual content)
 
   return server;
 };

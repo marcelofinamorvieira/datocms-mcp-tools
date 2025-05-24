@@ -1,12 +1,23 @@
 import { createCustomHandler } from "../../../../../utils/enhancedHandlerFactory.js";
+import { createResponse, Response as MCPResponse } from "../../../../../utils/responseHandlers.js";
 import { schemaSchemas } from "../../../schemas.js";
 import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../../utils/responseHandlers.js";
+import type { BaseParams } from "../../../../../utils/enhancedHandlerFactory.js";
+import type { Client } from "@datocms/cma-client-node";
+
+interface UpdateFieldParams extends BaseParams {
+  fieldId: string;
+  field_type?: string;
+  appearance?: Record<string, unknown>;
+  validators?: Record<string, unknown>;
+  fieldset_id?: string | null;
+  [key: string]: unknown;
+}
 
 /**
  * Updates an existing field
  */
-export const updateFieldHandler = createCustomHandler({
+export const updateFieldHandler = createCustomHandler<UpdateFieldParams, MCPResponse>({
   domain: "schema",
   schemaName: "update_field",
   schema: schemaSchemas.update_field,
@@ -19,13 +30,22 @@ export const updateFieldHandler = createCustomHandler({
   const { apiToken, fieldId, environment, field_type, appearance, validators, fieldset_id, ...restFieldData } = args;
 
   // Build the DatoCMS client
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
 
   // First, check if the field exists and get the current field data
   const existingField = await client.fields.find(fieldId);
 
   // Create the update data object with proper structure
-  const updateData: any = {
+  interface UpdateData {
+    data: {
+      type: "field";
+      id: string;
+      attributes: Record<string, unknown>;
+      relationships: Record<string, unknown>;
+    };
+  }
+  
+  const updateData: UpdateData = {
     data: {
       type: "field" as const,
       id: fieldId,
@@ -64,7 +84,7 @@ export const updateFieldHandler = createCustomHandler({
   }
 
   // Use rawUpdate to directly pass the properly formatted JSON:API data
-  await client.fields.rawUpdate(fieldId, updateData);
+  await client.fields.rawUpdate(fieldId, updateData as any);
 
   // Fetch the updated field
   const updatedField = await client.fields.find(fieldId);

@@ -1,0 +1,1 @@
+export { updateLocaleHandler } from './updateLocaleHandler.js';

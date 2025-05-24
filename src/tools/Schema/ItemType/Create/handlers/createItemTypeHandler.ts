@@ -5,6 +5,7 @@
 
 import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { schemaSchemas } from "../../../schemas.js";
+import type { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler to create a new Item Type in DatoCMS
@@ -14,7 +15,7 @@ export const createItemTypeHandler = createCreateHandler({
   schemaName: "create_item_type",
   schema: schemaSchemas.create_item_type,
   entityName: "ItemType",
-  successMessage: (itemType: any) => `Item type '${itemType.name}' created successfully with ID: ${itemType.id}`,
+  successMessage: (itemType: SimpleSchemaTypes.ItemType) => `Item type '${itemType.name}' created successfully with ID: ${itemType.id}`,
   clientAction: async (client, args) => {
     const {
       name,

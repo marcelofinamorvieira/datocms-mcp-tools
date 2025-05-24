@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { 
-  apiTokenSchema,
   environmentSchema,
   paginationSchema,
   createBaseSchema,
@@ -9,14 +8,7 @@ import {
   returnOnlyConfirmationSchema,
   orderBySchema
 } from "../../utils/sharedSchemas.js";
-import { filterCondition, filterConditions } from "./filterCondition.js";
-
-import type { 
-  RecordStatus,
-  RecordQueryParams,
-  PublicationParams,
-  SchedulingParams
-} from "./types.js";
+import { filterConditions } from "./filterCondition.js";
 
 /**
  * Record ID schema with validation

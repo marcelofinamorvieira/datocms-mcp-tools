@@ -100,6 +100,11 @@ const schema = z.object({
 3. **Use `.js` extensions** in imports - TypeScript requirement
 4. **Validate with Zod schemas** - Input sanitization is automatic
 5. **Write detailed Zod descriptions** - They're Claude's primary documentation
+6. **ALWAYS use DatoCMS official types** - Never create custom types when `@datocms/cma-client-node` provides them
+   - Use `SimpleSchemaTypes.Role`, not custom `Role` type
+   - Use `SimpleSchemaTypes.AccessToken`, not custom `APIToken` type
+   - Use `SimpleSchemaTypes.Item`, not custom `Record` type
+   - The official types are always more accurate and up-to-date
 
 ## 🔍 Development Approach
 - constantly build while implementing new features to test for errors

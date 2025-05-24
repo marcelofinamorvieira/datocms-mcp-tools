@@ -26,7 +26,7 @@ export const listEnvironmentsHandler = createListHandler({
   schemaName: 'list',
   schema: environmentSchemas.list,
   entityName: 'Environment',
-  clientAction: async (client, args) => {
+  clientAction: async (client, _args) => {
     // List all environments
     const environments = await client.environments.list();
     

@@ -9,6 +9,9 @@ export type Response = {
   content: TextBlock[];
 };
 
+// Export with an alias to avoid DOM Response type conflicts
+export type McpResponse = Response;
+
 /**
  * Standard response format for handlers
  */

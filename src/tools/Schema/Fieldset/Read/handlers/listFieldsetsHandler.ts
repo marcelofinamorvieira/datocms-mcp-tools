@@ -15,15 +15,17 @@ export const listFieldsetsHandler = createListHandler({
   schema: schemaSchemas.list_fieldsets,
   entityName: "Fieldset",
   clientAction: async (client, args) => {
-    // The API requires itemTypeId as the first parameter
-    const queryParams: Record<string, unknown> = {};
+    // Build query parameters with item type filter
+    const queryParams: Record<string, unknown> = {
+      "filter[item_type]": args.itemTypeId
+    };
     
     // Add pagination if provided
     if (args.page) {
       queryParams.page = args.page;
     }
     
-    // List fieldsets for the specified item type
-    return await client.fieldsets.list(args.itemTypeId, queryParams);
+    // List fieldsets with filtering
+    return await client.fieldsets.list(queryParams as any);
   }
 });

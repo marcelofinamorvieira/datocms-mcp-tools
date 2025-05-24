@@ -1,7 +1,6 @@
 import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { webhookSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import type { CreateWebhookParams as ClientCreateParams } from "../../../webhookAndBuildTriggerTypes.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Creates a new webhook in DatoCMS
@@ -9,24 +8,29 @@ import type { CreateWebhookParams as ClientCreateParams } from "../../../webhook
  * @param params Parameters for creating a webhook
  * @returns Response with the created webhook details
  */
-export const createWebhookHandler = createCreateHandler({
+export const createWebhookHandler = createCreateHandler<any, SimpleSchemaTypes.Webhook>({
   domain: "webhooks.webhooks",
   schemaName: "create",
   schema: webhookSchemas.create,
   entityName: "Webhook",
-  successMessage: (result: any) => `Successfully created webhook '${result.name}' with ID ${result.id}`,
+  successMessage: (result) => `Successfully created webhook '${result.name}' with ID ${result.id}`,
   clientAction: async (client, args) => {
-    const { name, url, headers, events } = args;
+    const { name, url, headers = {}, events } = args;
 
-    // Create the webhook with the provided parameters using our typed client
-    const createParams: ClientCreateParams = {
+    // Create the webhook with the official schema
+    const createParams: SimpleSchemaTypes.WebhookCreateSchema = {
       name,
       url,
-      headers: headers || {},
-      events
+      headers,
+      events: events.map((event: string) => ({
+        entity_type: event.split(':')[0] as any,
+        event_types: [event.split(':')[1]] as any
+      })),
+      custom_payload: null,
+      http_basic_user: null,
+      http_basic_password: null
     };
 
-    // Create the webhook with proper typing
     return await client.webhooks.create(createParams);
   }
 });

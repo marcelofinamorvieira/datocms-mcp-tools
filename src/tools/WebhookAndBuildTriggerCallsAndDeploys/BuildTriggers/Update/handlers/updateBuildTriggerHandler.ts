@@ -1,7 +1,6 @@
 import { createUpdateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
-import type { UpdateBuildTriggerParams as ClientUpdateParams } from "../../../webhookAndBuildTriggerTypes.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Updates an existing build trigger in DatoCMS
@@ -9,7 +8,7 @@ import type { UpdateBuildTriggerParams as ClientUpdateParams } from "../../../we
  * @param params Parameters for updating a build trigger
  * @returns Response with the updated build trigger details
  */
-export const updateBuildTriggerHandler = createUpdateHandler({
+export const updateBuildTriggerHandler = createUpdateHandler<any, SimpleSchemaTypes.BuildTrigger>({
   domain: "webhooks.buildTriggers",
   schemaName: "update",
   schema: buildTriggerSchemas.update,
@@ -19,13 +18,12 @@ export const updateBuildTriggerHandler = createUpdateHandler({
     const { buildTriggerId, name, adapter_settings, indexing_enabled } = args;
 
     // Build update payload with only the provided parameters
-    const updatePayload: ClientUpdateParams = {};
+    const updatePayload: SimpleSchemaTypes.BuildTriggerUpdateSchema = {};
     
     if (name !== undefined) updatePayload.name = name;
     if (adapter_settings !== undefined) updatePayload.adapter_settings = adapter_settings;
     if (indexing_enabled !== undefined) updatePayload.indexing_enabled = indexing_enabled;
 
-    // Update the build trigger with proper typing
     return await client.buildTriggers.update(buildTriggerId, updatePayload);
   }
 });

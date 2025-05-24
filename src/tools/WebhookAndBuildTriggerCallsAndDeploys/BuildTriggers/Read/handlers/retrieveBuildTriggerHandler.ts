@@ -1,6 +1,5 @@
 import { createRetrieveHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Retrieves a specific build trigger by ID

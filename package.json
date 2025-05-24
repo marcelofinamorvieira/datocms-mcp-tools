@@ -10,7 +10,10 @@
     "start:http": "TRANSPORT_TYPE=http node dist/src/index.js",
     "dev": "tsc -w",
     "validate": "node dist/scripts/validate-structure.js",
-    "test:debug": "node dist/scripts/test-debug.js"
+    "test:debug": "node dist/scripts/test-debug.js",
+    "type-check": "tsc --noEmit",
+    "type-check:handlers": "tsc --noEmit --project tsconfig.json src/tools/**/handlers/*.ts",
+    "type-check:strict": "tsc --noEmit --strict --noImplicitAny --strictNullChecks --noUncheckedIndexedAccess"
   },
   "keywords": [
     "mcp",

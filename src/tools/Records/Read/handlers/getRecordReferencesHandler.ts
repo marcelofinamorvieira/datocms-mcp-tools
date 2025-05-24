@@ -5,19 +5,29 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { ClientType, UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import { createResponse, Response as MCPResponse } from "../../../../utils/responseHandlers.js";
+import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import { recordsSchemas } from "../../schemas.js";
+import type { BaseParams } from "../../../../utils/enhancedHandlerFactory.js";
+import type { Client } from "@datocms/cma-client-node";
+
+interface GetRecordReferencesParams extends BaseParams {
+  itemId: string;
+  version?: "current" | "published";
+  returnAllLocales?: boolean;
+  nested?: boolean;
+  returnOnlyIds?: boolean;
+}
 
 /**
  * Handler function for retrieving references to a specific DatoCMS record
  */
-export const getRecordReferencesHandler = createCustomHandler({
+export const getRecordReferencesHandler = createCustomHandler<GetRecordReferencesParams, MCPResponse>({
   domain: "records",
   schemaName: "references",
   schema: recordsSchemas.references,
-}, async (args: any) => {
+}, async (args) => {
   const {
     apiToken,
     environment,
@@ -29,7 +39,7 @@ export const getRecordReferencesHandler = createCustomHandler({
   } = args;
   
   // Initialize client
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
   
   // Retrieve records that reference the specified item with nested parameter
   const referencingItems = await client.items.references(itemId, { nested, version });
@@ -41,7 +51,7 @@ export const getRecordReferencesHandler = createCustomHandler({
   
   // If returnOnlyIds is true, return just the IDs using map for cleaner code
   if (returnOnlyIds) {
-    const result = referencingItems.map((item: any) => item.id);
+    const result = referencingItems.map((item) => item.id);
     return createResponse(JSON.stringify(result, null, 2));
   }
   

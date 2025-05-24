@@ -1,0 +1,1 @@
+export { deleteLocaleHandler } from './deleteLocaleHandler.js';

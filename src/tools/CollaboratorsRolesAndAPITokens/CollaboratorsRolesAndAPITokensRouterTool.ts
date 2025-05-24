@@ -8,8 +8,7 @@ import {
   apiTokenActionEnum,
   apiTokenSchemas
 } from "./schemas.js";
-import { createResponse } from "../../utils/responseHandlers.js";
-import { createErrorResponse , extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
+import { createErrorResponse, extractDetailedErrorInfo } from "../../utils/errorHandlers.js";
 
 // Import handlers from subdirectories for collaborators
 import {
@@ -53,10 +52,10 @@ import { destroyTokenHandler } from "./APITokens/Delete/handlers/index.js";
 import { rotateTokenHandler } from "./APITokens/Rotate/handlers/index.js";
 
 // Annotate the args parameter with the discriminated union type for collaborators
-type CollaboratorToolArgs = {
-  action: string;
-  args?: Record<string, unknown>;
-};
+// type CollaboratorToolArgs = {
+//   action: string;
+//   args?: Record<string, unknown>;
+// }; // Unused - kept for reference
 
 // Type for the action parameter for collaborators
 type CollaboratorAction = keyof typeof collaboratorSchemas;
@@ -143,34 +142,57 @@ This will show you all the required parameters and their types.`);
           const validatedArgs = actionSchema.parse(args);
 
           // Route to the appropriate handler based on the action
+          let handlerResult: any;
+          
           switch (validAction) {
             // Invitation operations
             case "invitation_create":
-              return createInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_create']);
+              handlerResult = await createInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_create']);
+              break;
             case "invitation_list":
-              return listInvitationsHandler(validatedArgs as CollaboratorActionArgsMap['invitation_list']);
+              handlerResult = await listInvitationsHandler(validatedArgs as CollaboratorActionArgsMap['invitation_list']);
+              break;
             case "invitation_retrieve":
-              return retrieveInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_retrieve']);
+              handlerResult = await retrieveInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_retrieve']);
+              break;
             case "invitation_destroy":
-              return destroyInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_destroy']);
+              handlerResult = await destroyInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_destroy']);
+              break;
             case "invitation_resend":
-              return resendInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_resend']);
+              handlerResult = await resendInvitationHandler(validatedArgs as CollaboratorActionArgsMap['invitation_resend']);
+              break;
 
             // User operations
             case "user_list":
-              return listUsersHandler(validatedArgs as CollaboratorActionArgsMap['user_list']);
+              handlerResult = await listUsersHandler(validatedArgs as CollaboratorActionArgsMap['user_list']);
+              break;
             case "user_retrieve":
-              return retrieveUserHandler(validatedArgs as CollaboratorActionArgsMap['user_retrieve']);
+              handlerResult = await retrieveUserHandler(validatedArgs as CollaboratorActionArgsMap['user_retrieve']);
+              break;
             case "user_update":
-              return updateUserHandler(validatedArgs as CollaboratorActionArgsMap['user_update']);
+              handlerResult = await updateUserHandler(validatedArgs as CollaboratorActionArgsMap['user_update']);
+              break;
             case "user_destroy":
-              return destroyUserHandler(validatedArgs as CollaboratorActionArgsMap['user_destroy']);
+              handlerResult = await destroyUserHandler(validatedArgs as CollaboratorActionArgsMap['user_destroy']);
+              break;
             case "user_invite":
-              return inviteUserHandler(validatedArgs as CollaboratorActionArgsMap['user_invite']);
+              handlerResult = await inviteUserHandler(validatedArgs as CollaboratorActionArgsMap['user_invite']);
+              break;
 
             default:
               return createErrorResponse(`Error: No handler implemented for action '${action}'. This is a server configuration error.`);
           }
+          
+          // Handle the handler result
+          if (handlerResult && typeof handlerResult === 'object') {
+            // Check if it's already a Response object from createResponse/createErrorResponse
+            if ('content' in handlerResult) {
+              return handlerResult;
+            }
+          }
+          
+          // This shouldn't happen with properly implemented handlers
+          return createErrorResponse(`Unexpected response format from handler for action '${action}'.`);
         } catch (error) {
           if (error instanceof z.ZodError) {
             // Get the schema for documentation purposes
@@ -218,22 +240,41 @@ export const registerRolesRouter = (server: McpServer) => {
         const params = schema.parse(args);
 
         // Route to the appropriate handler
+        let handlerResult: any;
+        
         switch (action) {
           case "create_role":
-            return await createRoleHandler(params as z.infer<typeof roleSchemas.create_role>);
+            handlerResult = await createRoleHandler(params as z.infer<typeof roleSchemas.create_role>);
+            break;
           case "list_roles":
-            return await listRolesHandler(params as z.infer<typeof roleSchemas.list_roles>);
+            handlerResult = await listRolesHandler(params as z.infer<typeof roleSchemas.list_roles>);
+            break;
           case "retrieve_role":
-            return await retrieveRoleHandler(params as z.infer<typeof roleSchemas.retrieve_role>);
+            handlerResult = await retrieveRoleHandler(params as z.infer<typeof roleSchemas.retrieve_role>);
+            break;
           case "update_role":
-            return await updateRoleHandler(params as z.infer<typeof roleSchemas.update_role>);
+            handlerResult = await updateRoleHandler(params as z.infer<typeof roleSchemas.update_role>);
+            break;
           case "destroy_role":
-            return await destroyRoleHandler(params as z.infer<typeof roleSchemas.destroy_role>);
+            handlerResult = await destroyRoleHandler(params as z.infer<typeof roleSchemas.destroy_role>);
+            break;
           case "duplicate_role":
-            return await duplicateRoleHandler(params as z.infer<typeof roleSchemas.duplicate_role>);
+            handlerResult = await duplicateRoleHandler(params as z.infer<typeof roleSchemas.duplicate_role>);
+            break;
           default:
-            throw new Error(`Unsupported action: ${action}`);
+            return createErrorResponse(`Unsupported action: ${action}`);
         }
+        
+        // Handle the handler result
+        if (handlerResult && typeof handlerResult === 'object') {
+          // Check if it's already a Response object from createResponse/createErrorResponse
+          if ('content' in handlerResult) {
+            return handlerResult;
+          }
+        }
+        
+        // This shouldn't happen with properly implemented handlers
+        return createErrorResponse(`Unexpected response format from handler for action '${action}'.`);
       } catch (error) {
         return createErrorResponse(`Error performing role operation: ${extractDetailedErrorInfo(error)}`);
       }
@@ -262,36 +303,40 @@ export const registerAPITokensRouter = (server: McpServer) => {
         const params = schema.parse(args);
 
         // Route to the appropriate handler
-        let response;
+        let handlerResult: any;
         switch (action) {
           case "create_token":
-            response = await createTokenHandler(params as z.infer<typeof apiTokenSchemas.create_token>);
+            handlerResult = await createTokenHandler(params as z.infer<typeof apiTokenSchemas.create_token>);
             break;
           case "list_tokens":
-            response = await listTokensHandler(params as z.infer<typeof apiTokenSchemas.list_tokens>);
+            handlerResult = await listTokensHandler(params as z.infer<typeof apiTokenSchemas.list_tokens>);
             break;
           case "retrieve_token":
-            response = await retrieveTokenHandler(params as z.infer<typeof apiTokenSchemas.retrieve_token>);
+            handlerResult = await retrieveTokenHandler(params as z.infer<typeof apiTokenSchemas.retrieve_token>);
             break;
           case "update_token":
-            response = await updateTokenHandler(params as z.infer<typeof apiTokenSchemas.update_token>);
+            handlerResult = await updateTokenHandler(params as z.infer<typeof apiTokenSchemas.update_token>);
             break;
           case "destroy_token":
-            response = await destroyTokenHandler(params as z.infer<typeof apiTokenSchemas.destroy_token>);
+            handlerResult = await destroyTokenHandler(params as z.infer<typeof apiTokenSchemas.destroy_token>);
             break;
           case "rotate_token":
-            response = await rotateTokenHandler(params as z.infer<typeof apiTokenSchemas.rotate_token>);
+            handlerResult = await rotateTokenHandler(params as z.infer<typeof apiTokenSchemas.rotate_token>);
             break;
           default:
-            throw new Error(`Unsupported action: ${action}`);
+            return createErrorResponse(`Unsupported action: ${action}`);
         }
 
-        // Handlers already return Response objects, so we can return them directly
-        if (response) {
-          return response;
+        // Handle the handler result
+        if (handlerResult && typeof handlerResult === 'object') {
+          // Check if it's already a Response object from createResponse/createErrorResponse
+          if ('content' in handlerResult) {
+            return handlerResult;
+          }
         }
-
-        return createErrorResponse('No response from handler');
+        
+        // This shouldn't happen with properly implemented handlers
+        return createErrorResponse(`Unexpected response format from handler for action '${action}'.`);
       } catch (error) {
         return createErrorResponse(`Error performing API token operation: ${extractDetailedErrorInfo(error)}`);
       }

@@ -27,7 +27,7 @@ export const deleteEnvironmentHandler = createDeleteHandler({
   schema: environmentSchemas.delete,
   entityName: 'Environment',
   idParam: 'environmentId',
-  successMessage: (id: any) => `Environment '${id}' has been deleted successfully`,
+  successMessage: (id: string) => `Environment '${id}' has been deleted successfully`,
   clientAction: async (client, args) => {
     // Delete the environment
     // Note: Don't pass environmentId when initializing client to avoid

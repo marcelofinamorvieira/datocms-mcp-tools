@@ -10,18 +10,18 @@ import type {
   RecordCreatePayload, 
   RecordUpdatePayload, 
   RecordQueryParams, 
-  PublicationParams,
   FieldTypes
 } from './types.js';
 import { validateItemFields, extractTypedFields, TypedRecord } from './advancedTypes.js';
 import { UnifiedClientManager } from '../../utils/unifiedClientManager.js';
+import { Client, SimpleSchemaTypes } from '@datocms/cma-client-node';
 
 /**
  * Type-safe client for working with DatoCMS records
  * This wraps the actual CMA client with better typing
  */
 export class TypedRecordsClient {
-  private client: any;
+  private client: Client;
   
   /**
    * Create a new typed client using the standard CMA client
@@ -29,7 +29,7 @@ export class TypedRecordsClient {
    * @param environment - Optional environment name
    */
   constructor(apiToken: string, environment?: string) {
-    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+    this.client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
   }
   
   /**
@@ -83,13 +83,28 @@ export class TypedRecordsClient {
    * @returns Array of records
    */
   async listRecords(params?: Partial<RecordQueryParams>): Promise<Item[]> {
-    if (typeof this.client.items.list === 'function') {
-      return this.client.items.list(params as any);
+    // Convert our RecordQueryParams to ItemInstancesHrefSchema format
+    const apiParams: SimpleSchemaTypes.ItemInstancesHrefSchema = {};
+    
+    if (params) {
+      if (params.page) {
+        apiParams.page = params.page;
+      }
+      if (params.filter) {
+        apiParams.filter = params.filter as any; // Type mismatch in filter structure
+      }
+      if (params.order_by) {
+        apiParams.order_by = params.order_by;
+      }
+      if (params.version) {
+        apiParams.version = params.version;
+      }
+      if (params.nested !== undefined) {
+        apiParams.nested = params.nested;
+      }
     }
-    if (typeof this.client.items.all === 'function') {
-      return this.client.items.all(params as any);
-    }
-    throw new Error('DatoCMS client does not support listing items');
+    
+    return this.client.items.list(apiParams);
   }
   
   /**
@@ -117,7 +132,7 @@ export class TypedRecordsClient {
    * @returns Promise that resolves when the record is deleted
    */
   async deleteRecord(id: string): Promise<void> {
-    return this.client.items.destroy(id);
+    await this.client.items.destroy(id);
   }
   
   /**
@@ -132,9 +147,17 @@ export class TypedRecordsClient {
       content_in_locales?: string[], 
       non_localized_content?: boolean
     },
-    params?: { recursive?: boolean }
+    _params?: { recursive?: boolean }
   ): Promise<Item> {
-    return this.client.items.publish(id, options, params);
+    if (options) {
+      const publishSchema: SimpleSchemaTypes.ItemPublishSchema = {
+        type: "selective_publish_operation",
+        content_in_locales: options.content_in_locales || [],
+        non_localized_content: options.non_localized_content || false
+      };
+      return this.client.items.publish(id, publishSchema);
+    }
+    return this.client.items.publish(id);
   }
   
   /**
@@ -144,7 +167,14 @@ export class TypedRecordsClient {
    * @returns The unpublished record
    */
   async unpublishRecord(id: string, params?: { recursive?: boolean }): Promise<Item> {
-    return this.client.items.unpublish(id, params);
+    if (params?.recursive) {
+      const unpublishSchema: SimpleSchemaTypes.ItemUnpublishSchema = {
+        type: "selective_unpublish_operation",
+        content_in_locales: [] // Empty array unpublishes all locales
+      };
+      return this.client.items.unpublish(id, unpublishSchema);
+    }
+    return this.client.items.unpublish(id);
   }
   
   /**
@@ -162,21 +192,15 @@ export class TypedRecordsClient {
    * @returns Array of versions
    */
   async listRecordVersions(itemId: string): Promise<ItemVersion[]> {
-    if (typeof this.client.itemVersions.list === 'function') {
-      return this.client.itemVersions.list(itemId);
-    }
-    if (typeof this.client.itemVersions.all === 'function') {
-      return this.client.itemVersions.all({ item_id: itemId });
-    }
-    throw new Error('DatoCMS client does not support listing record versions');
+    return this.client.itemVersions.list(itemId);
   }
   
   /**
    * Restore a record to a specific version
    * @param versionId - Version ID
-   * @returns The restored record
+   * @returns The restore job result
    */
-  async restoreRecordVersion(versionId: string): Promise<Item> {
+  async restoreRecordVersion(versionId: string): Promise<SimpleSchemaTypes.ItemVersionRestoreJobSchema> {
     return this.client.itemVersions.restore(versionId);
   }
 }

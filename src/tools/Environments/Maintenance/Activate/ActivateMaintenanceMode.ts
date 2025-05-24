@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import { isAuthorizationError, createErrorResponse } from "../../../../utils/errorHandlers.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 /**

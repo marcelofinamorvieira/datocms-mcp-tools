@@ -154,7 +154,10 @@ export function withDebugTracking(options: DebugMiddlewareOptions) {
               responseData.meta.debug = debugData;
               
               // Update the response
-              (result as Response).content[0].text = JSON.stringify(responseData, null, 2);
+              const content = (result as Response).content;
+              if (content && content[0]) {
+                content[0].text = JSON.stringify(responseData, null, 2);
+              }
             }
           } catch (e) {
             // If we can't parse/modify the response, just continue
@@ -273,7 +276,7 @@ export function enhanceResponseWithDebug(
  * @param handlerName The name of the handler for logging
  * @returns Middleware function that tracks performance
  */
-export function withPerformanceTracking(handlerName: string) {
+export function withPerformanceTracking(_handlerName: string) {
   return function<T, R>(handler: Handler<T, R>): Handler<T, R> {
     return async function performanceTrackedHandler(args: T): Promise<R> {
       // Extract the debug flag from the request parameters
@@ -302,7 +305,10 @@ export function withPerformanceTracking(handlerName: string) {
               }
               responseData.meta.duration = duration;
               
-              (result as Response).content[0].text = JSON.stringify(responseData, null, 2);
+              const content = (result as Response).content;
+              if (content && content[0]) {
+                content[0].text = JSON.stringify(responseData, null, 2);
+              }
             }
           } catch (e) {
             // Continue without timing
@@ -311,7 +317,7 @@ export function withPerformanceTracking(handlerName: string) {
         
         return result;
       } catch (error) {
-        const duration = timer.stop();
+        timer.stop();
         
         // Could enhance error with timing here if needed
         throw error;

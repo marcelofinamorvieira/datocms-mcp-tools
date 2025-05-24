@@ -5,26 +5,30 @@
  */
 
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../utils/unifiedClientManager.js";
+import { createResponse, Response as MCPResponse } from "../../../../utils/responseHandlers.js";
 import { recordsSchemas } from "../../schemas.js";
-import { createResponse } from "../../../../utils/responseHandlers.js";
+import type { BaseParams } from "../../../../utils/enhancedHandlerFactory.js";
+import type { Client } from "@datocms/cma-client-node";
+
+interface BulkDestroyRecordsParams extends BaseParams {
+  itemIds: string[];
+}
 
 /**
  * Handler function for deleting multiple DatoCMS records in bulk
  */
-export const bulkDestroyRecordsHandler = createCustomHandler(
+export const bulkDestroyRecordsHandler = createCustomHandler<BulkDestroyRecordsParams, MCPResponse>(
   {
     domain: "records",
     schemaName: "bulk_destroy",
-    schema: recordsSchemas.bulk_destroy,
-    clientType: ClientType.DEFAULT
+    schema: recordsSchemas.bulk_destroy
   },
-  async (args: any) => {
+  async (args) => {
     const { itemIds, apiToken, environment } = args;
 
     // Get the records client
     const { UnifiedClientManager } = await import("../../../../utils/unifiedClientManager.js");
-    const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+    const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
 
     // Check if we have any IDs to delete
     if (!Array.isArray(itemIds) || itemIds.length === 0) {
@@ -38,7 +42,7 @@ export const bulkDestroyRecordsHandler = createCustomHandler(
     
     // Format input for bulkDestroy with explicit type annotation
     // Format each ID into the required structure for the API
-    const itemsToDelete = itemIds.map((id: string) => ({ type: "item" as const, id }));
+    const itemsToDelete = itemIds.map((id) => ({ type: "item" as const, id }));
     
     // Execute bulk deletion
     await client.items.bulkDestroy({

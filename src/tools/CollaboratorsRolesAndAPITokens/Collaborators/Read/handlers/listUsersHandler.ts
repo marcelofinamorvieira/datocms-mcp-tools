@@ -4,20 +4,21 @@
  */
 
 import { z } from "zod";
-import { createListHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { collaboratorSchemas } from "../../../schemas.js";
 
 /**
  * Handler for listing DatoCMS site users
  */
-export const listUsersHandler = createListHandler({
+export const listUsersHandler = createListHandler<
+  z.infer<typeof collaboratorSchemas.user_list>,
+  any  // User type from DatoCMS
+>({
   domain: "collaborators.users",
   schemaName: "user_list",
   schema: collaboratorSchemas.user_list,
   entityName: "User",
-  clientType: ClientType.COLLABORATORS,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.user_list>) => {
-    return await client.listCollaborators();
+  clientAction: async (client, _args) => {
+    return await client.users.list();
   }
 });

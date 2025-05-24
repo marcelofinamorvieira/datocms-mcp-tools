@@ -8,6 +8,6 @@ export const deleteUploadCollectionHandler = createDeleteHandler({
   entityName: "Upload Collection",
   idParam: "uploadCollectionId",
   clientAction: async (client, args) => {
-    return await client.uploadCollections.destroy(args.uploadCollectionId);
+    await client.uploadCollections.destroy(args.uploadCollectionId);
   }
 });

@@ -10,6 +10,7 @@ export { registerPermissionsRouter } from "./CollaboratorsRolesAndAPITokens/inde
 export { registerCollaboratorRouter, registerRolesRouter } from "./CollaboratorsRolesAndAPITokens/index.js";
 export { registerSchemaRouter } from "./Schema/index.js";
 export { registerDeliveryManagementRouter } from "./WebhookAndBuildTriggerCallsAndDeploys/index.js";
+export { LocalesRouterTool, registerLocalesRouter } from "./Locales/index.js";
 export {
   registerUIRouter,
   // Export individual routers for backward compatibility

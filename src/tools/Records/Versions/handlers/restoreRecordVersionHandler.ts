@@ -11,6 +11,7 @@
 
 import { createUpdateHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { recordsSchemas } from "../../schemas.js";
+import type { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for restoring a specific version of a DatoCMS record
@@ -21,13 +22,13 @@ import { recordsSchemas } from "../../schemas.js";
  * - Provides execution trace for troubleshooting
  * - Sanitizes sensitive data (API tokens) in debug output
  */
-export const restoreRecordVersionHandler = createUpdateHandler({
+export const restoreRecordVersionHandler = createUpdateHandler<any, SimpleSchemaTypes.ItemVersionRestoreJobSchema>({
   domain: 'records.versions',
   schemaName: 'version_restore',
   schema: recordsSchemas.version_restore,
   entityName: 'Record Version',
   idParam: 'versionId',
-  successMessage: (result: any) => `Successfully restored version ${result.id} for record ${result.item_id}.`,
+  successMessage: (_result) => `Successfully initiated version restoration job.`,
   clientAction: async (client, args) => {
     const { versionId } = args;
     

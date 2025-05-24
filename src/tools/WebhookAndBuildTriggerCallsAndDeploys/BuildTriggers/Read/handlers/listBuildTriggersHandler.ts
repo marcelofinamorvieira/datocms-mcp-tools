@@ -1,6 +1,5 @@
 import { createListHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { buildTriggerSchemas } from "../../../schemas.js";
-import { UnifiedClientManager } from "../../../../../utils/unifiedClientManager.js";
 
 /**
  * Retrieves a list of all build triggers in the DatoCMS project
@@ -13,7 +12,7 @@ export const listBuildTriggersHandler = createListHandler({
   schemaName: "list",
   schema: buildTriggerSchemas.list,
   entityName: "Build Trigger",
-  clientAction: async (client, args) => {
+  clientAction: async (client, _args) => {
     return await client.buildTriggers.list();
   }
 });

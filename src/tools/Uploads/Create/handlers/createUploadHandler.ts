@@ -1,12 +1,12 @@
-import type { z } from "zod";
+import { createResponse } from "../../../../utils/responseHandlers.js";
 import { UnifiedClientManager } from "../../../../utils/unifiedClientManager.js";
 import fetch, { Response as FetchResponse } from "node-fetch";
 import fs from "node:fs/promises";
 import path from "node:path";
 import mime from "mime-types";
-import { createResponse } from "../../../../utils/responseHandlers.js";
 import { createCustomHandler } from "../../../../utils/enhancedHandlerFactory.js";
 import { uploadsSchemas } from "../../schemas.js";
+import type { Client, SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 interface UploadRequestResponse {
   data: {
@@ -16,9 +16,22 @@ interface UploadRequestResponse {
 }
 
 const getFilenameFromUrl = (url: string) => {
-  const clean = url.split("?")[0];
+  const clean = url.split("?")[0] || url;
   return clean.substring(clean.lastIndexOf("/") + 1) || "downloaded-file";
 };
+
+interface UploadPayload {
+  uploadId: string;
+  path: string;
+  id?: string;
+  author?: string | null;
+  copyright?: string | null;
+  notes?: string | null;
+  tags?: string[];
+  default_field_metadata?: Record<string, unknown>;
+  upload_collection?: { type: "upload_collection"; id: string } | null;
+  skip_creation_if_already_exists?: boolean;
+}
 
 export const createUploadHandler = createCustomHandler({
   domain: "uploads",
@@ -121,9 +134,9 @@ export const createUploadHandler = createCustomHandler({
   }
 
   // 4) Create upload resource
-  const client = UnifiedClientManager.getDefaultClient(apiToken, environment);
+  const client = UnifiedClientManager.getDefaultClient(apiToken, environment) as Client;
 
-  const payload: any = {
+  const payload: UploadPayload = {
     uploadId,
     path: uploadId
   };
@@ -137,6 +150,6 @@ export const createUploadHandler = createCustomHandler({
   if (url && skipCreationIfAlreadyExists)
     payload.skip_creation_if_already_exists = skipCreationIfAlreadyExists;
 
-  const upload = await client.uploads.create(payload);
+  const upload = await client.uploads.create(payload as SimpleSchemaTypes.UploadCreateSchema);
   return createResponse(JSON.stringify(upload, null, 2));
 });

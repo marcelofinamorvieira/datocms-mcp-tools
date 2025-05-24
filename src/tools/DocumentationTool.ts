@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { createResponse } from "../utils/responseHandlers.js";
 import { recordsSchemas, recordActionsList } from "./Records/schemas.js";
 import { projectSchemas, projectActionsList } from "./Project/schemas.js";
 import { uploadsSchemas, uploadsActionsList } from "./Uploads/schemas.js";
@@ -13,7 +14,6 @@ import {
   apiTokenActionEnum as apiTokensActionsList
 } from "./CollaboratorsRolesAndAPITokens/schemas.js";
 import { schemaSchemas, schemaActionsList } from "./Schema/schemas.js";
-import { createResponse } from "../utils/responseHandlers.js";
 
 // Define schema map for all resources
 const schemas = {
@@ -32,11 +32,7 @@ type SchemaMap = typeof schemas;
 // Create a type-safe action enum for each resource type
 type RecordActions = typeof recordActionsList[number];
 type ProjectActions = typeof projectActionsList[number];
-type UploadActions = typeof uploadsActionsList[number];
-type EnvironmentActions = typeof environmentActionsList[number];
 type CollaboratorActions = typeof collaboratorActionsList[number];
-type RolesActions = z.infer<typeof rolesActionsList>;
-type ApiTokenActions = z.infer<typeof apiTokensActionsList>;
 type SchemaActions = typeof schemaActionsList[number];
 
 /**

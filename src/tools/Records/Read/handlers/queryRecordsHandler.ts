@@ -69,9 +69,6 @@ export const queryRecordsHandler = createListHandler({
     // The CMA client expects a plain object with specific properties
     let filter: Record<string, unknown> | undefined;
     
-    // Keep track of field filters to handle multiple field conditions correctly
-    const fieldFilters: Record<string, unknown> = {};
-    
     // Handle filter logic following DatoCMS API constraints:
     // - filter[ids] cannot be used with filter[type] or filter[fields]
     // - filter[type] cannot be used with filter[fields] (mutually exclusive)

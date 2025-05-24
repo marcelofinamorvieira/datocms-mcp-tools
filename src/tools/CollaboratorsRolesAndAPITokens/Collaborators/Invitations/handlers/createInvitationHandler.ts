@@ -4,21 +4,23 @@
  */
 
 import { z } from "zod";
-import { createCreateHandler, ClientActionFn, DatoCMSClient } from "../../../../../utils/enhancedHandlerFactory.js";
-import { ClientType } from "../../../../../utils/unifiedClientManager.js";
+import { createCreateHandler } from "../../../../../utils/enhancedHandlerFactory.js";
 import { collaboratorSchemas } from "../../../schemas.js";
+import { SimpleSchemaTypes } from "@datocms/cma-client-node";
 
 /**
  * Handler for creating a new DatoCMS site invitation
  */
-export const createInvitationHandler = createCreateHandler({
+export const createInvitationHandler = createCreateHandler<
+  z.infer<typeof collaboratorSchemas.invitation_create>,
+  SimpleSchemaTypes.SiteInvitation
+>({
   domain: "collaborators.invitations",
   schemaName: "invitation_create",
   schema: collaboratorSchemas.invitation_create,
   entityName: "Invitation",
-  clientType: ClientType.COLLABORATORS,
-  successMessage: (result: any) => `Invitation created successfully for ${result.attributes.email}`,
-  clientAction: async (client: DatoCMSClient, args: z.infer<typeof collaboratorSchemas.invitation_create>) => {
+  successMessage: (result) => `Invitation created successfully for ${result.email}`,
+  clientAction: async (client, args) => {
     const { email, role } = args;
     
     // Create the invitation - handle different role formats
@@ -28,7 +30,7 @@ export const createInvitationHandler = createCreateHandler({
       : role;
 
     // Create the invitation
-    return await client.createInvitation({
+    return await client.siteInvitations.create({
       email,
       role: roleData
     });
