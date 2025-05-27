@@ -129,6 +129,7 @@ npm run start
 | **Schemas** | Validate input parameters | `src/tools/*/schemas.ts` |
 | **Utilities** | Shared functionality | `src/utils/` |
 | **Debug System** | Execution tracking & monitoring | `src/utils/debug*.ts` |
+| **Type System** | Official DatoCMS types | `@datocms/cma-client-node` |
 
 ### Router Tools Reference
 
@@ -148,9 +149,10 @@ npm run start
 ### Prerequisites
 
 - **Node.js** v16 or higher
-- **npm** or **yarn**
+- **npm** v7 or higher
+- **TypeScript** v5.0 or higher (installed automatically)
 - **DatoCMS account** with API access
-- **Claude Desktop** or Claude AI with MCP support
+- **Claude Desktop** v1.5.12+ or Claude AI with MCP support
 
 ### Step-by-Step Installation
 
@@ -198,19 +200,21 @@ npm run start
 
 3. **Restart Claude Desktop**
 
-### Environment Variables
+### Environment Variables (Optional)
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root for global configuration:
 
 ```bash
-# .env file
-DEBUG=false                # Enable debug mode (set to true for development)
+# .env file (all settings are optional)
+DEBUG=false                # Enable global debug mode (development only!)
 TRACK_PERFORMANCE=false    # Enable performance tracking
 LOG_LEVEL=info            # Log level (error, warn, info, debug)
 NODE_ENV=production       # Environment (development, production)
 ```
 
-**⚠️ Warning**: Never enable `DEBUG=true` in production as it may expose sensitive information.
+**📝 Note**: Environment variables are optional. Users can enable debug mode per-request by adding `debug: true` to any tool parameters, which is the recommended approach for production environments.
+
+**⚠️ Warning**: Never enable `DEBUG=true` globally in production as it affects all users and may expose sensitive information.
 
 ## 💬 Usage
 
@@ -370,6 +374,11 @@ npm run dev
 # In another terminal, start the server
 npm run start
 
+# Type checking commands
+npm run type-check              # Basic type checking
+npm run type-check:handlers     # Check all handler types  
+npm run type-check:strict       # Strict mode with all checks
+
 # Validate structure
 npm run validate
 
@@ -393,10 +402,35 @@ npm run test:debug
    └── index.ts
    ```
 
-2. **Define schemas** using Zod
-3. **Implement handlers** using factory functions
-4. **Create router tool**
+2. **Define schemas** using Zod with descriptive documentation
+3. **Implement handlers** using enhanced factory functions
+4. **Create router tool** for action dispatch
 5. **Register in** `src/index.ts`
+
+### Enhanced Handler Factory Pattern
+
+The project uses enhanced factory functions that provide automatic error handling, validation, and debug tracking:
+
+```typescript
+import { createRetrieveHandler } from "../../../../utils/enhancedHandlerFactory.js";
+
+export const getResourceHandler = createRetrieveHandler({
+  domain: "resources",
+  schemaName: "get",
+  schema: domainSchemas.get,
+  entityName: "Resource",
+  idParam: "resourceId",
+  clientAction: async (client, args) => {
+    return await client.resources.find(args.resourceId);
+  }
+});
+```
+
+Available factories:
+- `createListHandler` - For listing resources with pagination
+- `createRetrieveHandler` - For getting single resources by ID
+- `createWriteHandler` - For create, update, and delete operations
+- `createActionHandler` - For custom operations
 
 See [Contributing Guide](docs/CONTRIBUTING.md) for detailed instructions.
 
@@ -432,7 +466,7 @@ The DatoCMS MCP Server includes a sophisticated debug system that provides compr
 
 The debug system supports two modes:
 
-#### 1. **Per-Request Debug Mode (Recommended)**
+#### 1. **Per-Request Debug Mode (Recommended for Production)**
 Add the `debug` parameter to any request:
 ```javascript
 // Enable debug for a specific request
@@ -442,6 +476,12 @@ Add the `debug` parameter to any request:
   debug: true  // ← Enable debug for this request only
 }
 ```
+
+**✅ Benefits of per-request debug:**
+- Safe for production use
+- No performance impact on other requests
+- User-controlled debugging
+- Isolated debug output
 
 #### 2. **Global Debug Mode (Development Only)**
 Enable debug mode in `.env`:
