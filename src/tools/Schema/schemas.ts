@@ -42,14 +42,6 @@ const apiKeyPattern = /^[a-z][a-z0-9_]*$/;
  *    - Validators must be appropriate for the field type
  */
 export const schemaSchemas = {
-  // FieldCreationHelper operations
-  get_field_type_info: z.object({
-    apiToken: apiTokenSchema,
-    environment: environmentSchema.optional().default("main"),
-    fieldType: z.string().optional().describe("Optional field type to get specific information about (e.g., 'string', 'text', 'lat_lon', 'json'). If not provided, returns a list of all available field types with their supported appearances."),
-    appearance: z.string().optional().describe("Optional appearance type to get specific template for (e.g., 'string_radio_group', 'map', 'string_checkbox_group'). If provided, fieldType must also be provided.")
-  }).describe("Get verified field templates with working configurations to prevent validation errors in DatoCMS. Provides correct structure for problematic field types that commonly fail in creation requests. Includes templates for string_radio_group, string_select, textarea, wysiwyg, markdown, lat_lon, slug, and json fields with various appearances. All templates include the critical 'addons' array, proper editor names, and required validator configurations. For specialized fields, returns specific guidance (e.g., \"Use string_multi_select instead of json_editor\", \"Use map instead of lat_lon_editor\", \"Remember to match enum validators with option values\")."),
-
   // ItemType operations
   create_item_type: createBaseSchema().extend({
     name: z.string().min(1).describe("The name of the new Item Type (model)."),
@@ -202,45 +194,40 @@ export const schemaSchemas = {
   create_field: z.object({
     apiToken: apiTokenSchema,
     itemTypeId: z.string().min(1)
-      .describe("ID of the item type to which this field belongs."),
+      .describe("ID of the item type to which this field belongs"),
     label: z.string().min(1)
-      .describe("The human-readable name of the field that appears in the CMS interface."),
+      .describe("The human-readable name of the field shown in the CMS interface"),
     api_key: z.string().min(1).regex(apiKeyPattern, {
       message: "API key must start with a lowercase letter and contain only lowercase letters, numbers, and underscores"
-    }).describe("The machine-readable identifier for the field. Must start with lowercase letter and contain only lowercase letters, numbers, and underscores."),
+    }).describe("The machine-readable identifier for the field (e.g., 'title', 'body_text')"),
     field_type: fieldTypeSchema
-      .describe(
-        "The type of field to create. Each type requires specific validators and appearance configurations. " +
-          "If you're requesting a generic text field and haven't explicitly asked for a markdown or wysiwyg editor, " +
-          "prefer 'structured_text' over 'text' so you can use record links and modular blocks. " +
-          "When adding many fields to a model, consider a modular design using link fields, block models, and structured text with blocks."
-      ),
-    validators: z.lazy(() => z.record(z.unknown())
-      .describe("Validators for the field. CRITICAL VALIDATORS BY TYPE:\n- For string_radio_group/string_select: MUST include { \"enum\": { \"values\": [\"option_a\", \"option_b\"] } } with values matching your options\n- For link fields: MUST include { \"item_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For links fields: MUST include { \"items_item_type\": { \"item_types\": [\"your_item_type_id\"] } }\n- For slug fields: Use { \"required\": {}, \"unique\": {} }\n- For rich_text fields: MUST include { \"rich_text_blocks\": { \"item_types\": [\"block_model_id1\", \"block_model_id2\"] } }")),
-    appearance: z.lazy(() => z.object({
+      .describe("The type of field to create. Common types: string, text, structured_text, boolean, integer, float, date, date_time, link, links, file, gallery, color, json, lat_lon, seo, slug, single_block, rich_text"),
+    validators: z.record(z.unknown()).optional()
+      .describe("Field validators. Required validators by type:\n" +
+        "• rich_text: { \"rich_text_blocks\": { \"item_types\": [\"block_id\"] } }\n" +
+        "• structured_text: { \"structured_text_blocks\": { \"item_types\": [] } }\n" +
+        "• single_block: { \"single_block_blocks\": { \"item_types\": [] } }\n" +
+        "• link: { \"item_item_type\": { \"item_types\": [\"model_id\"] } }\n" +
+        "• links: { \"items_item_type\": { \"item_types\": [\"model_id\"] } }\n" +
+        "• slug: { \"slug_title_field\": { \"title_field_id\": \"field_id\" } }\n" +
+        "See: https://www.datocms.com/docs/content-management-api/resources/field/create"),
+    appearance: z.object({
       editor: z.string()
-        .describe(`The editor type to use for this field. CRITICAL MAPPINGS:
-- string fields: "single_line", "string_radio_group", or "string_select"
-- text fields: "textarea", "wysiwyg", or "markdown"
-- lat_lon fields: "map" (IMPORTANT: use "map" not "lat_lon_editor")
-- json fields: "string_multi_select" or "string_checkbox_group" (json_editor currently fails)
-- link fields: "link_select"
-- slug fields: "slug"
-- boolean fields: "boolean"
-- color fields: "color_picker"`),
-      parameters: z.record(z.unknown()).default({})
-        .describe("Editor-specific parameters. Common examples:\n- For string_radio_group: { \"radios\": [{\"label\": \"Option A\", \"value\": \"option_a\"}] }\n- For string_select: { \"options\": [{\"label\": \"Option A\", \"value\": \"option_a\"}] }\n- For string_checkbox_group: { \"options\": [{\"label\": \"Feature\", \"value\": \"feature\"}] } (not \"checkboxes\")\n- For slug: { \"url_prefix\": \"https://example.com/\" }"),
-      addons: z.array(fieldAddonSchema).default([])
-        .describe("Field addons to apply. IMPORTANT: Always include this field, at minimum as an empty array.")
-    }).describe("Appearance configuration for the field. Structure depends on field_type. IMPORTANT: Always include 'addons' array even if empty.")),
+        .describe("The editor interface for this field. Must match the field type"),
+      parameters: z.record(z.unknown()).optional()
+        .describe("Editor-specific configuration parameters"),
+      addons: z.array(fieldAddonSchema).optional()
+        .describe("Field addons (plugins) to enhance functionality")
+    }).optional()
+      .describe("Appearance configuration. If not provided, defaults will be applied based on field type"),
     position: z.number().int().nonnegative().optional()
-      .describe("Position index for ordering fields."),
+      .describe("Position index for field ordering"),
     hint: z.string().nullable().optional()
-      .describe("Additional hint text for the field, shown to content editors."),
-    localized: z.boolean().default(false)
-      .describe("Whether the field is localized (translatable). Include this parameter even when using the default value."),
+      .describe("Help text shown to content editors below the field"),
+    localized: z.boolean().optional().default(false)
+      .describe("Whether this field can have different values for each locale"),
     fieldset_id: z.string().optional()
-      .describe("The ID of the fieldset to assign the field to. Recommended for organization. You will need to include this when updating the field later."),
+      .describe("ID of the fieldset to group this field under"),
     environment: environmentSchema
   }).refine(
     (data) => {
@@ -453,6 +440,4 @@ export const schemaSchemas = {
 export const schemaActionsList = Object.keys(schemaSchemas) as Array<keyof typeof schemaSchemas>;
 
 // Field Type Documentation
-export const fieldTypeDocumentationIds = [
-  "get_field_type_info"
-];
+export const fieldTypeDocumentationIds: string[] = [];

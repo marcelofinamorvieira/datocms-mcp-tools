@@ -52,10 +52,6 @@ import {
   deleteFieldHandler
 } from "./Field/Delete/handlers/index.js";
 
-// Import FieldCreationHelper handlers
-import {
-  getFieldTypeInfoHandler
-} from "./FieldCreationHelper/handlers/index.js";
 
 // Define the types for our action arguments
 type ActionArgsMap = {
@@ -81,8 +77,6 @@ type ActionArgsMap = {
   update_field: z.infer<typeof schemaSchemas.update_field>;
   delete_field: z.infer<typeof schemaSchemas.delete_field>;
   
-  // FieldCreationHelper actions
-  get_field_type_info: z.infer<typeof schemaSchemas.get_field_type_info>;
 };
 
 // Type for the action parameter
@@ -199,10 +193,6 @@ This will show you all the required parameters and their types.`);
               handlerResult = await deleteFieldHandler(validatedArgs as ActionArgsMap['delete_field']);
               break;
 
-            // FieldCreationHelper handlers
-            case "get_field_type_info":
-              handlerResult = await getFieldTypeInfoHandler(validatedArgs as ActionArgsMap['get_field_type_info']);
-              break;
 
             default: {
               // This is a type check to ensure we've handled all possible actions

@@ -9,5 +9,5 @@ export * from './SchemaRouterTool.js';
 // Export schema definitions
 export * from './schemas.js';
 
-// Export FieldCreationHelper functionality
-export * from './FieldCreationHelper/index.js';
+// Export field validator
+export * from './fieldValidator.js';
