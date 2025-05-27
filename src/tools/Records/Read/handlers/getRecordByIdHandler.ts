@@ -13,7 +13,6 @@ import { createRetrieveHandler } from "../../../../utils/enhancedHandlerFactory.
 import { returnMostPopulatedLocale } from "../../../../utils/returnMostPopulatedLocale.js";
 import { recordsSchemas } from "../../schemas.js";
 import type { Item } from "../../types.js";
-import { isPublished, hasScheduledPublication, hasScheduledUnpublishing } from "../../advancedTypes.js";
 
 /**
  * Handler to retrieve a specific DatoCMS record by its ID
@@ -57,20 +56,20 @@ export const getRecordByIdHandler = createRetrieveHandler({
     // Build additional info about the record
     const additionalInfo: string[] = [];
     
-    if (isPublished(item)) {
-      additionalInfo.push(`Record Status: Published (published on ${new Date(item.meta.published_at!).toLocaleString()})`);
+    if (item.meta.status === 'published' && item.meta.published_at) {
+      additionalInfo.push(`Record Status: Published (published on ${new Date(item.meta.published_at).toLocaleString()})`);
     } else if (item.meta.status === 'draft') {
       additionalInfo.push('Record Status: Draft (not yet published)');
     } else if (item.meta.status === 'updated') {
       additionalInfo.push(`Record Status: Updated (published version from ${new Date(item.meta.published_at!).toLocaleString()}, with unpublished changes)`);
     }
     
-    if (hasScheduledPublication(item)) {
-      additionalInfo.push(`Scheduled Publication: ${new Date(item.meta.publication_scheduled_at!).toLocaleString()}`);
+    if (item.meta.publication_scheduled_at) {
+      additionalInfo.push(`Scheduled Publication: ${new Date(item.meta.publication_scheduled_at).toLocaleString()}`);
     }
     
-    if (hasScheduledUnpublishing(item)) {
-      additionalInfo.push(`Scheduled Unpublishing: ${new Date(item.meta.unpublishing_scheduled_at!).toLocaleString()}`);
+    if (item.meta.unpublishing_scheduled_at) {
+      additionalInfo.push(`Scheduled Unpublishing: ${new Date(item.meta.unpublishing_scheduled_at).toLocaleString()}`);
     }
     
     // Process locales

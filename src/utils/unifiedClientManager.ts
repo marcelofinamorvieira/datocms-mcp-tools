@@ -5,7 +5,6 @@
  */
 
 import { buildClient, Client } from "@datocms/cma-client-node";
-import { TypedRecordsClient } from "../tools/Records/typedClient.js";
 import { CollaboratorsClient, createTypedCollaboratorsClient } from "../tools/CollaboratorsRolesAndAPITokens/collaboratorsClient.js";
 
 /**
@@ -13,7 +12,6 @@ import { CollaboratorsClient, createTypedCollaboratorsClient } from "../tools/Co
  */
 export enum ClientType {
   DEFAULT = 'default',
-  RECORDS = 'records',
   COLLABORATORS = 'collaborators',
 }
 
@@ -60,9 +58,6 @@ export class UnifiedClientManager {
 
     // Create and return the appropriate client type
     switch (clientType) {
-      case ClientType.RECORDS:
-        return new TypedRecordsClient(apiToken, environment);
-      
       case ClientType.COLLABORATORS:
         return createTypedCollaboratorsClient(baseClient);
       
@@ -107,17 +102,13 @@ export class UnifiedClientManager {
   }
 
   /**
-   * Gets a typed records client
+   * Gets a records client (same as default client)
    * @param apiToken DatoCMS API token
    * @param environment Optional environment name
-   * @returns A typed records client
+   * @returns A DatoCMS client
    */
-  public static getRecordsClient(apiToken: string, environment?: string): TypedRecordsClient {
-    return this.getClient<TypedRecordsClient>({
-      apiToken,
-      environment,
-      clientType: ClientType.RECORDS
-    });
+  public static getRecordsClient(apiToken: string, environment?: string): Client {
+    return this.getDefaultClient(apiToken, environment);
   }
 
   /**
