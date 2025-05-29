@@ -1,8 +1,8 @@
 # DatoCMS MCP Server
 
-<div align="center">  
+<div align="center">
   <h3>Model Context Protocol server for seamless DatoCMS integration with Claude AI</h3>
-  
+
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Node Version](https://img.shields.io/badge/node-%3E%3D16-brightgreen)](https://nodejs.org)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
@@ -170,11 +170,6 @@ npm run start
 3. **Build the project**
    ```bash
    npm run build
-   ```
-
-4. **Verify installation**
-   ```bash
-   npm run validate  # Validates directory structure
    ```
 
 ## ⚙️ Configuration
@@ -376,11 +371,8 @@ npm run start
 
 # Type checking commands
 npm run type-check              # Basic type checking
-npm run type-check:handlers     # Check all handler types  
+npm run type-check:handlers     # Check all handler types
 npm run type-check:strict       # Strict mode with all checks
-
-# Validate structure
-npm run validate
 
 # Test debug functionality
 npm run test:debug
@@ -511,7 +503,7 @@ When debug mode is enabled, every response includes comprehensive debug informat
         parameters: object,       // Request parameters (API tokens automatically redacted)
         performance: {
           startTime: number,      // Start timestamp
-          endTime: number,        // End timestamp  
+          endTime: number,        // End timestamp
           duration: number,       // Total execution time in milliseconds
           apiCallDuration: number,// Time spent on DatoCMS API calls
           stages: {
@@ -645,7 +637,7 @@ import { createCreateHandler } from "../../../../utils/enhancedHandlerFactory.js
 // This handler automatically gets debug tracking
 export const myHandler = createCreateHandler({
   domain: 'myDomain',
-  schemaName: 'create', 
+  schemaName: 'create',
   schema: mySchema,
   entityName: 'MyEntity',
   clientAction: async (client, args) => {
@@ -669,18 +661,18 @@ export const customHandler = async (args) => {
     domain: 'myDomain',
     parameters: args
   });
-  
+
   addTrace(context, 'Starting custom operation');
-  
+
   const timer = createTimer();
   const result = await someApiCall();
-  
+
   trackApiCall(context, {
     endpoint: '/custom',
     method: 'GET',
     duration: timer.stop()
   });
-  
+
   return createStandardResponse(result, {
     debug: createDebugData(context)
   });
@@ -719,7 +711,7 @@ Use debug data to analyze performance:
    TRACK_PERFORMANCE=false  # Disable global performance tracking
    LOG_LEVEL=error         # Minimal logging
    ```
-   
+
    **Note**: Per-request debug (`debug: true` parameter) is safe for production use as it only affects individual requests.
 
 2. **Automatic sanitization patterns**:
@@ -764,7 +756,7 @@ npm run test:debug
 
 1. **Use enhanced factories** for automatic debug support
 2. **Add meaningful traces** for complex operations
-3. **Track API calls** for performance analysis  
+3. **Track API calls** for performance analysis
 4. **Never commit** with `DEBUG=true`
 5. **Monitor performance impact** in development
 6. **Use debug data** to optimize slow operations

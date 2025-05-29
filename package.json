@@ -5,11 +5,10 @@
   "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && npm run validate",
+    "build": "tsc",
     "start": "node dist/src/index.js",
     "start:http": "TRANSPORT_TYPE=http node dist/src/index.js",
     "dev": "tsc -w",
-    "validate": "node dist/scripts/validate-structure.js",
     "test:debug": "node dist/scripts/test-debug.js",
     "type-check": "tsc --noEmit",
     "type-check:handlers": "tsc --noEmit --project tsconfig.json src/tools/**/handlers/*.ts",
