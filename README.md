@@ -1,3 +1,5 @@
+> **Archived:** This project has been archived in favor of the official DatoCMS MCP server. Please use [datocms/mcp](https://github.com/datocms/mcp) instead.
+
 # DatoCMS MCP Server
 
 <div align="center">  
